@@ -1,103 +1,219 @@
+/* ── Message Row ───────────────────────────────────────────────────────────── */
 .message-row {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  animation: fadeInUp 0.3s ease;
+  animation: fadeInUp 0.25s ease;
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.message-ai { flex-direction: row; }
+.message-ai   { flex-direction: row; }
 .message-user { flex-direction: row-reverse; }
 
-.avatar {
-  width: 36px;
-  height: 36px;
+/* ── Avatar ────────────────────────────────────────────────────────────────── */
+.avatar-ai {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 17px;
   flex-shrink: 0;
   border: 2px solid;
   background: var(--bg-card);
+  margin-top: 2px;
 }
 
+/* ── Bubbles ───────────────────────────────────────────────────────────────── */
 .bubble {
-  max-width: 75%;
-  border-radius: var(--radius-md);
+  max-width: 82%;
+  border-radius: 14px;
   padding: 14px 18px;
-  line-height: 1.6;
-  font-size: 14px;
+  font-size: 14.5px;
+  line-height: 1.65;
+  word-break: break-word;
 }
 
 .bubble-ai {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
+  background: #13192a;
+  border: 1px solid #1e2d45;
   border-top-left-radius: 4px;
-  color: var(--text-primary);
+  color: #e2e8f0;
 }
 
 .bubble-user {
   border-top-right-radius: 4px;
-  color: white;
+  color: #fff;
+  font-size: 14.5px;
 }
 
-/* Markdown Styles */
+/* ── User text ─────────────────────────────────────────────────────────────── */
+.user-text {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MARKDOWN ELEMENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Paragraphs */
 .md-p {
-  margin: 0 0 12px;
-  color: var(--text-primary);
+  margin: 0 0 10px;
+  color: #e2e8f0;
 }
 .md-p:last-child { margin-bottom: 0; }
 
-.md-list {
-  margin: 8px 0 12px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* ── Headings ──────────────────────────────────────────────────────────────── */
+.md-h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 4px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #1e2d45;
+  letter-spacing: -0.2px;
 }
 
-.md-li { color: var(--text-primary); }
-
-.md-strong {
-  color: var(--text-primary);
-  font-weight: 600;
+.md-h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 14px 0 8px;
+  letter-spacing: -0.1px;
 }
 
 .md-h3 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 12px 0 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin: 12px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
 }
 
+/* ── Bold / Italic ─────────────────────────────────────────────────────────── */
+.md-strong {
+  color: #f1f5f9;
+  font-weight: 600;
+}
+
+.md-em {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Divider ───────────────────────────────────────────────────────────────── */
+.md-hr {
+  border: none;
+  border-top: 1px solid #1e2d45;
+  margin: 14px 0;
+}
+
+/* ── Lists ─────────────────────────────────────────────────────────────────── */
+.md-ul {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.md-ol {
+  list-style: decimal;
+  padding-left: 20px;
+  margin: 6px 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.md-li {
+  color: #cbd5e1;
+  line-height: 1.6;
+  padding-left: 2px;
+}
+
+/* Bullet for unordered list */
+.md-ul > .md-li::before {
+  content: '›';
+  color: #4b6082;
+  font-weight: 700;
+  margin-right: 8px;
+}
+
+/* ── Blockquote ────────────────────────────────────────────────────────────── */
+.md-blockquote {
+  border-left: 3px solid #334155;
+  margin: 10px 0;
+  padding: 8px 14px;
+  background: rgba(30, 45, 69, 0.4);
+  border-radius: 0 6px 6px 0;
+}
+
+.md-blockquote .md-p {
+  color: #94a3b8;
+  margin: 0;
+  font-style: italic;
+  font-size: 13.5px;
+}
+
+/* ── Inline Code ───────────────────────────────────────────────────────────── */
+/* Subtle: just a slight tint — does NOT look like a big box */
 .inline-code {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 13px;
-  background: rgba(139, 92, 246, 0.15);
-  color: var(--purple-light);
-  padding: 2px 6px;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 0.875em;
+  color: #a78bfa;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 1px 5px;
   border-radius: 4px;
+  border: 1px solid rgba(139, 92, 246, 0.18);
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+/* ── Code Block ────────────────────────────────────────────────────────────── */
+.code-block-wrapper {
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #1e2d45;
+}
+
+/* Small "code" label bar at top */
+.code-block-wrapper::before {
+  content: 'code';
+  display: block;
+  background: #0d1424;
+  color: #4b6082;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 6px 14px;
+  border-bottom: 1px solid #1e2d45;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
 }
 
 .code-block {
-  background: #0a0f1e;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  background: #090e1a;
   padding: 14px 16px;
   overflow-x: auto;
-  margin: 10px 0;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   font-size: 13px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: #e2e8f0;
 }
 
-.user-text {
-  color: white;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
+/* ── Scrollbar inside code ─────────────────────────────────────────────────── */
+.code-block::-webkit-scrollbar { height: 4px; }
+.code-block::-webkit-scrollbar-track { background: transparent; }
+.code-block::-webkit-scrollbar-thumb { background: #1e2d45; border-radius: 2px; }
