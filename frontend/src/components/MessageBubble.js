@@ -21,15 +21,21 @@ export default function MessageBubble({ message, typeColor }) {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              code({ node, inline, className, children, ...props }) {
-                return inline ? (
-                  <code className="inline-code" {...props}>
+              pre: ({ children }) => (
+                <pre className="code-block">{children}</pre>
+              ),
+              code: ({ children, className, ...props }) => {
+                if (!className) {
+                  return (
+                    <code className="inline-code" {...props}>
+                      {children}
+                    </code>
+                  );
+                }
+                return (
+                  <code className={className} {...props}>
                     {children}
                   </code>
-                ) : (
-                  <pre className="code-block">
-                    <code {...props}>{children}</code>
-                  </pre>
                 );
               },
               p: ({ children }) => <p className="md-p">{children}</p>,
