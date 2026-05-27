@@ -4,6 +4,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Interview from './pages/Interview';
+import History from './pages/History';
+import HistoryDetail from './pages/HistoryDetail';
 import './index.css';
 
 // Protected route wrapper
@@ -61,6 +63,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Interview />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <History />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history/:id"
+        element={
+          <ProtectedRoute>
+            <HistoryDetail />
           </ProtectedRoute>
         }
       />

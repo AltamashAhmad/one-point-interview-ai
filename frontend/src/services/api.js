@@ -40,6 +40,52 @@ export async function getInterviewTypes() {
 }
 
 /**
+ * Fetch all past interview sessions for the current user.
+ */
+export async function getHistory() {
+  const headers = await getAuthHeader();
+  const { data } = await axios.get(`${API_BASE}/api/history`, { headers });
+  return data.interviews;
+}
+
+/**
+ * Fetch a specific interview session by ID.
+ * @param {string} id
+ */
+export async function getHistoryById(id) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.get(`${API_BASE}/api/history/${id}`, { headers });
+  return data.interview;
+}
+
+/**
+ * Create or update an interview session.
+ * @param {string} sessionId
+ * @param {string} interviewType
+ * @param {string} modelUsed
+ * @param {Array} messages
+ */
+export async function saveSession(sessionId, interviewType, modelUsed, messages) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.post(
+    `${API_BASE}/api/history`,
+    { sessionId, interviewType, modelUsed, messages },
+    { headers }
+  );
+  return data;
+}
+
+/**
+ * Delete a specific interview session by ID.
+ * @param {string} id
+ */
+export async function deleteSession(id) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.delete(`${API_BASE}/api/history/${id}`, { headers });
+  return data;
+}
+
+/**
  * Check if the backend is reachable.
  */
 export async function healthCheck() {

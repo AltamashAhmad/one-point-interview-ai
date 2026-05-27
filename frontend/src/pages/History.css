@@ -1,0 +1,175 @@
+.history-page {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: var(--bg-card);
+  border-bottom: 1px solid #1e293b;
+}
+
+.history-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #f1f5f9;
+}
+
+.header-placeholder {
+  width: 80px; /* To balance the back button */
+}
+
+.history-main {
+  flex: 1;
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.history-loading, .history-error {
+  text-align: center;
+  padding: 60px;
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+.history-error {
+  color: #ef4444;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px dashed #334155;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.history-empty h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+  color: #f1f5f9;
+}
+
+.history-empty p {
+  color: #94a3b8;
+  margin: 0;
+}
+
+.mt-4 { margin-top: 24px; }
+
+/* History List & Cards */
+.history-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+}
+
+.history-card {
+  background: var(--bg-card);
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.type-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-dsa { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.type-systemDesign { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+.type-lld { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+.history-date {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.history-card-body {
+  display: flex;
+  gap: 24px;
+}
+
+.history-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.model-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.history-delete-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #475569;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.history-card:hover .history-delete-btn {
+  opacity: 1;
+}
+
+.history-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}

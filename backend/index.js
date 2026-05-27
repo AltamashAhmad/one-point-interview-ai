@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 
 const chatRouter = require('./routes/chat');
 const healthRouter = require('./routes/health');
+const historyRouter = require('./routes/history');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -41,6 +42,7 @@ app.use('/api/', apiLimiter);
 // ── Routes ─────────────────────────────────────────────────────
 app.use('/api/chat', chatRouter);
 app.use('/api/health', healthRouter);
+app.use('/api/history', historyRouter);
 
 app.get('/', (req, res) => {
   res.json({ message: '🎯 One Point Interview AI', status: 'running', version: '1.0.0' });

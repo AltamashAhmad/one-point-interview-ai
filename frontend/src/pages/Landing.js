@@ -62,6 +62,9 @@ export default function Landing() {
             )}
             <span className="user-name">{user?.displayName || user?.email?.split('@')[0]}</span>
           </div>
+          <button className="btn btn-ghost" onClick={() => navigate('/history')} style={{ marginRight: '12px' }}>
+            History
+          </button>
           <button className="btn btn-outline" onClick={handleLogout} disabled={loggingOut}>
             {loggingOut ? 'Signing out...' : 'Sign out'}
           </button>

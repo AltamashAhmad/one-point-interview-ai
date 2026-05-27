@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { sendMessage } from '../services/api';
+import { sendMessage, saveSession } from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import TypingIndicator from '../components/TypingIndicator';
 import ModelSelector, { DEFAULT_MODEL } from '../components/ModelSelector';
@@ -34,6 +34,7 @@ export default function Interview() {
   const [sessionStarted, setSessionStarted] = useState(false);
   const [error, setError] = useState(null);
   const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL.id);
+  const [sessionId, setSessionId] = useState(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -62,19 +63,26 @@ export default function Interview() {
     setError(null);
     setSessionStarted(true);
 
+    const newSessionId = crypto.randomUUID();
+    setSessionId(newSessionId);
+
     const initialMessages = [INITIAL_MESSAGE];
     setMessages([]);
 
     try {
       const response = await sendMessage(initialMessages, type, userName, selectedModel);
-      setMessages([{ role: 'assistant', content: response.content }]);
+      const updatedMessages = [{ role: 'assistant', content: response.content }];
+      setMessages(updatedMessages);
+      
+      // Save session history
+      await saveSession(newSessionId, type, selectedModel, updatedMessages);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to connect to the AI interviewer. Please check your connection.');
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [type]);
+  }, [type, userName, selectedModel]);
 
   const handleSend = useCallback(async () => {
     const trimmed = input.trim();
@@ -94,7 +102,11 @@ export default function Interview() {
 
     try {
       const response = await sendMessage(apiMessages, type, userName, selectedModel);
-      setMessages((prev) => [...prev, { role: 'assistant', content: response.content }]);
+      const finalMessages = [...newMessages, { role: 'assistant', content: response.content }];
+      setMessages(finalMessages);
+      
+      // Save session history in the background
+      saveSession(sessionId, type, selectedModel, finalMessages).catch(console.error);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to get a response. Please try again.');
       // Remove the optimistic user message on error
@@ -103,7 +115,7 @@ export default function Interview() {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [input, isLoading, messages, type]);
+  }, [input, isLoading, messages, type, userName, selectedModel, sessionId]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
