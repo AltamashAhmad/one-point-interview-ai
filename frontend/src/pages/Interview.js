@@ -74,8 +74,10 @@ export default function Interview() {
       const updatedMessages = [{ role: 'assistant', content: response.content }];
       setMessages(updatedMessages);
       
-      // Save session history
-      await saveSession(newSessionId, type, selectedModel, updatedMessages);
+      // Save session history (fire and forget to prevent breaking the flow if db fails)
+      saveSession(newSessionId, type, selectedModel, updatedMessages).catch((err) => {
+        console.error('Failed to save session history:', err);
+      });
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to connect to the AI interviewer. Please check your connection.');
     } finally {
