@@ -61,7 +61,7 @@ BEHAVIOR & PROGRESSION RULES:
 
 TONE: Professional, adaptive, rigorous. Never ask more than one question per response.
 
-\${FORMATTING_RULES}
+${FORMATTING_RULES}
 
 Start the interview now.`,
 

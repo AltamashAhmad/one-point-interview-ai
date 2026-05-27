@@ -129,14 +129,30 @@ export default function Interview() {
   // When model changes mid-session, start a fresh session with new model
   const handleModelChange = (modelId) => {
     setSelectedModel(modelId);
-    hasFetched.current = false;
     setMessages([]);
     setInput('');
     setError(null);
-    // slight delay so state updates before the new interview call
-    setTimeout(() => {
-      hasFetched.current = false;
-    }, 0);
+    setIsLoading(true);
+    setSessionStarted(true);
+
+    const newSessionId = crypto.randomUUID();
+    setSessionId(newSessionId);
+
+    const initialMessages = [INITIAL_MESSAGE];
+
+    sendMessage(initialMessages, type, userName, modelId)
+      .then((response) => {
+        const updatedMessages = [{ role: 'assistant', content: response.content }];
+        setMessages(updatedMessages);
+        saveSession(newSessionId, type, modelId, updatedMessages).catch(console.error);
+      })
+      .catch((err) => {
+        setError(err.response?.data?.error || 'Failed to connect with the selected model. Please try another.');
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setTimeout(() => inputRef.current?.focus(), 100);
+      });
   };
 
   const handleNewSession = () => {
