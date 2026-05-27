@@ -15,7 +15,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
  */
 async function generateInterviewResponse(messages, systemPrompt) {
   const model = genAI.getGenerativeModel({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.0-flash',
     systemInstruction: systemPrompt,
     generationConfig: {
       maxOutputTokens: 1024,
