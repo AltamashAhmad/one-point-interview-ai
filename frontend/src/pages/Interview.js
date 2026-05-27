@@ -20,7 +20,7 @@ const INITIAL_MESSAGE = {
 export default function Interview() {
   const { type } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth(); // ensures auth guard is active
 
   const config = TYPE_CONFIG[type];
 
