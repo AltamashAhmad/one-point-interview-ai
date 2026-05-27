@@ -7,28 +7,26 @@ if (!process.env.GEMINI_API_KEY) {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
- * Model fallback chain — ordered by preference.
- * When one model hits its daily/per-minute quota (429), we automatically
- * try the next one. This prevents a single quota exhaustion from
- * taking down the whole service.
+ * Default fallback chain when user hasn't picked a model.
+ * Updated May 2026 — 2.0-flash* deprecated June 1, 2026.
  *
  * Free-tier limits (approximate):
- *   gemini-2.0-flash       → 1,500 req/day, 15 RPM
- *   gemini-2.0-flash-lite  → 1,500 req/day, 30 RPM
- *   gemini-flash-latest    → 1,500 req/day, 15 RPM
- *   gemini-flash-lite-latest → 1,500 req/day, 30 RPM
+ *   gemini-2.5-flash       → 10 RPM,  1500 RPD
+ *   gemini-2.5-flash-lite  → 30 RPM,  1500 RPD  ← highest RPM
+ *   gemini-3.1-flash-lite  → 15 RPM,  1500 RPD
+ *   gemini-3-flash-preview → 10 RPM,   500 RPD
+ *   gemini-flash-latest    → 15 RPM,  1500 RPD  ← stable alias
  */
 const MODEL_FALLBACK_CHAIN = [
-  'gemini-2.0-flash',
-  'gemini-2.0-flash-lite',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-3.1-flash-lite',
   'gemini-flash-latest',
   'gemini-flash-lite-latest',
 ];
 
 /**
- * Check if an error is a quota/rate-limit error (HTTP 429).
- * @param {Error} err
- * @returns {boolean}
+ * Returns true if the error is a quota / rate-limit error (HTTP 429).
  */
 function isQuotaError(err) {
   const msg = err?.message || '';
@@ -42,14 +40,22 @@ function isQuotaError(err) {
 
 /**
  * Generate an AI interviewer response using Gemini.
- * Automatically falls back through MODEL_FALLBACK_CHAIN on quota errors.
+ *
+ * If `preferredModel` is provided (user's UI selection), it goes first.
+ * On a 429 / quota error we silently try the next model in the chain.
  *
  * @param {Array<{role: 'user'|'assistant', content: string}>} messages
- * @param {string} systemPrompt - The interviewer persona/instructions
+ * @param {string} systemPrompt - The interviewer persona / instructions
+ * @param {string} [preferredModel]  - Model chosen by the user in the UI
  * @returns {Promise<string>} - The AI response text
  */
-async function generateInterviewResponse(messages, systemPrompt) {
-  // Convert message history to Gemini format (all except the last message)
+async function generateInterviewResponse(messages, systemPrompt, preferredModel) {
+  // Build the chain: user's pick first, then every other fallback
+  const chain = preferredModel
+    ? [preferredModel, ...MODEL_FALLBACK_CHAIN.filter((m) => m !== preferredModel)]
+    : MODEL_FALLBACK_CHAIN;
+
+  // Convert message history to Gemini chat format (all except the last message)
   const history = messages.slice(0, -1).map((msg) => ({
     role: msg.role === 'user' ? 'user' : 'model',
     parts: [{ text: msg.content }],
@@ -58,7 +64,7 @@ async function generateInterviewResponse(messages, systemPrompt) {
 
   let lastError = null;
 
-  for (const modelName of MODEL_FALLBACK_CHAIN) {
+  for (const modelName of chain) {
     try {
       const model = genAI.getGenerativeModel({
         model: modelName,
@@ -74,29 +80,31 @@ async function generateInterviewResponse(messages, systemPrompt) {
       const result = await chat.sendMessage(lastMessage.content);
       const text = result.response.text();
 
-      // Log which model was actually used (useful for debugging)
-      if (modelName !== MODEL_FALLBACK_CHAIN[0]) {
-        console.info(`ℹ️  Used fallback model: ${modelName}`);
+      // Log when a fallback was used — visible in server console
+      if (modelName !== chain[0]) {
+        console.info(`ℹ️  Quota fallback used: ${chain[0]} → ${modelName}`);
+      } else {
+        console.info(`✅ Model: ${modelName}`);
       }
 
       return text;
     } catch (err) {
       if (isQuotaError(err)) {
-        console.warn(`⚠️  Model "${modelName}" quota exceeded — trying next model...`);
+        console.warn(`⚠️  "${modelName}" quota exceeded — trying next...`);
         lastError = err;
-        continue; // try next model
+        continue;
       }
-      // Non-quota error (bad request, auth issue, etc.) — fail immediately
+      // Non-quota error: fail fast (bad auth, invalid request, etc.)
       throw err;
     }
   }
 
-  // All models exhausted
-  console.error('❌ All Gemini models hit quota limits.');
+  // All models in the chain are exhausted
+  console.error('❌ All models hit quota limits:', chain.join(', '));
   throw Object.assign(
     new Error(
       'All AI models are currently rate-limited. The free tier resets daily at midnight (Pacific Time). ' +
-      'Please try again in a few minutes or tomorrow.'
+      'Please try again in a few minutes or after the daily quota resets.'
     ),
     { isQuotaExhausted: true, statusCode: 429 }
   );

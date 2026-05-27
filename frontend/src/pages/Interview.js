@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { sendMessage } from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import TypingIndicator from '../components/TypingIndicator';
+import ModelSelector, { DEFAULT_MODEL } from '../components/ModelSelector';
 import './Interview.css';
 
 const TYPE_CONFIG = {
@@ -32,6 +33,7 @@ export default function Interview() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedModel, setSelectedModel] = useState(DEFAULT_MODEL.id);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -64,7 +66,7 @@ export default function Interview() {
     setMessages([]);
 
     try {
-      const response = await sendMessage(initialMessages, type, userName);
+      const response = await sendMessage(initialMessages, type, userName, selectedModel);
       setMessages([{ role: 'assistant', content: response.content }]);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to connect to the AI interviewer. Please check your connection.');
@@ -91,7 +93,7 @@ export default function Interview() {
     const apiMessages = [INITIAL_MESSAGE, ...newMessages];
 
     try {
-      const response = await sendMessage(apiMessages, type, userName);
+      const response = await sendMessage(apiMessages, type, userName, selectedModel);
       setMessages((prev) => [...prev, { role: 'assistant', content: response.content }]);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to get a response. Please try again.');
@@ -108,6 +110,19 @@ export default function Interview() {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  // When model changes mid-session, start a fresh session with new model
+  const handleModelChange = (modelId) => {
+    setSelectedModel(modelId);
+    hasFetched.current = false;
+    setMessages([]);
+    setInput('');
+    setError(null);
+    // slight delay so state updates before the new interview call
+    setTimeout(() => {
+      hasFetched.current = false;
+    }, 0);
   };
 
   const handleNewSession = () => {
@@ -135,9 +150,14 @@ export default function Interview() {
           </div>
         </div>
         <div className="header-right">
+          <ModelSelector
+            selectedModel={selectedModel}
+            onModelChange={handleModelChange}
+            disabled={isLoading}
+          />
           <div className="session-badge">
             <span className="session-dot" />
-            Session Active
+            Live
           </div>
           <button className="btn btn-outline new-session-btn" onClick={handleNewSession} disabled={isLoading}>
             New Session

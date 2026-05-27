@@ -16,16 +16,16 @@ async function getAuthHeader() {
 /**
  * Send a message to the AI interviewer and get a response.
  *
- * @param {Array<{role: string, content: string}>} messages - Full conversation history
+ * @param {Array<{role: string, content: string}>} messages
  * @param {string} interviewType - 'dsa' | 'systemDesign' | 'lld'
- * @param {string} userName - Logged-in user's display name (for personalised greeting)
- * @returns {Promise<{role: string, content: string}>}
+ * @param {string} userName - Candidate's first name
+ * @param {string} model - Gemini model ID to use
  */
-export async function sendMessage(messages, interviewType, userName = 'there') {
+export async function sendMessage(messages, interviewType, userName = 'there', model) {
   const headers = await getAuthHeader();
   const { data } = await axios.post(
     `${API_BASE}/api/chat`,
-    { messages, interviewType, userName },
+    { messages, interviewType, userName, model },
     { headers }
   );
   return data;

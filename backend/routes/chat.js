@@ -18,7 +18,7 @@ const VALID_INTERVIEW_TYPES = ['dsa', 'systemDesign', 'lld'];
  */
 router.post('/', verifyToken, async (req, res, next) => {
   try {
-    const { messages, interviewType, userName = 'there' } = req.body;
+    const { messages, interviewType, userName = 'there', model } = req.body;
 
     // ── Input Validation ────────────────────────────────────────
     if (!Array.isArray(messages) || messages.length === 0) {
@@ -54,7 +54,7 @@ router.post('/', verifyToken, async (req, res, next) => {
 
     // ── Generate Response ───────────────────────────────────────
     const systemPrompt = getSystemPrompt(interviewType, userName);
-    const responseText = await generateInterviewResponse(messages, systemPrompt);
+    const responseText = await generateInterviewResponse(messages, systemPrompt, model);
 
     res.json({
       role: 'assistant',
