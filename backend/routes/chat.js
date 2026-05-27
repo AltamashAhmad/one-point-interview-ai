@@ -61,6 +61,13 @@ router.post('/', verifyToken, async (req, res, next) => {
       content: responseText,
     });
   } catch (error) {
+    // Return a clean 429 with friendly message when all AI models are quota-limited
+    if (error.isQuotaExhausted || error.message?.includes('rate-limited')) {
+      return res.status(429).json({
+        error: '⏳ The AI interviewer is taking a short break — free tier quota reached. Please try again in a few minutes or after midnight (Pacific Time) when quotas reset.',
+        retryAfter: 60,
+      });
+    }
     next(error);
   }
 });
