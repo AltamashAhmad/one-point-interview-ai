@@ -20,7 +20,10 @@ const INITIAL_MESSAGE = {
 export default function Interview() {
   const { type } = useParams();
   const navigate = useNavigate();
-  useAuth(); // ensures auth guard is active
+  const { user } = useAuth();
+
+  // Extract first name for the personalised greeting
+  const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
 
   const config = TYPE_CONFIG[type];
 
@@ -61,7 +64,7 @@ export default function Interview() {
     setMessages([]);
 
     try {
-      const response = await sendMessage(initialMessages, type);
+      const response = await sendMessage(initialMessages, type, userName);
       setMessages([{ role: 'assistant', content: response.content }]);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to connect to the AI interviewer. Please check your connection.');
@@ -88,7 +91,7 @@ export default function Interview() {
     const apiMessages = [INITIAL_MESSAGE, ...newMessages];
 
     try {
-      const response = await sendMessage(apiMessages, type);
+      const response = await sendMessage(apiMessages, type, userName);
       setMessages((prev) => [...prev, { role: 'assistant', content: response.content }]);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to get a response. Please try again.');

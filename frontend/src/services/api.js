@@ -18,13 +18,14 @@ async function getAuthHeader() {
  *
  * @param {Array<{role: string, content: string}>} messages - Full conversation history
  * @param {string} interviewType - 'dsa' | 'systemDesign' | 'lld'
+ * @param {string} userName - Logged-in user's display name (for personalised greeting)
  * @returns {Promise<{role: string, content: string}>}
  */
-export async function sendMessage(messages, interviewType) {
+export async function sendMessage(messages, interviewType, userName = 'there') {
   const headers = await getAuthHeader();
   const { data } = await axios.post(
     `${API_BASE}/api/chat`,
-    { messages, interviewType },
+    { messages, interviewType, userName },
     { headers }
   );
   return data;
