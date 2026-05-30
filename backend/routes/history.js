@@ -1,0 +1,252 @@
+const express = require('express');
+const router = express.Router();
+const { verifyToken } = require('../middleware/auth');
+const admin = require('../config/firebase');
+const { generateInterviewResponse } = require('../services/gemini');
+const { generateGroqResponse, isGroqModel } = require('../services/groq');
+
+const db = admin.firestore();
+
+/**
+ * GET /api/history
+ * Fetch all past interviews for the authenticated user.
+ */
+router.get('/', verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    const snapshot = await db.collection('interviews')
+      .where('userId', '==', userId)
+      .orderBy('updatedAt', 'desc')
+      .get();
+
+    const interviews = [];
+    snapshot.forEach(doc => {
+      interviews.push({ id: doc.id, ...doc.data() });
+    });
+
+    res.json({ interviews });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/history/:id
+ * Fetch a specific interview by ID.
+ */
+router.get('/:id', verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    const docRef = db.collection('interviews').doc(req.params.id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Interview not found' });
+    }
+
+    const data = doc.data();
+    if (data.userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized access to this interview' });
+    }
+
+    res.json({ interview: { id: doc.id, ...data } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/history
+ * Create or update an interview session.
+ * Body: { sessionId: string, interviewType: string, modelUsed: string, messages: array }
+ */
+router.post('/', verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    const { sessionId, interviewType, modelUsed, messages,
+            company, difficulty, language, questionTitle, questionLink } = req.body;
+
+    if (!sessionId || !interviewType || !messages) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const docRef = db.collection('interviews').doc(sessionId);
+    const doc = await docRef.get();
+
+    const timestamp = admin.firestore.FieldValue.serverTimestamp();
+
+    if (doc.exists) {
+      if (doc.data().userId !== userId) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      await docRef.update({
+        messages,
+        modelUsed:     modelUsed     || doc.data().modelUsed,
+        // Update metadata fields if provided
+        ...(company       !== undefined && { company }),
+        ...(difficulty    !== undefined && { difficulty }),
+        ...(language      !== undefined && { language }),
+        ...(questionTitle !== undefined && { questionTitle }),
+        ...(questionLink  !== undefined && { questionLink }),
+        updatedAt: timestamp
+      });
+    } else {
+      await docRef.set({
+        userId,
+        interviewType,
+        modelUsed:     modelUsed     || 'unknown',
+        company:       company       || null,
+        difficulty:    difficulty    || null,
+        language:      language      || null,
+        questionTitle: questionTitle || null,
+        questionLink:  questionLink  || null,
+        messages,
+        startedAt: timestamp,
+        updatedAt: timestamp
+      });
+    }
+
+    res.json({ success: true, sessionId });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * DELETE /api/history/:id
+ * Delete a specific interview session.
+ */
+router.delete('/:id', verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    const docRef = db.collection('interviews').doc(req.params.id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Interview not found' });
+    }
+
+    if (doc.data().userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized access' });
+    }
+
+    await docRef.delete();
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/history/:id/scorecard
+ * Generates an AI scorecard based on the interview transcript.
+ */
+router.post('/:id/scorecard', verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    const docRef = db.collection('interviews').doc(req.params.id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Interview not found' });
+    }
+
+    const data = doc.data();
+    if (data.userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // If scorecard already exists, just return it
+    if (data.scorecard) {
+      return res.json({ scorecard: data.scorecard });
+    }
+
+    const messages = data.messages || [];
+    if (messages.length === 0) {
+      return res.status(400).json({ error: 'No interview transcript available to score' });
+    }
+
+    // Count actual candidate (user) messages — AI-only transcripts shouldn't get scored
+    const userMessages = messages.filter(m => m.role === 'user');
+    if (userMessages.length === 0) {
+      return res.status(400).json({
+        error: 'Cannot generate a scorecard — you didn\'t provide any responses during this interview. Start a new session and answer the questions to get scored.'
+      });
+    }
+
+    // Build the transcript text
+    const transcript = messages
+      .filter(m => m.role !== 'system')
+      .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+      .join('\n\n');
+
+    const totalMessages = messages.filter(m => m.role !== 'system').length;
+
+    const systemPrompt = `You are a Principal Engineer and expert technical interviewer at a top tech company.
+Your task is to evaluate the following interview transcript and generate a final scorecard.
+
+CRITICAL SCORING RULES:
+- The transcript contains ${totalMessages} total messages, of which ${userMessages.length} are from the CANDIDATE.
+- Base your score ONLY on what the candidate actually said and demonstrated. Never infer or hallucinate abilities not shown in the transcript.
+- NON-NEGOTIABLE RULE 1: If the candidate provided very few responses (1-2 messages) or only trivial/vague answers, the score MUST be between 0-25 and the verdict MUST be "No Hire".
+- NON-NEGOTIABLE RULE 2: If the candidate NEVER wrote any actual code (in any language) for a DSA/LLD problem, the verdict MUST be "No Hire" and the score MUST NOT exceed 30.
+- If the candidate attempted the problem with code but made significant errors or had incomplete solutions, score 25-50 ("No Hire").
+- If the candidate provided a reasonable approach with minor gaps and working code, score 50-75 ("Lean Hire" or "Hire").
+- Only give 75+ ("Strong Hire") if the candidate demonstrated strong problem-solving, clear communication, and optimal, working code.
+- Strengths and weaknesses MUST reflect what actually happened in the transcript. Do NOT fabricate accomplishments.
+
+You MUST output ONLY a valid JSON object with the following exact structure, no markdown blocks:
+{
+  "score": <number 0-100>,
+  "verdict": "<'Hire', 'Strong Hire', 'Lean Hire', or 'No Hire'>",
+  "strengths": ["point 1", "point 2"],
+  "weaknesses": ["point 1", "point 2"],
+  "problemSolving": "<Detailed paragraph on their problem solving and technical skills>",
+  "communication": "<Detailed paragraph on their communication and clarity>"
+}
+
+Transcript (${userMessages.length} candidate messages, ${totalMessages - userMessages.length} interviewer messages):
+${transcript}`;
+
+    const aiMessages = [
+      { role: 'user', content: 'Generate the scorecard for this interview.' }
+    ];
+
+    let responseText = '';
+    // Use the user's selected scorecard model or fallback to gemini-3.1-pro-preview
+    const modelUsed = req.body.model || 'gemini-3.1-pro-preview';
+    
+    if (isGroqModel(modelUsed)) {
+      responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);
+    } else {
+      responseText = await generateInterviewResponse(aiMessages, systemPrompt, modelUsed);
+    }
+
+    // Robust JSON extraction
+    let scorecard;
+    try {
+      let cleanedText = responseText;
+      const firstBrace = cleanedText.indexOf('{');
+      const lastBrace = cleanedText.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        cleanedText = cleanedText.substring(firstBrace, lastBrace + 1);
+      }
+      scorecard = JSON.parse(cleanedText);
+    } catch (e) {
+      console.error('Failed to parse scorecard JSON:', responseText);
+      return res.status(500).json({ error: 'AI failed to generate a valid scorecard. Please try again.' });
+    }
+
+    // Save to Firestore
+    await docRef.update({
+      scorecard,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ scorecard });
+  } catch (error) {
+    next(error);
+  }
+});
+
+module.exports = router;

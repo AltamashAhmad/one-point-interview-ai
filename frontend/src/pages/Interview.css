@@ -90,6 +90,13 @@
 .new-session-btn { font-size: 13px; padding: 7px 14px; }
 
 /* ── Chat Area ─────────────────────────────────────────────────────────────── */
+.chat-full-width {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
 .chat-area {
   flex: 1;
   overflow-y: auto;
@@ -135,6 +142,57 @@
 }
 
 .retry-btn { color: #fca5a5; font-size: 13px; }
+
+/* ── Session config badge ───────────────────────────────────────────────────── */
+.session-config-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.session-config-badge span::before {
+  margin-right: 4px;
+}
+
+/* ── Model switch notice ────────────────────────────────────────────────────── */
+.model-notice {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,0.45);
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px dashed rgba(255,255,255,0.1);
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* ── LeetCode link in header ────────────────────────────────────────────────── */
+.question-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  vertical-align: middle;
+  transition: color 0.2s;
+}
+
+.question-link:hover { color: rgba(255,255,255,0.8); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Input Area ────────────────────────────────────────────────────────────── */
 .input-area {
@@ -183,7 +241,63 @@
   cursor: not-allowed;
 }
 
+/* ── Mic Button ────────────────────────────────────────────────────────────── */
+.mic-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.mic-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.mic-btn--active {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+  animation: mic-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+
+.mic-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Voice feedback ────────────────────────────────────────────────────────── */
+.voice-listening {
+  max-width: 780px;
+  margin: 6px auto 0;
+  font-size: 12px;
+  color: #f87171;
+  animation: fadeIn 0.2s ease;
+}
+
+.voice-error {
+  max-width: 780px;
+  margin: 6px auto 0;
+  font-size: 12px;
+  color: #fca5a5;
+}
+
 .send-btn {
+
   width: 46px;
   height: 46px;
   border-radius: var(--radius-sm);
@@ -231,4 +345,290 @@
   .session-badge { display: none; }
   .chat-area { padding: 16px; }
   .input-area { padding: 12px 16px 16px; }
+}
+
+.interview-timer {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  font-family: 'Inter', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+}
+
+.interview-timer--urgent {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  animation: pulse-urgent 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.interview-timer--expired {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+  font-weight: 600;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ── Editor & Split Pane Layout ───────────────────────────────────────────── */
+.interview-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.chat-full-width {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.resize-handle {
+  width: 4px;
+  background-color: var(--bg-deep);
+  cursor: col-resize;
+  transition: background-color 0.2s;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.resize-handle:hover,
+.resize-handle:active {
+  background-color: var(--primary-color, #3b82f6);
+}
+
+.editor-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e; /* Monaco dark background */
+}
+
+.editor-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #252526;
+  border-bottom: 1px solid #333;
+  color: #ccc;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.close-editor-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.close-editor-btn:hover {
+  color: #fff;
+}
+
+.code-editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.code-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: #1e1e1e;
+}
+
+.editor-lang-badge {
+  background: #333;
+  color: #aaa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.submit-code-btn {
+  background: var(--primary-color, #3b82f6);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submit-code-btn:hover {
+  background: #2563eb;
+}
+
+.code-editor-body {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Code Editor Actions & Console ────────────────────────────────────────── */
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editor-btn {
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.editor-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editor-btn-secondary {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+.editor-btn-secondary:hover:not(:disabled) {
+  background: rgba(255,255,255,0.2);
+}
+
+.editor-btn-primary {
+  background: #10b981;
+  color: #fff;
+}
+.editor-btn-primary:hover:not(:disabled) {
+  background: #059669;
+}
+
+.horizontal-handle {
+  height: 4px;
+  width: 100%;
+  cursor: row-resize;
+  background: var(--border);
+  position: relative;
+  transition: background 0.2s;
+}
+.horizontal-handle:hover, .horizontal-handle[data-resize-handle-state="drag"] {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Console Pane */
+.console-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1e1e1e;
+  border-top: 1px solid var(--border);
+}
+
+.console-header {
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.5);
+  background: #252526;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  text-transform: uppercase;
+}
+
+.console-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #d4d4d4;
+}
+
+.console-empty {
+  color: rgba(255,255,255,0.3);
+  font-style: italic;
+}
+
+.console-info {
+  color: #3b82f6;
+}
+
+.console-error pre, .console-raw pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.console-error {
+  color: #ef4444;
+}
+
+.console-test-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.test-result-item {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.test-result-item.passed {
+  border-left: 4px solid #10b981;
+}
+
+.test-result-item.failed {
+  border-left: 4px solid #ef4444;
+}
+
+.test-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.test-header .badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+.passed .badge { color: #10b981; }
+.failed .badge { color: #ef4444; }
+
+.test-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+.test-details span {
+  color: rgba(255,255,255,0.5);
+  display: inline-block;
+  width: 70px;
+}
+.actual-failed {
+  color: #ef4444;
 }

@@ -1,0 +1,456 @@
+[
+  {
+    "slug": "car-rental-system",
+    "title": "Designing a Car Rental System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The car rental system should allow customers to browse and reserve available cars for specific dates.\n2. Each car should have details such as make, model, year, license plate number, and rental price per day.\n3. Customers should be able to search for cars based on various criteria, such as car type, price range, and availability.\n4. The system should handle reservations, including creating, modifying, and canceling reservations.\n5. The system should keep track of the availability of cars and update their status accordingly.\n6. The system should handle customer information, including name, contact details, and driver's license information.\n7. The system should handle payment processing for reservations.\n8. The system should be able to handle concurrent reservations and ensure data consistency.",
+    "classInfo": "",
+    "sourceFile": "problems/car-rental-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "chess-game",
+    "title": "Designing a Chess Game",
+    "difficulty": "HARD",
+    "patterns": [
+      "Interface Design"
+    ],
+    "requirements": "1. The chess game should follow the standard rules of chess.\n2. The game should support two players, each controlling their own set of pieces.\n3. The game board should be represented as an 8x8 grid, with alternating black and white squares.\n4. Each player should have 16 pieces: 1 king, 1 queen, 2 rooks, 2 bishops, 2 knights, and 8 pawns.\n5. The game should validate legal moves for each piece and prevent illegal moves.\n6. The game should detect checkmate and stalemate conditions.\n7. The game should handle player turns and allow players to make moves alternately.\n8. The game should provide a user interface for players to interact with the game.",
+    "classInfo": "",
+    "sourceFile": "problems/chess-game.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "coffee-vending-machine",
+    "title": "Designing a Coffee Vending Machine",
+    "difficulty": "EASY",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The coffee vending machine should support different types of coffee, such as espresso, cappuccino, and latte.\n2. Each type of coffee should have a specific price and recipe (ingredients and their quantities).\n3. The machine should have a menu to display the available coffee options and their prices.\n4. Users should be able to select a coffee type and make a payment.\n5. The machine should dispense the selected coffee and provide change if necessary.\n6. The machine should track the inventory of ingredients and notify when they are running low.\n7. The machine should handle multiple user requests concurrently and ensure thread safety.",
+    "classInfo": "",
+    "sourceFile": "problems/coffee-vending-machine.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "concert-ticket-booking-system",
+    "title": "Designing a Concert Ticket Booking System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The concert ticket booking system should allow users to view available concerts and their seating arrangements.\n2. Users should be able to search for concerts based on various criteria such as artist, venue, date, and time.\n3. Users should be able to select seats and purchase tickets for a specific concert.\n4. The system should handle concurrent booking requests to avoid double-booking of seats.\n5. The system should ensure fair booking opportunities for all users.\n6. The system should handle payment processing securely.\n7. The system should generate booking confirmations and send them to users via email or SMS.\n8. The system should provide a waiting list functionality for sold-out concerts.",
+    "classInfo": "",
+    "sourceFile": "problems/concert-ticket-booking-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "cricinfo",
+    "title": "Designing a Cricket Information System like CricInfo",
+    "difficulty": "HARD",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The Cricinfo system should provide information about cricket matches, teams, players, and live scores.\n2. Users should be able to view the schedule of upcoming matches and the results of completed matches.\n3. The system should allow users to search for specific matches, teams, or players.\n4. Users should be able to view detailed information about a particular match, including the scorecard, commentary, and statistics.\n5. The system should support real-time updates of live scores and match information.\n6. The system should handle concurrent access to match data and ensure data consistency.\n7. The system should be scalable and able to handle a large volume of user requests.\n8. The system should be extensible to accommodate new features and enhancements in the future.",
+    "classInfo": "",
+    "sourceFile": "problems/cricinfo.md",
+    "hasSolution": true
+  },
+  {
+    "slug": "digital-wallet-service",
+    "title": "Designing a Digital Wallet Service",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The digital wallet should allow users to create an account and manage their personal information.\n2. Users should be able to add and remove payment methods, such as credit cards or bank accounts.\n3. The digital wallet should support fund transfers between users and to external accounts.\n4. The system should handle transaction history and provide a statement of transactions.\n5. The digital wallet should support multiple currencies and perform currency conversions.\n6. The system should ensure the security of user information and transactions.\n7. The digital wallet should handle concurrent transactions and ensure data consistency.\n8. The system should be scalable to handle a large number of users and transactions.",
+    "classInfo": "",
+    "sourceFile": "problems/digital-wallet-service.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "hotel-management-system",
+    "title": "Designing a Hotel Management System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The hotel management system should allow guests to book rooms, check-in, and check-out.\n2. The system should manage different types of rooms, such as single, double, deluxe, and suite.\n3. The system should handle room availability and reservation status.\n4. The system should allow the hotel staff to manage guest information, room assignments, and billing.\n5. The system should support multiple payment methods, such as cash, credit card, and online payment.\n6. The system should handle concurrent bookings and ensure data consistency.\n7. The system should provide reporting and analytics features for hotel management.\n8. The system should be scalable and handle a large number of rooms and guests.",
+    "classInfo": "",
+    "sourceFile": "problems/hotel-management-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "library-management-system",
+    "title": "Designing a Library Management System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The library management system should allow librarians to manage books, members, and borrowing activities.\n2. The system should support adding, updating, and removing books from the library catalog.\n3. Each book should have details such as title, author, ISBN, publication year, and availability status.\n4. The system should allow members to borrow and return books.\n5. Each member should have details such as name, member ID, contact information, and borrowing history.\n6. The system should enforce borrowing rules, such as a maximum number of books that can be borrowed at a time and loan duration.\n7. The system should handle concurrent access to the library catalog and member records.\n8. The system should be extensible to accommodate future enhancements and new features.",
+    "classInfo": "",
+    "sourceFile": "problems/library-management-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "logging-framework",
+    "title": "Designing a Logging Framework",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The logging framework should support different log levels, such as DEBUG, INFO, WARNING, ERROR, and FATAL.\n2. It should allow logging messages with a timestamp, log level, and message content.\n3. The framework should support multiple output destinations, such as console, file, and database.\n4. It should provide a configuration mechanism to set the log level and output destination.\n5. The logging framework should be thread-safe to handle concurrent logging from multiple threads.\n6. It should be extensible to accommodate new log levels and output destinations in the future.",
+    "classInfo": "",
+    "sourceFile": "problems/logging-framework.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "lru-cache",
+    "title": "Designing a LRU Cache",
+    "difficulty": "HARD",
+    "patterns": [
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The LRU cache should support the following operations:\n- put(key, value): Insert a key-value pair into the cache. If the cache is at capacity, remove the least recently used item before inserting the new item.\n- get(key): Get the value associated with the given key. If the key exists in the cache, move it to the front of the cache (most recently used) and return its value. If the key does not exist, return -1.\n2. The cache should have a fixed capacity, specified during initialization.\n3. The cache should be thread-safe, allowing concurrent access from multiple threads.\n4. The cache should be efficient in terms of time complexity for both put and get operations, ideally O(1).",
+    "classInfo": "",
+    "sourceFile": "problems/lru-cache.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "movie-ticket-booking-system",
+    "title": "Designing a Movie Ticket Booking System like BookMyShow",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The system should allow users to view the list of movies playing in different theaters.\n2. Users should be able to select a movie, theater, and show timing to book tickets.\n3. The system should display the seating arrangement of the selected show and allow users to choose seats.\n4. Users should be able to make payments and confirm their booking.\n5. The system should handle concurrent bookings and ensure seat availability is updated in real-time.\n6. The system should support different types of seats (e.g., normal, premium) and pricing.\n7. The system should allow theater administrators to add, update, and remove movies, shows, and seating arrangements.\n8. The system should be scalable to handle a large number of concurrent users and bookings.",
+    "classInfo": "",
+    "sourceFile": "problems/movie-ticket-booking-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "parking-lot",
+    "title": "Designing a Parking Lot System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Factory Pattern",
+      "Observer Pattern",
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The parking lot should have multiple levels, each level with a certain number of parking spots.\n2. The parking lot should support different types of vehicles, such as cars, motorcycles, and trucks.\n3. Each parking spot should be able to accommodate a specific type of vehicle.\n4. The system should assign a parking spot to a vehicle upon entry and release it when the vehicle exits.\n5. The system should track the availability of parking spots and provide real-time information to customers.\n6. The system should handle multiple entry and exit points and support concurrent access.",
+    "classInfo": "1. The **ParkingLot** class follows the Singleton pattern to ensure only one instance of the parking lot exists. It maintains a list of levels and provides methods to park and unpark vehicles.\n2. The **ParkingFloor** class represents a level in the parking lot and contains a list of parking spots. It handles parking and unparking of vehicles within the level.\n3. The **ParkingSpot** class represents an individual parking spot and tracks the availability and the parked vehicle.\n4. The **Vehicle** class is an abstract base class for different types of vehicles. It is extended by Car, Motorcycle, and Truck classes.\n5. The **VehicleSize** enum defines the different types of vehicles supported by the parking lot.\n6. Multi-threading is achieved through the use of synchronized keyword on critical sections to ensure thread safety.\n7. The **Main** class demonstrates the usage of the parking lot system.",
+    "sourceFile": "problems/parking-lot.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "linkedin",
+    "title": "Designing a Professional Networking Platform like LinkedIn",
+    "difficulty": "HARD",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "#### User Registration and Authentication:\n- Users should be able to create an account with their professional information, such as name, email, and password.\n- Users should be able to log in and log out of their accounts securely.",
+    "classInfo": "",
+    "sourceFile": "problems/linkedin.md",
+    "hasSolution": true
+  },
+  {
+    "slug": "pub-sub-system",
+    "title": "Designing a Pub-Sub System in Java",
+    "difficulty": "HARD",
+    "patterns": [
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The Pub-Sub system should allow publishers to publish messages to specific topics.\n2. Subscribers should be able to subscribe to topics of interest and receive messages published to those topics.\n3. The system should support multiple publishers and subscribers.\n4. Messages should be delivered to all subscribers of a topic in real-time.\n5. The system should handle concurrent access and ensure thread safety.\n6. The Pub-Sub system should be scalable and efficient in terms of message delivery.",
+    "classInfo": "",
+    "sourceFile": "problems/pub-sub-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "ride-sharing-service",
+    "title": "Designing a Ride-Sharing Service Like Uber",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The ride sharing service should allow passengers to request rides and drivers to accept and fulfill those ride requests.\n2. Passengers should be able to specify their pickup location, destination, and desired ride type (e.g., regular, premium).\n3. Drivers should be able to see available ride requests and choose to accept or decline them.\n4. The system should match ride requests with available drivers based on proximity and other factors.\n5. The system should calculate the fare for each ride based on distance, time, and ride type.\n6. The system should handle payments and process transactions between passengers and drivers.\n7. The system should provide real-time tracking of ongoing rides and notify passengers and drivers about ride status updates.\n8. The system should handle concurrent requests and ensure data consistency.",
+    "classInfo": "",
+    "sourceFile": "problems/ride-sharing-service.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "social-networking-service",
+    "title": "Designing a Social Network Like Facebook",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "#### User Registration and Authentication:\n- Users should be able to create an account with their personal information, such as name, email, and password.\n- Users should be able to log in and log out of their accounts securely.",
+    "classInfo": "",
+    "sourceFile": "problems/social-networking-service.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "task-management-system",
+    "title": "Designing a Task Management System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The task management system should allow users to create, update, and delete tasks.\n2. Each task should have a title, description, due date, priority, and status (e.g., pending, in progress, completed).\n3. Users should be able to assign tasks to other users and set reminders for tasks.\n4. The system should support searching and filtering tasks based on various criteria (e.g., priority, due date, assigned user).\n5. Users should be able to mark tasks as completed and view their task history.\n6. The system should handle concurrent access to tasks and ensure data consistency.\n7. The system should be extensible to accommodate future enhancements and new features.",
+    "classInfo": "",
+    "sourceFile": "problems/task-management-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "tic-tac-toe",
+    "title": "Designing a Tic Tac Toe Game",
+    "difficulty": "EASY",
+    "patterns": [
+      "Interface Design"
+    ],
+    "requirements": "1. The Tic-Tac-Toe game should be played on a 3x3 grid.\n2. Two players take turns marking their symbols (X or O) on the grid.\n3. The first player to get three of their symbols in a row (horizontally, vertically, or diagonally) wins the game.\n4. If all the cells on the grid are filled and no player has won, the game ends in a draw.\n5. The game should have a user interface to display the grid and allow players to make their moves.\n6. The game should handle player turns and validate moves to ensure they are legal.\n7. The game should detect and announce the winner or a draw at the end of the game.",
+    "classInfo": "",
+    "sourceFile": "problems/tic-tac-toe.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "traffic-signal",
+    "title": "Designing a Traffic Signal Control System",
+    "difficulty": "EASY",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design"
+    ],
+    "requirements": "1. The traffic signal system should control the flow of traffic at an intersection with multiple roads.\n2. The system should support different types of signals, such as red, yellow, and green.\n3. The duration of each signal should be configurable and adjustable based on traffic conditions.\n4. The system should handle the transition between signals smoothly, ensuring safe and efficient traffic flow.\n5. The system should be able to detect and handle emergency situations, such as an ambulance or fire truck approaching the intersection.\n6. The system should be scalable and extensible to support additional features and functionality.",
+    "classInfo": "",
+    "sourceFile": "problems/traffic-signal.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "course-registration-system",
+    "title": "Designing a University Course Registration System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Observer Pattern",
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The course registration system should allow students to register for courses and view their registered courses.\n2. Each course should have a course code, name, instructor, and maximum enrollment capacity.\n3. Students should be able to search for courses based on course code or name.\n4. The system should prevent students from registering for courses that have reached their maximum enrollment capacity.\n5. The system should handle concurrent registration requests from multiple students.\n6. The system should ensure data consistency and prevent race conditions.\n7. The system should be extensible to accommodate future enhancements and new features.",
+    "classInfo": "",
+    "sourceFile": "problems/course-registration-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "vending-machine",
+    "title": "Designing a Vending Machine",
+    "difficulty": "EASY",
+    "patterns": [
+      "Singleton Pattern",
+      "State Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The vending machine should support multiple products with different prices and quantities.\n1. The machine should accept coins and notes of different denominations.\n1. The machine should dispense the selected product and return change if necessary.\n1. The machine should keep track of the available products and their quantities.\n1. The machine should handle multiple transactions concurrently and ensure data consistency.\n1. The machine should provide an interface for restocking products and collecting money.\n1. The machine should handle exceptional scenarios, such as insufficient funds or out-of-stock products.",
+    "classInfo": "",
+    "sourceFile": "problems/vending-machine.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "airline-management-system",
+    "title": "Designing an Airline Management System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The airline management system should allow users to search for flights based on source, destination, and date.\n2. Users should be able to book flights, select seats, and make payments.\n3. The system should manage flight schedules, aircraft assignments, and crew assignments.\n4. The system should handle passenger information, including personal details and baggage information.\n5. The system should support different types of users, such as passengers, airline staff, and administrators.\n6. The system should be able to handle cancellations, refunds, and flight changes.\n7. The system should ensure data consistency and handle concurrent access to shared resources.\n8. The system should be scalable and extensible to accommodate future enhancements and new features.",
+    "classInfo": "",
+    "sourceFile": "problems/airline-management-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "atm",
+    "title": "Designing an ATM System",
+    "difficulty": "EASY",
+    "patterns": [
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The ATM system should support basic operations such as balance inquiry, cash withdrawal, and cash deposit.\n2. Users should be able to authenticate themselves using a card and a PIN (Personal Identification Number).\n3. The system should interact with a bank's backend system to validate user accounts and perform transactions.\n4. The ATM should have a cash dispenser to dispense cash to users.\n5. The system should handle concurrent access and ensure data consistency.\n6. The ATM should have a user-friendly interface for users to interact with.",
+    "classInfo": "",
+    "sourceFile": "problems/atm.md",
+    "hasSolution": true
+  },
+  {
+    "slug": "elevator-system",
+    "title": "Designing an Elevator System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The elevator system should consist of multiple elevators serving multiple floors.\n2. Each elevator should have a capacity limit and should not exceed it.\n3. Users should be able to request an elevator from any floor and select a destination floor.\n4. The elevator system should efficiently handle user requests and optimize the movement of elevators to minimize waiting time.\n5. The system should prioritize requests based on the direction of travel and the proximity of the elevators to the requested floor.\n6. The elevators should be able to handle multiple requests concurrently and process them in an optimal order.\n7. The system should ensure thread safety and prevent race conditions when multiple threads interact with the elevators.",
+    "classInfo": "",
+    "sourceFile": "problems/elevator-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "online-auction-system",
+    "title": "Designing an Online Auction System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The online auction system should allow users to register and log in to their accounts.\n2. Users should be able to create new auction listings with details such as item name, description, starting price, and auction duration.\n3. Users should be able to browse and search for auction listings based on various criteria (e.g., item name, category, price range).\n4. Users should be able to place bids on active auction listings.\n5. The system should automatically update the current highest bid and notify the bidders accordingly.\n6. The auction should end when the specified duration is reached, and the highest bidder should be declared the winner.\n7. The system should handle concurrent access to auction listings and ensure data consistency.\n8. The system should be extensible to accommodate future enhancements and new features.",
+    "classInfo": "",
+    "sourceFile": "problems/online-auction-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "food-delivery-service",
+    "title": "Designing an Online Food Delivery Service Like Swiggy",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The food delivery service should allow customers to browse restaurants, view menus, and place orders.\n2. Restaurants should be able to manage their menus, prices, and availability.\n3. Delivery agents should be able to accept and fulfill orders.\n4. The system should handle order tracking and status updates.\n5. The system should support multiple payment methods.\n6. The system should handle concurrent orders and ensure data consistency.\n7. The system should be scalable and handle a high volume of orders.\n8. The system should provide real-time notifications to customers, restaurants, and delivery agents.",
+    "classInfo": "",
+    "sourceFile": "problems/food-delivery-service.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "music-streaming-service",
+    "title": "Designing an Online Music Streaming Service Like Spotify",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The music streaming service should allow users to browse and search for songs, albums, and artists.\n2. Users should be able to create and manage playlists.\n3. The system should support user authentication and authorization.\n4. Users should be able to play, pause, skip, and seek within songs.\n5. The system should recommend songs and playlists based on user preferences and listening history.\n6. The system should handle concurrent requests and ensure smooth streaming experience for multiple users.\n7. The system should be scalable and handle a large volume of songs and users.\n8. The system should be extensible to support additional features such as social sharing and offline playback.",
+    "classInfo": "",
+    "sourceFile": "problems/music-streaming-service.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "online-shopping-service",
+    "title": "Designing an Online Shopping System Like Amazon",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The online shopping service should allow users to browse products, add them to the shopping cart, and place orders.\n2. The system should support multiple product categories and provide search functionality.\n3. Users should be able to manage their profiles, view order history, and track order status.\n4. The system should handle inventory management and update product availability accordingly.\n5. The system should support multiple payment methods and ensure secure transactions.\n6. The system should handle concurrent user requests and ensure data consistency.\n7. The system should be scalable to handle a large number of products and users.\n8. The system should provide a user-friendly interface for a seamless shopping experience.",
+    "classInfo": "",
+    "sourceFile": "problems/online-shopping-service.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "online-stock-brokerage-system",
+    "title": "Designing an Online Stock Brokerage System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The online stock brokerage system should allow users to create and manage their trading accounts.\n2. Users should be able to buy and sell stocks, as well as view their portfolio and transaction history.\n3. The system should provide real-time stock quotes and market data to users.\n4. The system should handle order placement, execution, and settlement processes.\n5. The system should enforce various business rules and validations, such as checking account balances and stock availability.\n6. The system should handle concurrent user requests and ensure data consistency and integrity.\n7. The system should be scalable and able to handle a large number of users and transactions.\n8. The system should be secure and protect sensitive user information.",
+    "classInfo": "",
+    "sourceFile": "problems/online-stock-brokerage-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "restaurant-management-system",
+    "title": "Designing Restaurant Management System",
+    "difficulty": "MEDIUM",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The restaurant management system should allow customers to place orders, view the menu, and make reservations.\n2. The system should manage the restaurant's inventory, including ingredients and menu items.\n3. The system should handle order processing, including order preparation, billing, and payment.\n4. The system should support multiple payment methods, such as cash, credit card, and mobile payments.\n5. The system should manage staff information, including roles, schedules, and performance tracking.\n6. The system should generate reports and analytics for management, such as sales reports and inventory analysis.\n7. The system should handle concurrent access and ensure data consistency.",
+    "classInfo": "",
+    "sourceFile": "problems/restaurant-management-system.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "snake-and-ladder",
+    "title": "Designing Snake and Ladder Game",
+    "difficulty": "EASY",
+    "patterns": [
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The game should be played on a board with numbered cells, typically with 100 cells.\n2. The board should have a predefined set of snakes and ladders, connecting certain cells.\n3. The game should support multiple players, each represented by a unique game piece.\n4. Players should take turns rolling a dice to determine the number of cells to move forward.\n5. If a player lands on a cell with the head of a snake, they should slide down to the cell with the tail of the snake.\n6. If a player lands on a cell with the base of a ladder, they should climb up to the cell at the top of the ladder.\n7. The game should continue until one of the players reaches the final cell on the board.\n8. The game should handle multiple game sessions concurrently, allowing different groups of players to play independently.",
+    "classInfo": "",
+    "sourceFile": "problems/snake-and-ladder.md",
+    "hasSolution": false
+  },
+  {
+    "slug": "splitwise",
+    "title": "Designing Splitwise",
+    "difficulty": "HARD",
+    "patterns": [
+      "Singleton Pattern",
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. The system should allow users to create accounts and manage their profile information.\n2. Users should be able to create groups and add other users to the groups.\n3. Users should be able to add expenses within a group, specifying the amount, description, and participants.\n4. The system should automatically split the expenses among the participants based on their share.\n5. Users should be able to view their individual balances with other users and settle up the balances.\n6. The system should support different split methods, such as equal split, percentage split, and exact amounts.\n7. Users should be able to view their transaction history and group expenses.\n8. The system should handle concurrent transactions and ensure data consistency.",
+    "classInfo": "",
+    "sourceFile": "problems/splitwise.md",
+    "hasSolution": true
+  },
+  {
+    "slug": "stack-overflow",
+    "title": "Designing Stack Overflow",
+    "difficulty": "HARD",
+    "patterns": [
+      "Interface Design",
+      "Concurrency"
+    ],
+    "requirements": "1. Users can post questions, answer questions, and comment on questions and answers.\n2. Users can vote on questions and answers.\n3. Questions should have tags associated with them.\n4. Users can search for questions based on keywords, tags, or user profiles.\n5. The system should assign reputation score to users based on their activity and the quality of their contributions.\n6. The system should handle concurrent access and ensure data consistency.",
+    "classInfo": "",
+    "sourceFile": "problems/stack-overflow.md",
+    "hasSolution": false
+  }
+]

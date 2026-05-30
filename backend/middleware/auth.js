@@ -18,7 +18,7 @@ async function verifyToken(req, res, next) {
   }
 
   try {
-    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const decodedToken = await admin.auth().verifyIdToken(idToken, /* checkRevoked */ true);
     req.user = {
       uid: decodedToken.uid,
       email: decodedToken.email,
@@ -28,6 +28,9 @@ async function verifyToken(req, res, next) {
   } catch (error) {
     if (error.code === 'auth/id-token-expired') {
       return res.status(401).json({ error: 'Token expired. Please sign in again.' });
+    }
+    if (error.code === 'auth/id-token-revoked') {
+      return res.status(401).json({ error: 'Session revoked. Please sign in again.' });
     }
     return res.status(401).json({ error: 'Invalid authentication token.' });
   }

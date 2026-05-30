@@ -1,0 +1,321 @@
+.history-page {
+  min-height: 100vh;
+  background-color: var(--bg-main);
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: var(--bg-card);
+  border-bottom: 1px solid #1e293b;
+}
+
+.history-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  color: #f1f5f9;
+}
+
+.header-placeholder {
+  width: 80px; /* To balance the back button */
+}
+
+.history-main {
+  flex: 1;
+  padding: 40px;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.history-loading, .history-error {
+  text-align: center;
+  padding: 60px;
+  color: #94a3b8;
+  font-size: 16px;
+}
+
+.history-error {
+  color: #ef4444;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 80px 20px;
+  background: var(--bg-card);
+  border-radius: 16px;
+  border: 1px dashed #334155;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.history-empty h2 {
+  font-size: 20px;
+  margin: 0 0 8px;
+  color: #f1f5f9;
+}
+
+.history-empty p {
+  color: #94a3b8;
+  margin: 0;
+}
+
+.mt-4 { margin-top: 24px; }
+
+/* History List & Cards */
+.history-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 20px;
+}
+
+.history-card {
+  background: var(--bg-card);
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.history-card:hover {
+  transform: translateY(-2px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.history-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.type-badge {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-dsa { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.type-systemDesign { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+.type-lld { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+.history-date {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.history-card-body {
+  display: flex;
+  gap: 24px;
+}
+
+.history-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.model-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.history-delete-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: #475569;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+}
+
+.history-card:hover .history-delete-btn {
+  opacity: 1;
+}
+
+.history-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+/* ── Rich card top row ──────────────────────────────────────────────────────── */
+.hcard-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.hcard-emoji {
+  font-size: 24px;
+  line-height: 1;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.hcard-question {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-top: 6px;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-card-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  margin-top: 12px;
+}
+
+/* ── Skeleton loader ────────────────────────────────────────────────────────── */
+.history-card--skeleton {
+  pointer-events: none;
+  border-color: #1e293b;
+}
+
+.skeleton-line {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #1e293b 25%, #273548 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.skeleton-line--short { width: 40%; }
+.skeleton-line--med   { width: 65%; }
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Delete confirmation modal ──────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.15s ease;
+}
+
+.modal-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modal-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 10px;
+}
+
+.modal-body {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 0 0 24px;
+  line-height: 1.6;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-btn {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.modal-btn--cancel {
+  background: #334155;
+  color: #94a3b8;
+}
+
+.modal-btn--cancel:hover {
+  background: #3f4f64;
+  color: #e2e8f0;
+}
+
+.modal-btn--delete {
+  background: #ef4444;
+  color: #fff;
+}
+
+.modal-btn--delete:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.modal-btn--delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
