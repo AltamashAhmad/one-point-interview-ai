@@ -1,0 +1,212 @@
+.loop-dashboard-container {
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 40px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.loop-dashboard-content {
+  width: 100%;
+  max-width: 800px;
+}
+
+.loop-header {
+  margin-bottom: 48px;
+  text-align: center;
+}
+
+.loop-header h1 {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.loop-level {
+  background: var(--purple-light);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.loop-status {
+  font-size: 16px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.loop-status.in-progress { color: var(--blue); }
+.loop-status.passed { color: var(--green); }
+.loop-status.failed { color: var(--red); }
+
+.loop-timeline {
+  position: relative;
+  padding-left: 32px;
+}
+
+.loop-timeline-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 11px;
+  width: 2px;
+  background: var(--border);
+  z-index: 1;
+}
+
+.loop-round {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.loop-round:last-child {
+  margin-bottom: 0;
+}
+
+.loop-round-dot {
+  position: absolute;
+  top: 32px;
+  left: -27.5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  border: 2px solid var(--border);
+  z-index: 3;
+}
+
+.loop-round.active {
+  border-color: var(--purple-light);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.1);
+}
+
+.loop-round.active .loop-round-dot {
+  border-color: var(--purple-light);
+  background: var(--purple-light);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
+}
+
+.loop-round.passed .loop-round-dot {
+  border-color: var(--green);
+  background: var(--green);
+}
+
+.loop-round.failed .loop-round-dot {
+  border-color: var(--red);
+  background: var(--red);
+}
+
+.loop-round-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.loop-round-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.round-index {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.round-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.round-type-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-weight: 600;
+}
+
+.round-status-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+}
+
+.round-status-badge.locked {
+  background: var(--bg-primary);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.round-status-badge.pending {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--blue);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.round-status-badge.passed {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.round-status-badge.failed {
+  background: rgba(244, 63, 94, 0.1);
+  color: var(--red);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.round-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.round-score {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.top-bar-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.back-btn:hover {
+  color: var(--text-primary);
+}

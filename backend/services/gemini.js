@@ -70,14 +70,31 @@ async function generateInterviewResponse(messages, systemPrompt, preferredModel)
         model: modelName,
         systemInstruction: systemPrompt,
         generationConfig: {
+<<<<<<< HEAD
           maxOutputTokens: 1024,
           temperature: 0.8,
+=======
+          maxOutputTokens: 2048,
+          temperature: 0.7,
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
           topP: 0.9,
         },
       });
 
       const chat = model.startChat({ history });
+<<<<<<< HEAD
       const result = await chat.sendMessage(lastMessage.content);
+=======
+
+      // Add timeout to prevent indefinite hangs
+      const timeoutMs = 30_000;
+      const result = await Promise.race([
+        chat.sendMessage(lastMessage.content),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error(`Gemini request timed out after ${timeoutMs / 1000}s`)), timeoutMs)
+        ),
+      ]);
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
       const text = result.response.text();
 
       // Log when a fallback was used — visible in server console

@@ -192,7 +192,45 @@
 }
 
 /* ── Footer ────────────────────────────────────────────────────────────────── */
+<<<<<<< HEAD
 .model-dropdown-footer {
+=======
+/* ── Provider Groups ──────────────────────────────────────────────────────── */
+.model-provider-group {
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+
+.model-provider-group:last-of-type {
+  border-bottom: none;
+}
+
+.model-provider-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  padding: 6px 14px 4px;
+}
+
+.provider-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.provider-dot--groq   { background: #f97316; box-shadow: 0 0 6px #f9731680; }
+.provider-dot--gemini { background: #8b5cf6; box-shadow: 0 0 6px #8b5cf680; }
+
+.model-dropdown-footer {
+
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
   padding: 8px 16px 10px;
   font-size: 10.5px;
   color: #334155;

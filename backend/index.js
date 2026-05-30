@@ -4,9 +4,17 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
+<<<<<<< HEAD
 const chatRouter = require('./routes/chat');
 const healthRouter = require('./routes/health');
 const historyRouter = require('./routes/history');
+=======
+const chatRouter      = require('./routes/chat');
+const healthRouter    = require('./routes/health');
+const historyRouter   = require('./routes/history');
+const questionsRouter = require('./routes/questions');
+const evaluateRouter  = require('./routes/evaluate');
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -26,7 +34,7 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '2mb' }));
 
 // ── Rate Limiting ──────────────────────────────────────────────
 const apiLimiter = rateLimit({
@@ -40,9 +48,17 @@ const apiLimiter = rateLimit({
 app.use('/api/', apiLimiter);
 
 // ── Routes ─────────────────────────────────────────────────────
+<<<<<<< HEAD
 app.use('/api/chat', chatRouter);
 app.use('/api/health', healthRouter);
 app.use('/api/history', historyRouter);
+=======
+app.use('/api/chat',      chatRouter);
+app.use('/api/health',    healthRouter);
+app.use('/api/history',   historyRouter);
+app.use('/api/questions', questionsRouter);
+app.use('/api/evaluate',  evaluateRouter);
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
 
 app.get('/', (req, res) => {
   res.json({ message: '🎯 One Point Interview AI', status: 'running', version: '1.0.0' });

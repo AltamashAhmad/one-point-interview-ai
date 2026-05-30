@@ -1,0 +1,200 @@
+[
+  {
+    "title": "Design Pastebin.com (or Bit.ly)",
+    "difficulty": "EASY",
+    "topics": [],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design the Twitter timeline and search (or Facebook feed and search)",
+    "difficulty": "MEDIUM",
+    "topics": [],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a web crawler",
+    "difficulty": "MEDIUM",
+    "topics": [],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design Mint.com",
+    "difficulty": "MEDIUM",
+    "topics": [],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design the data structures for a social network",
+    "difficulty": "MEDIUM",
+    "topics": [],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a key-value store for a search engine",
+    "difficulty": "HARD",
+    "topics": [
+      "Caching"
+    ],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design Amazon's sales ranking by category feature",
+    "difficulty": "MEDIUM",
+    "topics": [],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a system that scales to millions of users on AWS",
+    "difficulty": "HARD",
+    "topics": [],
+    "requirements": [],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a Rate Limiter",
+    "difficulty": "MEDIUM",
+    "topics": [
+      "API Design",
+      "Redis",
+      "Load Balancing"
+    ],
+    "requirements": [
+      "Limit requests per user per second",
+      "Distributed environment support",
+      "Different rate limit rules per endpoint"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a Notification System",
+    "difficulty": "MEDIUM",
+    "topics": [
+      "Message Queue",
+      "Database Design",
+      "High Availability"
+    ],
+    "requirements": [
+      "Support push, email, and SMS notifications",
+      "Handle millions of notifications per day",
+      "Retry failed notifications"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design an API Gateway",
+    "difficulty": "HARD",
+    "topics": [
+      "Load Balancing",
+      "Caching",
+      "API Design",
+      "High Availability"
+    ],
+    "requirements": [
+      "Route requests to microservices",
+      "Rate limiting and authentication",
+      "High throughput and low latency"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a Chat Application (like WhatsApp)",
+    "difficulty": "MEDIUM",
+    "topics": [
+      "Message Queue",
+      "Database Design",
+      "High Availability"
+    ],
+    "requirements": [
+      "Real-time messaging",
+      "Online/offline status",
+      "Message history"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a Video Streaming Service (like Netflix)",
+    "difficulty": "HARD",
+    "topics": [
+      "CDN",
+      "Database Design",
+      "High Availability",
+      "Sharding"
+    ],
+    "requirements": [
+      "Stream video to millions of users",
+      "Support adaptive bitrate",
+      "Handle content storage and delivery"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design Uber / Lyft Ride Sharing",
+    "difficulty": "HARD",
+    "topics": [
+      "Database Design",
+      "API Design",
+      "High Availability"
+    ],
+    "requirements": [
+      "Match riders to nearby drivers",
+      "Real-time location tracking",
+      "Surge pricing"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design a Distributed Cache (like Redis)",
+    "difficulty": "HARD",
+    "topics": [
+      "Caching",
+      "Replication",
+      "High Availability",
+      "Sharding"
+    ],
+    "requirements": [
+      "In-memory key-value store",
+      "Eviction policies (LRU)",
+      "Distributed partitioning"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  },
+  {
+    "title": "Design an E-commerce Platform (like Amazon)",
+    "difficulty": "HARD",
+    "topics": [
+      "Database Design",
+      "Caching",
+      "Message Queue",
+      "High Availability"
+    ],
+    "requirements": [
+      "Product catalog search",
+      "Order processing and payments",
+      "Inventory management"
+    ],
+    "hasSolution": false,
+    "solutionSummary": ""
+  }
+]

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useLoopPersist } from '../hooks/useLoopPersist';
 import './Landing.css';
 
 const INTERVIEW_TYPES = [
@@ -37,10 +38,63 @@ const INTERVIEW_TYPES = [
   },
 ];
 
+const TUTOR_TYPES = [
+  {
+    id: 'tutorDsa',
+    emoji: '🎓',
+    label: 'DSA Tutor',
+    fullName: 'Learn Algorithms & Data Structures',
+    description: 'AI teaches you step-by-step: brute force → optimal. No pressure, just learning.',
+    topics: ['Step-by-Step Guidance', 'Pattern Recognition', 'Complexity Analysis', 'Code Review'],
+    color: '#f59e0b',
+    glow: 'rgba(245, 158, 11, 0.15)',
+  },
+  {
+    id: 'tutorLld',
+    emoji: '🎓',
+    label: 'LLD Tutor',
+    fullName: 'Learn Object-Oriented Design',
+    description: 'Master design patterns, SOLID principles, and class modeling with AI guidance.',
+    topics: ['Design Patterns', 'SOLID Principles', 'UML & Class Diagrams', 'Entity Modeling'],
+    color: '#f59e0b',
+    glow: 'rgba(245, 158, 11, 0.15)',
+  },
+  {
+    id: 'tutorSystemDesign',
+    emoji: '🎓',
+    label: 'System Design Tutor',
+    fullName: 'Learn Scalable Architecture',
+    description: 'AI walks you through designing large-scale systems from scratch.',
+    topics: ['Capacity Estimation', 'Database Selection', 'Caching Strategies', 'Load Balancing'],
+    color: '#f59e0b',
+    glow: 'rgba(245, 158, 11, 0.15)',
+  },
+];
+
 export default function Landing() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { createLoop } = useLoopPersist();
   const [loggingOut, setLoggingOut] = useState(false);
+  
+  const [showLoopModal, setShowLoopModal] = useState(false);
+  const [loopCompany, setLoopCompany] = useState('');
+  const [loopLevel, setLoopLevel] = useState('L4');
+
+  const handleCreateLoop = (e) => {
+    e.preventDefault();
+    if (!loopCompany.trim()) return;
+    
+    const roundsArray = [
+      { type: 'dsa', name: 'Coding - Data Structures' },
+      { type: 'dsa', name: 'Coding - Algorithms' },
+      { type: 'systemDesign', name: 'System Design' },
+      { type: 'managerial', name: 'Behavioral & Leadership' }
+    ];
+    
+    const newLoop = createLoop(loopCompany, loopLevel, roundsArray);
+    navigate('/loop/' + newLoop.id);
+  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -73,7 +127,7 @@ export default function Landing() {
 
       {/* Hero */}
       <header className="hero">
-        <div className="hero-badge">🚀 Free · No limits · Powered by Gemini AI</div>
+        <div className="hero-badge">🚀 Free · No limits · Powered by Groq &amp; Gemini AI</div>
         <h1 className="hero-title">
           Ace Your <span className="gradient-text">FAANG Interview</span><br />
           with an AI Interviewer
@@ -83,16 +137,27 @@ export default function Landing() {
           DSA problems, system design, and OOP design — all in one place.
         </p>
         <div className="hero-stats">
-          <div className="stat"><strong>3</strong><span>Interview Types</span></div>
+          <div className="stat"><strong>8,177</strong><span>Real Questions</span></div>
           <div className="stat-divider" />
-          <div className="stat"><strong>∞</strong><span>Practice Sessions</span></div>
+          <div className="stat"><strong>464</strong><span>Companies</span></div>
           <div className="stat-divider" />
-          <div className="stat"><strong>Free</strong><span>Forever</span></div>
+          <div className="stat"><strong>7</strong><span>AI Models</span></div>
         </div>
       </header>
 
       {/* Interview Type Cards */}
       <main className="cards-section">
+        {/* Loop Banner */}
+        <div className="loop-banner" onClick={() => setShowLoopModal(true)}>
+          <div className="loop-banner-content">
+            <h2>🏢 Mock It: Full Company Interview Loop</h2>
+            <p>Simulate a complete 4-round FAANG onsite loop (2x DSA, 1x System Design, 1x Managerial). End-to-end evaluation.</p>
+          </div>
+          <button className="btn btn-outline" style={{ borderColor: 'white', color: 'white' }}>
+            Setup Loop →
+          </button>
+        </div>
+
         <h2 className="section-title">Choose your interview type</h2>
         <div className="cards-grid">
           {INTERVIEW_TYPES.map((type) => (
@@ -101,6 +166,19 @@ export default function Landing() {
               type={type}
               onStart={() => navigate(`/interview/${type.id}`)}
             />
+          ))}
+        </div>
+
+        {/* 🎓 Tutor Mode Section */}
+        <div className="section-divider">
+          <span className="section-divider-text">🎓 Learn & Practice</span>
+        </div>
+        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '2rem', fontSize: '1.05rem' }}>
+          Not ready for interviews yet? Let AI teach you step-by-step. No timer. No pressure.
+        </p>
+        <div className="cards-grid">
+          {TUTOR_TYPES.map((t) => (
+            <InterviewCard key={t.id} type={t} onStart={() => navigate(`/interview/${t.id}`)} />
           ))}
         </div>
       </main>
@@ -126,6 +204,52 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Loop Creation Modal */}
+      {showLoopModal && (
+        <div className="modal-backdrop" onClick={() => setShowLoopModal(false)}>
+          <div className="modal-content loop-modal" onClick={e => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setShowLoopModal(false)}>✕</button>
+            <h2>Create Interview Loop</h2>
+            <p className="modal-subtitle">Configure your mock onsite loop.</p>
+            <form onSubmit={handleCreateLoop}>
+              <div className="form-group">
+                <label>Company Name</label>
+                <input 
+                  type="text" 
+                  placeholder="e.g. Google, Meta, Amazon" 
+                  value={loopCompany}
+                  onChange={e => setLoopCompany(e.target.value)}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div className="form-group">
+                <label>Target Level</label>
+                <select value={loopLevel} onChange={e => setLoopLevel(e.target.value)}>
+                  <option value="L3">L3 / SDE I (Junior)</option>
+                  <option value="L4">L4 / SDE II (Mid)</option>
+                  <option value="L5">L5 / Senior</option>
+                  <option value="L6">L6 / Staff</option>
+                </select>
+              </div>
+              <div className="loop-rounds-preview">
+                <h4>Standard Loop Preview:</h4>
+                <ol>
+                  <li>Coding - Data Structures</li>
+                  <li>Coding - Algorithms</li>
+                  <li>System Design</li>
+                  <li>Behavioral & Leadership</li>
+                </ol>
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowLoopModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary">Create Loop</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -153,7 +277,7 @@ function InterviewCard({ type, onStart }) {
         ))}
       </div>
       <button className="btn card-btn" onClick={onStart} style={{ background: type.color }}>
-        Start Interview →
+        {type.id.startsWith('tutor') ? 'Start Learning →' : 'Start Interview →'}
       </button>
     </div>
   );

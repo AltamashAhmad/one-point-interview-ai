@@ -20,6 +20,7 @@ async function getAuthHeader() {
  * @param {string} interviewType - 'dsa' | 'systemDesign' | 'lld'
  * @param {string} userName - Candidate's first name
  * @param {string} model - Gemini model ID to use
+<<<<<<< HEAD
  */
 export async function sendMessage(messages, interviewType, userName = 'there', model) {
   const headers = await getAuthHeader();
@@ -27,9 +28,56 @@ export async function sendMessage(messages, interviewType, userName = 'there', m
     `${API_BASE}/api/chat`,
     { messages, interviewType, userName, model },
     { headers }
+=======
+ * @param {Object} config - { company, difficulty, language }
+ */
+export async function sendMessage(messages, interviewType, userName = 'there', model, config = {}, signal) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.post(
+    `${API_BASE}/api/chat`,
+    {
+      messages,
+      interviewType,
+      userName,
+      model,
+      company:    config.company    || '',
+      difficulty: config.difficulty || 'ANY',
+      language:   config.language   || 'any language',
+    },
+    { headers, ...(signal && { signal }) }
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
   );
   return data;
 }
+
+/**
+ * Request the AI to generate a runnable test template for the given problem.
+ */
+export async function generateTestTemplate(problemTitle, language, model) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.post(
+    `${API_BASE}/api/evaluate/generate-template`,
+    { problemTitle, language, model },
+    { headers }
+  );
+  return data.template;
+}
+
+/**
+ * Fetch the list of companies available in the DSA question bank (for autocomplete).
+ */
+export async function getCompanyList() {
+  try {
+    const headers = await getAuthHeader();
+    const { data } = await axios.get(`${API_BASE}/api/questions/companies`, { headers });
+    return data.companies;
+  } catch (err) {
+    // Silently return empty list on auth errors so setup screen still works
+    console.warn('Could not load company list:', err.message);
+    return [];
+  }
+}
+
 
 /**
  * Fetch available interview types from the backend.
@@ -63,6 +111,7 @@ export async function getHistoryById(id) {
  * @param {string} sessionId
  * @param {string} interviewType
  * @param {string} modelUsed
+<<<<<<< HEAD
  * @param {Array} messages
  */
 export async function saveSession(sessionId, interviewType, modelUsed, messages) {
@@ -70,6 +119,16 @@ export async function saveSession(sessionId, interviewType, modelUsed, messages)
   const { data } = await axios.post(
     `${API_BASE}/api/history`,
     { sessionId, interviewType, modelUsed, messages },
+=======
+ * @param {Array}  messages
+ * @param {Object} [meta] - { company, difficulty, language, questionTitle, questionLink }
+ */
+export async function saveSession(sessionId, interviewType, modelUsed, messages, meta = {}) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.post(
+    `${API_BASE}/api/history`,
+    { sessionId, interviewType, modelUsed, messages, ...meta },
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
     { headers }
   );
   return data;
@@ -86,6 +145,18 @@ export async function deleteSession(id) {
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Generate and fetch the scorecard for an interview session.
+ */
+export async function generateScorecard(sessionId, model) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.post(`${API_BASE}/api/history/${sessionId}/scorecard`, { model }, { headers });
+  return data.scorecard;
+}
+
+/**
+>>>>>>> 4d0bcd1 (Feat: Complete Company Loop UI and prepare for AWS EC2 Deployment)
  * Check if the backend is reachable.
  */
 export async function healthCheck() {

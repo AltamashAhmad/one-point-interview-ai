@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -63,11 +63,16 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async () => {
-    await signOut(auth);
-  };
+  const logout = useCallback(async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error('Logout failed:', err);
+      setError('Failed to sign out. Please try again.');
+    }
+  }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     loading,
     error,
@@ -76,7 +81,7 @@ export function AuthProvider({ children }) {
     signInWithEmail,
     signUpWithEmail,
     logout,
-  };
+  }), [user, loading, error, signInWithGoogle, signInWithEmail, signUpWithEmail, logout]);
 
   return (
     <AuthContext.Provider value={value}>
