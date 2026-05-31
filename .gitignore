@@ -28,3 +28,9 @@ Thumbs.db
 # Firebase service account key — NEVER commit
 *service-account*.json
 firebase-adminsdk*.json
+
+# External Question Banks / Repositories
+awesome-low-level-design/
+interview-company-wise-problems/
+leetcode-companywise-interview-questions/
+system-design-primer/
