@@ -232,8 +232,18 @@ export default function Interview() {
     setTimeout(() => setModelNotice(null), 4000);
   };
 
+  // ── Clean up session-scoped localStorage keys (timer + editor code) ───
+  const clearSessionArtifacts = useCallback((id) => {
+    if (!id) return;
+    try {
+      localStorage.removeItem(`interview_timer_${id}`);
+      localStorage.removeItem(`code_${id}`);
+    } catch (_) { /* private mode / storage disabled — ignore */ }
+  }, []);
+
   // ── New session ───────────────────────────────────────────────────────
   const handleNewSession = () => {
+    clearSessionArtifacts(sessionId); // remove old timer + code before resetting
     clear();                     // wipe localStorage
     setSetupPhase(true);
     setMessages([]);
@@ -251,6 +261,7 @@ export default function Interview() {
     if (messages.length === 0) return;
 
     if (isTutor) {
+      clearSessionArtifacts(sessionId);
       clear();
       navigate('/');
       return;
@@ -271,6 +282,7 @@ export default function Interview() {
     setIsGeneratingScorecard(true);
     try {
       await generateScorecard(sessionId, scorecardModel);
+      clearSessionArtifacts(sessionId); // remove timer + editor code for this session
       clear(); // Wipe local storage session data upon successful completion
       const queryParams = loopId ? `?loopId=${loopId}&roundIndex=${roundIndex}` : '';
       navigate(`/scorecard/${sessionId}${queryParams}`);
@@ -280,14 +292,14 @@ export default function Interview() {
       if (!auto) alert(`Failed to generate scorecard: ${msg}`);
       setIsGeneratingScorecard(false);
     }
-  }, [messages, sessionId, scorecardModel, navigate, isTutor, clear]);
+  }, [messages, sessionId, scorecardModel, navigate, isTutor, clear, clearSessionArtifacts, loopId, roundIndex]);
 
   // ── Auto-submit when timer expires ────────────────────────────────────
   useEffect(() => {
     if (isExpired && !isTutor && !isGeneratingScorecard && messages.length > 0) {
       handleEndInterview(true);
     }
-  }, [isExpired, isGeneratingScorecard, messages.length, handleEndInterview]);
+  }, [isExpired, isGeneratingScorecard, messages.length, handleEndInterview, isTutor]);
 
   if (!config) return null;
 

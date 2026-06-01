@@ -12,6 +12,18 @@ const db = admin.firestore();
 const VALID_INTERVIEW_TYPES = ['dsa', 'systemDesign', 'lld', 'tutorDsa', 'tutorLld', 'tutorSystemDesign', 'managerial'];
 const VALID_DIFFICULTIES    = ['EASY', 'MEDIUM', 'HARD', 'ANY'];
 
+// Whitelist of allowed Gemini model IDs — prevents arbitrary model strings
+const VALID_GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.5-pro',
+  'gemini-3.1-pro-preview',
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-flash-latest',
+  'gemini-flash-lite-latest',
+];
+
 /**
  * POST /api/chat
  *
@@ -64,6 +76,10 @@ router.post('/', verifyToken, async (req, res, next) => {
       return res.status(400).json({
         error: `interviewType must be one of: ${VALID_INTERVIEW_TYPES.join(', ')}`,
       });
+    }
+    // Validate model: must be a whitelisted Gemini model or a known Groq model
+    if (model && !VALID_GEMINI_MODELS.includes(model) && !isGroqModel(model)) {
+      return res.status(400).json({ error: 'Invalid model specified.' });
     }
     if (messages[0].role !== 'user') {
       return res.status(400).json({ error: 'First message must have role "user"' });

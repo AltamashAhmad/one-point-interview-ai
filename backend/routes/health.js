@@ -6,7 +6,6 @@ router.get('/', (req, res) => {
     status: 'healthy',
     service: 'One Point Interview AI',
     timestamp: new Date().toISOString(),
-    uptime: Math.floor(process.uptime()),
   });
 });
 

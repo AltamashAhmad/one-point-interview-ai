@@ -7,6 +7,16 @@ const { generateGroqResponse, isGroqModel } = require('../services/groq');
 
 const db = admin.firestore();
 
+// Validates Firestore document IDs to prevent path traversal / malformed IDs
+function isValidDocId(id) {
+  if (!id || typeof id !== 'string') return false;
+  if (id.length > 128) return false;
+  // Firestore IDs: no slashes, no dots-only, no __.*__ reserved names
+  if (id.includes('/') || id === '.' || id === '..') return false;
+  if (/^__.*__$/.test(id)) return false;
+  return true;
+}
+
 /**
  * GET /api/history
  * Fetch all past interviews for the authenticated user.
@@ -37,6 +47,9 @@ router.get('/', verifyToken, async (req, res, next) => {
 router.get('/:id', verifyToken, async (req, res, next) => {
   try {
     const userId = req.user.uid;
+    if (!isValidDocId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid session ID.' });
+    }
     const docRef = db.collection('interviews').doc(req.params.id);
     const doc = await docRef.get();
 
@@ -68,6 +81,9 @@ router.post('/', verifyToken, async (req, res, next) => {
 
     if (!sessionId || !interviewType || !messages) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+    if (!isValidDocId(sessionId)) {
+      return res.status(400).json({ error: 'Invalid session ID.' });
     }
 
     const docRef = db.collection('interviews').doc(sessionId);
@@ -119,6 +135,9 @@ router.post('/', verifyToken, async (req, res, next) => {
 router.delete('/:id', verifyToken, async (req, res, next) => {
   try {
     const userId = req.user.uid;
+    if (!isValidDocId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid session ID.' });
+    }
     const docRef = db.collection('interviews').doc(req.params.id);
     const doc = await docRef.get();
 
@@ -144,6 +163,9 @@ router.delete('/:id', verifyToken, async (req, res, next) => {
 router.post('/:id/scorecard', verifyToken, async (req, res, next) => {
   try {
     const userId = req.user.uid;
+    if (!isValidDocId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid session ID.' });
+    }
     const docRef = db.collection('interviews').doc(req.params.id);
     const doc = await docRef.get();
 
@@ -213,8 +235,10 @@ ${transcript}`;
     ];
 
     let responseText = '';
-    // Use the user's selected scorecard model or fallback to gemini-3.1-pro-preview
-    const modelUsed = req.body.model || 'gemini-3.1-pro-preview';
+    // Use the user's selected scorecard model. If the request arrives with no
+    // body (Express 5 leaves req.body undefined), fall back to the model the
+    // interview was conducted with, then to gemini-3.1-pro-preview.
+    const modelUsed = req.body?.model || data.modelUsed || 'gemini-3.1-pro-preview';
     
     if (isGroqModel(modelUsed)) {
       responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);

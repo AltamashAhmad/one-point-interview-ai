@@ -41,19 +41,6 @@ export async function sendMessage(messages, interviewType, userName = 'there', m
 }
 
 /**
- * Request the AI to generate a runnable test template for the given problem.
- */
-export async function generateTestTemplate(problemTitle, language, model) {
-  const headers = await getAuthHeader();
-  const { data } = await axios.post(
-    `${API_BASE}/api/evaluate/generate-template`,
-    { problemTitle, language, model },
-    { headers }
-  );
-  return data.template;
-}
-
-/**
  * Fetch the list of companies available in the DSA question bank (for autocomplete).
  */
 export async function getCompanyList() {

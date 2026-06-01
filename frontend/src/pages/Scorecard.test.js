@@ -11,7 +11,8 @@ const mockNavigate = jest.fn();
 
 jest.mock('react-router-dom', () => ({
   useParams: () => mockParams,
-  useNavigate: () => mockNavigate
+  useNavigate: () => mockNavigate,
+  useLocation: () => ({ search: '' })
 }), { virtual: true });
 
 describe('Scorecard Component', () => {
