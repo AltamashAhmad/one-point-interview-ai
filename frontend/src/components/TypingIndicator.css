@@ -1,8 +1,13 @@
 .typing-row {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: flex-start;
-  animation: fadeInUp 0.3s ease;
+  animation: fadeInUp 0.3s var(--ease) both;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .typing-bubble {
@@ -14,20 +19,23 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   border-top-left-radius: 4px;
+  box-shadow: var(--shadow-sm);
+  transition: background var(--t-med), border-color var(--t-med);
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
-  background: var(--text-muted);
+  width: 7px;
+  height: 7px;
+  background: var(--purple-light);
   border-radius: 50%;
-  animation: typing 1.2s ease-in-out infinite;
+  animation: dotBounce 1.4s var(--ease) infinite;
 }
 
+.dot:nth-child(1) { animation-delay: 0s; }
 .dot:nth-child(2) { animation-delay: 0.2s; }
 .dot:nth-child(3) { animation-delay: 0.4s; }
 
-@keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-6px); opacity: 1; }
+@keyframes dotBounce {
+  0%, 60%, 100% { transform: translateY(0);    opacity: 0.4; }
+  30%            { transform: translateY(-6px); opacity: 1;   }
 }

@@ -78,7 +78,8 @@ export default function InterviewSetup({ interviewType, typeConfig, onBegin }) {
   const isShowingCompanyForType = interviewType === 'dsa' && !isTutor;
 
   return (
-    <div className="setup-screen">
+    <>
+      <div className="setup-screen">
       {/* Hero */}
       <div className="setup-hero" style={{ '--type-color': typeConfig.color }}>
         <span className="setup-emoji">{typeConfig.emoji}</span>
@@ -271,8 +272,11 @@ export default function InterviewSetup({ interviewType, typeConfig, onBegin }) {
 
 
       </div>
+      </div>{/* end .setup-screen */}
 
-      {/* Session summary + Begin button */}
+      {/* Session summary + Begin button — lives OUTSIDE .setup-screen so
+          position:fixed; bottom:0 is relative to the viewport, not the
+          animated (transform) ancestor */}
       <div className="setup-footer">
         <div className="setup-summary">
           <span className="summary-item" style={{ color: typeConfig.color }}>{typeConfig.fullName}</span>
@@ -291,6 +295,6 @@ export default function InterviewSetup({ interviewType, typeConfig, onBegin }) {
           {isTutor ? 'Start Learning 🎓' : 'Begin Interview →'}
         </button>
       </div>
-    </div>
+    </>
   );
 }

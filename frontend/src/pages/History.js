@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getHistory, deleteSession } from '../services/api';
 import { TYPE_CONFIG, formatDate, friendlyModelName, modelProviderColor } from '../utils/constants';
+import ThemeToggle from '../components/ThemeToggle';
 import './History.css';
 
 export default function History() {
@@ -49,7 +50,7 @@ export default function History() {
       <header className="history-header">
         <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
         <h1>Interview History</h1>
-        <div className="header-placeholder" />
+        <ThemeToggle />
       </header>
 
       <main className="history-main">
@@ -99,10 +100,10 @@ export default function History() {
                         )}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <div className="hcard-right">
                       <span className="history-date">{formatDate(interview.startedAt || interview.updatedAt)}</span>
                       {interview.scorecard && (
-                        <span style={{ fontSize: '11px', background: '#34d39922', color: '#34d399', padding: '2px 6px', borderRadius: '4px', border: '1px solid #34d39955' }}>
+                        <span className="scorecard-badge">
                           📊 Scorecard
                         </span>
                       )}

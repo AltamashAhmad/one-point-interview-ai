@@ -33,6 +33,7 @@ export function AuthProvider({ children }) {
       const result = await signInWithPopup(auth, googleProvider);
       return result.user;
     } catch (err) {
+      console.error('[Auth] Google sign-in failed:', err.code, err.message);
       setError(getAuthErrorMessage(err.code));
       throw err;
     }
@@ -99,16 +100,46 @@ export function useAuth() {
 }
 
 // Human-readable error messages
+// Covers both legacy Firebase codes and modern Firebase v9+ unified codes
 function getAuthErrorMessage(code) {
   const messages = {
-    'auth/user-not-found': 'No account found with this email.',
-    'auth/wrong-password': 'Incorrect password.',
-    'auth/email-already-in-use': 'An account with this email already exists.',
-    'auth/weak-password': 'Password must be at least 6 characters.',
-    'auth/invalid-email': 'Please enter a valid email address.',
-    'auth/too-many-requests': 'Too many attempts. Please try again later.',
-    'auth/popup-closed-by-user': 'Sign-in popup was closed.',
-    'auth/network-request-failed': 'Network error. Check your connection.',
+    // ── Firebase v9+ unified credential error (replaces wrong-password + user-not-found) ──
+    'auth/invalid-credential':          'Incorrect email or password. Please try again.',
+
+    // ── Legacy codes (still emitted in some SDK paths) ──
+    'auth/user-not-found':              'No account found with this email.',
+    'auth/wrong-password':              'Incorrect password.',
+
+    // ── Email / account ──
+    'auth/email-already-in-use':        'An account with this email already exists.',
+    'auth/invalid-email':               'Please enter a valid email address.',
+    'auth/user-disabled':               'This account has been disabled. Contact support.',
+    'auth/account-exists-with-different-credential':
+                                        'An account already exists with a different sign-in method.',
+
+    // ── Password ──
+    'auth/weak-password':               'Password must be at least 6 characters.',
+    'auth/missing-password':            'Please enter your password.',
+
+    // ── Rate limiting / safety ──
+    'auth/too-many-requests':           'Too many failed attempts. Please wait a few minutes and try again.',
+    'auth/requires-recent-login':       'Please sign out and sign back in to continue.',
+
+    // ── Google / OAuth popup ──
+    'auth/popup-closed-by-user':        'Sign-in popup was closed. Please try again.',
+    'auth/popup-blocked':               'Pop-up was blocked by your browser. Trying redirect sign-in…',
+    'auth/cancelled-popup-request':     'Only one sign-in popup can be open at a time.',
+    'auth/operation-not-supported-in-this-environment':
+                                        'Google sign-in is not supported in this environment.',
+
+    // ── Domain / config ──
+    'auth/unauthorized-domain':         'This domain is not authorised for sign-in. Please contact support.',
+    'auth/operation-not-allowed':       'Google sign-in is not enabled. Please contact support.',
+    'auth/invalid-action-code':         'This link has expired or already been used. Please try again.',
+    'auth/internal-error':              'An internal error occurred. Please try again.',
+
+    // ── Network ──
+    'auth/network-request-failed':      'Network error. Please check your connection and try again.',
   };
-  return messages[code] || 'Authentication failed. Please try again.';
+  return messages[code] || `Authentication failed. Please try again. (${code || 'unknown'})`;
 }

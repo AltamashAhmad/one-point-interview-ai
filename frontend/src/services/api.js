@@ -127,3 +127,55 @@ export async function healthCheck() {
   const { data } = await axios.get(`${API_BASE}/api/health`);
   return data;
 }
+
+// ── Interview Loops ──────────────────────────────────────────────
+
+/**
+ * Fetch all interview loops for the current user.
+ */
+export async function getLoops() {
+  const headers = await getAuthHeader();
+  const { data } = await axios.get(`${API_BASE}/api/loops`, { headers });
+  return data.loops;
+}
+
+/**
+ * Fetch a single loop by ID.
+ * @param {string} id
+ */
+export async function getLoop(id) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.get(`${API_BASE}/api/loops/${id}`, { headers });
+  return data.loop;
+}
+
+/**
+ * Create a new loop.
+ * @param {Object} payload - { company, level, rounds, status?, currentRoundIndex? }
+ */
+export async function createLoop(payload) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.post(`${API_BASE}/api/loops`, payload, { headers });
+  return data.loop;
+}
+
+/**
+ * Update a single round of a loop and apply progression on the server.
+ * @param {string} loopId
+ * @param {Object} payload - { roundIndex, status?, score?, sessionId? }
+ */
+export async function updateLoopRound(loopId, payload) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.put(`${API_BASE}/api/loops/${loopId}/round`, payload, { headers });
+  return data.loop;
+}
+
+/**
+ * Delete a loop by ID.
+ * @param {string} id
+ */
+export async function deleteLoop(id) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.delete(`${API_BASE}/api/loops/${id}`, { headers });
+  return data;
+}

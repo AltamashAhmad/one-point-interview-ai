@@ -9,6 +9,7 @@ const chatRouter      = require('./routes/chat');
 const healthRouter    = require('./routes/health');
 const historyRouter   = require('./routes/history');
 const questionsRouter = require('./routes/questions');
+const loopsRouter     = require('./routes/loops');
 
 const app = express();
 app.set('trust proxy', 1); // Trust the Caddy reverse proxy (one hop) for correct client IPs in rate limiting
@@ -61,6 +62,7 @@ app.use('/api/chat',      chatLimiter, chatRouter);
 app.use('/api/health',    healthRouter);
 app.use('/api/history',   historyRouter);
 app.use('/api/questions', questionsRouter);
+app.use('/api/loops',     loopsRouter);
 
 app.get('/', (req, res) => {
   res.json({ message: '🎯 One Point Interview AI', status: 'running', version: '1.0.0' });
