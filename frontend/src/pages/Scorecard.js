@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getHistoryById } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
 import { useLoopPersist } from '../hooks/useLoopPersist';
 import './Scorecard.css';
 
@@ -9,8 +8,6 @@ export default function Scorecard() {
   const { id: sessionId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  
   const searchParams = new URLSearchParams(location.search);
   const loopId = searchParams.get('loopId');
   const roundIndex = parseInt(searchParams.get('roundIndex'), 10);

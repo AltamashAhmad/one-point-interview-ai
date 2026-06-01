@@ -25,33 +25,33 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  const clearError = () => setError(null);
+  const clearError = useCallback(() => setError(null), []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     try {
-      clearError();
+      setError(null);
       const result = await signInWithPopup(auth, googleProvider);
       return result.user;
     } catch (err) {
       setError(getAuthErrorMessage(err.code));
       throw err;
     }
-  };
+  }, []);
 
-  const signInWithEmail = async (email, password) => {
+  const signInWithEmail = useCallback(async (email, password) => {
     try {
-      clearError();
+      setError(null);
       const result = await signInWithEmailAndPassword(auth, email, password);
       return result.user;
     } catch (err) {
       setError(getAuthErrorMessage(err.code));
       throw err;
     }
-  };
+  }, []);
 
-  const signUpWithEmail = async (email, password, displayName) => {
+  const signUpWithEmail = useCallback(async (email, password, displayName) => {
     try {
-      clearError();
+      setError(null);
       const result = await createUserWithEmailAndPassword(auth, email, password);
       if (displayName) {
         await updateProfile(result.user, { displayName });
@@ -61,7 +61,7 @@ export function AuthProvider({ children }) {
       setError(getAuthErrorMessage(err.code));
       throw err;
     }
-  };
+  }, []);
 
   const logout = useCallback(async () => {
     try {
@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
     signInWithEmail,
     signUpWithEmail,
     logout,
-  }), [user, loading, error, signInWithGoogle, signInWithEmail, signUpWithEmail, logout]);
+  }), [user, loading, error, clearError, signInWithGoogle, signInWithEmail, signUpWithEmail, logout]);
 
   return (
     <AuthContext.Provider value={value}>
