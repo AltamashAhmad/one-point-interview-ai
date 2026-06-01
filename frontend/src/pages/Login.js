@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ThemeToggle from '../components/ThemeToggle';
 import './Login.css';
 
 export default function Login() {
@@ -61,6 +62,7 @@ export default function Login() {
 
   return (
     <div className="login-page">
+      <ThemeToggle />
       <div className="login-bg-glow" />
 
       <div className="login-card">

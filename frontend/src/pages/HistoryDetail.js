@@ -4,6 +4,7 @@ import { getHistoryById } from '../services/api';
 import { TYPE_CONFIG, formatDate, friendlyModelName } from '../utils/constants';
 import { AVAILABLE_MODELS } from '../components/ModelSelector';
 import MessageBubble from '../components/MessageBubble';
+import ThemeToggle from '../components/ThemeToggle';
 import './HistoryDetail.css';
 
 // Extend friendlyModelName with icon for detail page
@@ -77,7 +78,7 @@ export default function HistoryDetail() {
           </div>
         </div>
 
-        <div className="header-actions" style={{ display: 'flex', gap: '12px' }}>
+        <div className="header-actions">
           {interview.scorecard && (
             <button className="btn btn-primary" onClick={() => navigate(`/scorecard/${id}`)} style={{ padding: '8px 16px', fontSize: '13px' }}>
               View Scorecard
@@ -86,6 +87,7 @@ export default function HistoryDetail() {
           <button className="copy-btn" onClick={handleCopy} title="Copy conversation">
             {copied ? '✅ Copied!' : '📋 Copy'}
           </button>
+          <ThemeToggle />
         </div>
       </header>
 

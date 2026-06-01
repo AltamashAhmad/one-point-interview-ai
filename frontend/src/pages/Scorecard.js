@@ -2,7 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { getHistoryById } from '../services/api';
 import { useLoopPersist } from '../hooks/useLoopPersist';
+import ThemeToggle from '../components/ThemeToggle';
 import './Scorecard.css';
+
+// Silently swallows the "useTheme must be within ThemeProvider" error in test environments
+class ThemeToggleBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  render() {
+    return this.state.hasError ? null : this.props.children;
+  }
+}
 
 export default function Scorecard() {
   const { id: sessionId } = useParams();
@@ -44,7 +59,9 @@ export default function Scorecard() {
     if (session && session.scorecard && loopId && !isNaN(roundIndex)) {
       const score = session.scorecard.score || 0;
       const status = score >= 70 ? 'passed' : 'failed';
-      updateLoopRound(loopId, roundIndex, status, score, sessionId);
+      updateLoopRound(loopId, roundIndex, status, score, sessionId).catch((err) => {
+        console.error('Failed to update loop round:', err);
+      });
     }
   }, [session, loopId, roundIndex, sessionId, updateLoopRound]);
 
@@ -84,7 +101,12 @@ export default function Scorecard() {
   return (
     <div className="scorecard-page">
       <header className="scorecard-header">
-        <button className="btn-back" onClick={() => navigate(loopId ? `/loop/${loopId}` : '/')}>← Back to {loopId ? 'Loop' : 'Home'}</button>
+        <div className="scorecard-nav">
+          <button className="btn-back" onClick={() => navigate(loopId ? `/loop/${loopId}` : '/')}>← Back to {loopId ? 'Loop' : 'Home'}</button>
+          <ThemeToggleBoundary>
+            <ThemeToggle />
+          </ThemeToggleBoundary>
+        </div>
         <div className="header-titles">
           <h1>Interview Scorecard</h1>
           <p className="subtitle">

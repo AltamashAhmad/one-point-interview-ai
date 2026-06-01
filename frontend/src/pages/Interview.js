@@ -12,6 +12,7 @@ import { useInterviewTimer }  from '../hooks/useInterviewTimer';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import CodeEditor from '../components/CodeEditor';
 import { TYPE_CONFIG } from '../utils/constants';
+import ThemeToggle from '../components/ThemeToggle';
 import './Interview.css';
 
 export default function Interview() {
@@ -316,7 +317,9 @@ export default function Interview() {
               <div className="type-fullname">{config.fullName}</div>
             </div>
           </div>
-          <div className="header-right" />
+          <div className="header-right">
+            <ThemeToggle />
+          </div>
         </header>
         <InterviewSetup interviewType={type} typeConfig={config} onBegin={handleBegin} />
       </div>
@@ -378,6 +381,7 @@ export default function Interview() {
           <button className="btn btn-outline new-session-btn" onClick={handleNewSession} disabled={isLoading || isGeneratingScorecard}>
             New Session
           </button>
+          <ThemeToggle />
         </div>
       </header>
 

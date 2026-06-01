@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLoopPersist } from '../hooks/useLoopPersist';
 import { TYPE_CONFIG } from '../utils/constants';
+import ThemeToggle from '../components/ThemeToggle';
 import './LoopDashboard.css';
 
 export default function LoopDashboard() {
@@ -11,12 +12,20 @@ export default function LoopDashboard() {
   const [loop, setLoop] = useState(null);
 
   useEffect(() => {
-    const data = getLoop(id);
-    if (!data) {
-      navigate('/', { replace: true });
-    } else {
-      setLoop(data);
-    }
+    let active = true;
+    getLoop(id)
+      .then((data) => {
+        if (!active) return;
+        if (!data) {
+          navigate('/', { replace: true });
+        } else {
+          setLoop(data);
+        }
+      })
+      .catch(() => {
+        if (active) navigate('/', { replace: true });
+      });
+    return () => { active = false; };
   }, [id, getLoop, navigate]);
 
   if (!loop) return null;
@@ -29,6 +38,7 @@ export default function LoopDashboard() {
           <button className="back-btn" onClick={() => navigate('/')}>
             ← Back to Home
           </button>
+          <ThemeToggle />
         </div>
 
         <div className="loop-header">

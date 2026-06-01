@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLoopPersist } from '../hooks/useLoopPersist';
+import ThemeToggle from '../components/ThemeToggle';
 import './Landing.css';
 
 const INTERVIEW_TYPES = [
@@ -74,26 +75,69 @@ const TUTOR_TYPES = [
 export default function Landing() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { createLoop } = useLoopPersist();
+  const { createLoop, getLoops, deleteLoop, migrateLocalLoops } = useLoopPersist();
   const [loggingOut, setLoggingOut] = useState(false);
-  
+
   const [showLoopModal, setShowLoopModal] = useState(false);
   const [loopCompany, setLoopCompany] = useState('');
   const [loopLevel, setLoopLevel] = useState('L4');
+  const [creatingLoop, setCreatingLoop] = useState(false);
 
-  const handleCreateLoop = (e) => {
+  const [myLoops, setMyLoops] = useState([]);
+  const [loadingLoops, setLoadingLoops] = useState(true);
+
+  const refreshLoops = useCallback(async () => {
+    try {
+      const loops = await getLoops();
+      setMyLoops(loops || []);
+    } catch (err) {
+      console.error('Failed to load loops:', err);
+    } finally {
+      setLoadingLoops(false);
+    }
+  }, [getLoops]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      await migrateLocalLoops();
+      if (active) await refreshLoops();
+    })();
+    return () => { active = false; };
+  }, [migrateLocalLoops, refreshLoops]);
+
+  const handleCreateLoop = async (e) => {
     e.preventDefault();
-    if (!loopCompany.trim()) return;
-    
+    if (!loopCompany.trim() || creatingLoop) return;
+
     const roundsArray = [
       { type: 'dsa', name: 'Coding - Data Structures' },
       { type: 'dsa', name: 'Coding - Algorithms' },
       { type: 'systemDesign', name: 'System Design' },
       { type: 'managerial', name: 'Behavioral & Leadership' }
     ];
-    
-    const newLoop = createLoop(loopCompany, loopLevel, roundsArray);
-    navigate('/loop/' + newLoop.id);
+
+    setCreatingLoop(true);
+    try {
+      const newLoop = await createLoop(loopCompany, loopLevel, roundsArray);
+      navigate('/loop/' + newLoop.id);
+    } catch (err) {
+      console.error('Failed to create loop:', err);
+      alert('Could not create the loop. Please try again.');
+      setCreatingLoop(false);
+    }
+  };
+
+  const handleDeleteLoop = async (e, loopId) => {
+    e.stopPropagation();
+    if (!window.confirm('Delete this interview loop? This cannot be undone.')) return;
+    try {
+      await deleteLoop(loopId);
+      setMyLoops((prev) => prev.filter((l) => l.id !== loopId));
+    } catch (err) {
+      console.error('Failed to delete loop:', err);
+      alert('Could not delete the loop. Please try again.');
+    }
   };
 
   const handleLogout = async () => {
@@ -116,6 +160,7 @@ export default function Landing() {
             )}
             <span className="user-name">{user?.displayName || user?.email?.split('@')[0]}</span>
           </div>
+          <ThemeToggle />
           <button className="btn btn-ghost" onClick={() => navigate('/history')} style={{ marginRight: '12px' }}>
             History
           </button>
@@ -157,6 +202,47 @@ export default function Landing() {
             Setup Loop →
           </button>
         </div>
+
+        {/* My Loops — resume any saved loop from any device */}
+        {!loadingLoops && myLoops.length > 0 && (
+          <div className="my-loops-section">
+            <h2 className="section-title">📌 My Interview Loops</h2>
+            <div className="my-loops-grid">
+              {myLoops.map((loop) => {
+                const total = loop.rounds?.length || 0;
+                const completed = (loop.rounds || []).filter(
+                  (r) => r.status === 'passed' || r.status === 'failed'
+                ).length;
+                return (
+                  <div
+                    key={loop.id}
+                    className="my-loop-card"
+                    onClick={() => navigate('/loop/' + loop.id)}
+                  >
+                    <button
+                      className="my-loop-delete"
+                      title="Delete loop"
+                      onClick={(e) => handleDeleteLoop(e, loop.id)}
+                    >
+                      ✕
+                    </button>
+                    <div className="my-loop-header">
+                      <span className="my-loop-company">{loop.company}</span>
+                      <span className="my-loop-level">{loop.level}</span>
+                    </div>
+                    <div className={`my-loop-status ${loop.status}`}>
+                      {(loop.status || 'in-progress').replace('-', ' ')}
+                    </div>
+                    <div className="my-loop-progress">
+                      {completed} / {total} rounds done
+                    </div>
+                    <span className="my-loop-resume">Resume →</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <h2 className="section-title">Choose your interview type</h2>
         <div className="cards-grid">
@@ -244,7 +330,9 @@ export default function Landing() {
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowLoopModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Create Loop</button>
+                <button type="submit" className="btn btn-primary" disabled={creatingLoop}>
+                  {creatingLoop ? 'Creating...' : 'Create Loop'}
+                </button>
               </div>
             </form>
           </div>
