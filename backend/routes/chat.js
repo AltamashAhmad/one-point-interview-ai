@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const { verifyToken }               = require('../middleware/auth');
+const { checkUserAccess }           = require('../middleware/checkUserAccess');
 const { generateInterviewResponse } = require('../services/gemini');
 const { generateGroqResponse, isGroqModel, isGroqQuotaError } = require('../services/groq');
 const { getSystemPrompt }           = require('../services/prompts');
@@ -42,7 +43,7 @@ const VALID_GEMINI_MODELS = [
  * Response:
  *   { role: 'assistant', content: string, questionTitle?: string }
  */
-router.post('/', verifyToken, async (req, res, next) => {
+router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
   try {
     const {
       messages,

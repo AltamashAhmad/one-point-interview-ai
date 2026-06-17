@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
@@ -8,22 +8,62 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
+import { getMyProfile } from '../services/api';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [user, setUser]               = useState(null);
+  const [userProfile, setUserProfile] = useState(null); // Firestore user doc
+  const [loading, setLoading]         = useState(true);  // auth loading
+  const [profileLoading, setProfileLoading] = useState(false); // profile fetch loading
+  const [error, setError]             = useState(null);
+  const profileFetchRef               = useRef(null); // prevent duplicate fetches
 
-  // Listen for auth state changes
+  /**
+   * Fetch the user profile from the backend (/api/users/me).
+   * Creates the Firestore document on first login.
+   * Exposed as refreshUserProfile() so any component can force a refresh
+   * (e.g. after admin approves the user).
+   */
+  const fetchUserProfile = useCallback(async (firebaseUser) => {
+    if (!firebaseUser) { setUserProfile(null); return; }
+
+    // Debounce: if a fetch is already in-flight, don't start another
+    if (profileFetchRef.current) return;
+    profileFetchRef.current = true;
+
+    setProfileLoading(true);
+    try {
+      const profile = await getMyProfile();
+      setUserProfile(profile);
+    } catch (err) {
+      console.warn('[AuthContext] Could not load user profile:', err.message);
+      // Non-fatal — the app still works, access control falls back to the backend
+      setUserProfile(null);
+    } finally {
+      setProfileLoading(false);
+      profileFetchRef.current = false;
+    }
+  }, []);
+
+  const refreshUserProfile = useCallback(() => {
+    if (auth.currentUser) return fetchUserProfile(auth.currentUser);
+  }, [fetchUserProfile]);
+
+  // Listen for Firebase Auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
+      if (firebaseUser) {
+        await fetchUserProfile(firebaseUser);
+      } else {
+        setUserProfile(null);
+      }
       setLoading(false);
     });
     return unsubscribe;
-  }, []);
+  }, [fetchUserProfile]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -31,6 +71,7 @@ export function AuthProvider({ children }) {
     try {
       setError(null);
       const result = await signInWithPopup(auth, googleProvider);
+      // Profile fetch is triggered by onAuthStateChanged above
       return result.user;
     } catch (err) {
       console.error('[Auth] Google sign-in failed:', err.code, err.message);
@@ -66,6 +107,7 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(async () => {
     try {
+      setUserProfile(null);
       await signOut(auth);
     } catch (err) {
       console.error('Logout failed:', err);
@@ -73,16 +115,54 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Computed helpers for components to use directly
+  const isAdmin      = userProfile?.role === 'admin';
+  const isPending    = userProfile?.status === 'PENDING';
+  const isApproved   = userProfile?.status === 'APPROVED';
+  const isUnlimited  = userProfile?.isUnlimited === true;
+  const trialUsed    = userProfile?.freeTrialUsed    ?? 0;
+  const trialLimit   = userProfile?.freeTrialLimit   ?? 3;
+  const trialLeft    = userProfile?.freeTrialRemaining ?? Math.max(0, trialLimit - trialUsed);
+  const dailyUsed    = userProfile?.dailyCallsUsed   ?? 0;
+  const dailyLimit   = userProfile?.dailyLimit       ?? 20;
+  const dailyLeft    = userProfile?.dailyCallsRemaining ?? Math.max(0, dailyLimit - dailyUsed);
+
   const value = useMemo(() => ({
+    // Firebase user object
     user,
+    // Firestore user profile (status, role, quotas)
+    userProfile,
+    // Loading states
     loading,
+    profileLoading,
+    // Errors
     error,
     clearError,
+    // Auth actions
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
     logout,
-  }), [user, loading, error, clearError, signInWithGoogle, signInWithEmail, signUpWithEmail, logout]);
+    // Profile refresh (call after admin actions)
+    refreshUserProfile,
+    // Computed convenience flags
+    isAdmin,
+    isPending,
+    isApproved,
+    isUnlimited,
+    // Quota info
+    trialUsed,
+    trialLimit,
+    trialLeft,
+    dailyUsed,
+    dailyLimit,
+    dailyLeft,
+  }), [
+    user, userProfile, loading, profileLoading, error,
+    clearError, signInWithGoogle, signInWithEmail, signUpWithEmail, logout, refreshUserProfile,
+    isAdmin, isPending, isApproved, isUnlimited,
+    trialUsed, trialLimit, trialLeft, dailyUsed, dailyLimit, dailyLeft,
+  ]);
 
   return (
     <AuthContext.Provider value={value}>

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../middleware/auth');
+const { checkUserAccess } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
 const { generateInterviewResponse } = require('../services/gemini');
 const { generateGroqResponse, isGroqModel } = require('../services/groq');
@@ -160,7 +161,7 @@ router.delete('/:id', verifyToken, async (req, res, next) => {
  * POST /api/history/:id/scorecard
  * Generates an AI scorecard based on the interview transcript.
  */
-router.post('/:id/scorecard', verifyToken, async (req, res, next) => {
+router.post('/:id/scorecard', verifyToken, checkUserAccess, async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) {
