@@ -1,7 +1,17 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, useRef } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+} from 'react';
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
@@ -12,34 +22,29 @@ import { getMyProfile } from '../services/api';
 
 const AuthContext = createContext(null);
 
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
 export function AuthProvider({ children }) {
   const [user, setUser]               = useState(null);
-  const [userProfile, setUserProfile] = useState(null); // Firestore user doc
-  const [loading, setLoading]         = useState(true);  // auth loading
-  const [profileLoading, setProfileLoading] = useState(false); // profile fetch loading
+  const [userProfile, setUserProfile] = useState(null);
+  const [loading, setLoading]         = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError]             = useState(null);
-  const profileFetchRef               = useRef(null); // prevent duplicate fetches
+  const profileFetchRef               = useRef(false);
 
-  /**
-   * Fetch the user profile from the backend (/api/users/me).
-   * Creates the Firestore document on first login.
-   * Exposed as refreshUserProfile() so any component can force a refresh
-   * (e.g. after admin approves the user).
-   */
+  // ── Fetch user profile from backend ───────────────────────────────────────
   const fetchUserProfile = useCallback(async (firebaseUser) => {
     if (!firebaseUser) { setUserProfile(null); return; }
-
-    // Debounce: if a fetch is already in-flight, don't start another
     if (profileFetchRef.current) return;
     profileFetchRef.current = true;
 
     setProfileLoading(true);
     try {
-      const profile = await getMyProfile();
-      setUserProfile(profile);
+      const data = await getMyProfile();
+      setUserProfile(data?.profile ?? data ?? null);
     } catch (err) {
-      console.warn('[AuthContext] Could not load user profile:', err.message);
-      // Non-fatal — the app still works, access control falls back to the backend
+      if (IS_DEV) console.warn('[AuthContext] Profile fetch failed:', err.message);
+      // Non-fatal — the app still works, access control falls back to backend
       setUserProfile(null);
     } finally {
       setProfileLoading(false);
@@ -51,7 +56,29 @@ export function AuthProvider({ children }) {
     if (auth.currentUser) return fetchUserProfile(auth.currentUser);
   }, [fetchUserProfile]);
 
-  // Listen for Firebase Auth state changes
+  // ── Handle redirect sign-in result on page load ───────────────────────────
+  // This runs once on mount and captures the result of signInWithRedirect
+  // (which is the automatic fallback when popup is blocked or fails).
+  useEffect(() => {
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          if (IS_DEV) console.log('[Auth] Redirect sign-in succeeded for', result.user.email);
+          // onAuthStateChanged will fire too, but we fetch profile immediately
+          setUser(result.user);
+        }
+      })
+      .catch((err) => {
+        const code = err?.code || '';
+        // Ignore the "no redirect pending" non-error
+        if (code && code !== 'auth/no-redirect-result') {
+          if (IS_DEV) console.error('[Auth] getRedirectResult error:', code, err.message);
+          setError(getAuthErrorMessage(code, err.message));
+        }
+      });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Firebase Auth state listener ──────────────────────────────────────────
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
@@ -67,30 +94,72 @@ export function AuthProvider({ children }) {
 
   const clearError = useCallback(() => setError(null), []);
 
+  // ── Google Sign-In (popup → redirect fallback) ────────────────────────────
+  // Companies like Firebase itself recommend popup for web, with redirect
+  // as an automatic fallback for cases where popup is blocked or fails.
   const signInWithGoogle = useCallback(async () => {
+    setError(null);
+
+    // ── Attempt 1: Popup (best UX, instant) ──────────────────────────────
     try {
-      setError(null);
       const result = await signInWithPopup(auth, googleProvider);
-      // Profile fetch is triggered by onAuthStateChanged above
       return result.user;
-    } catch (err) {
-      console.error('[Auth] Google sign-in failed:', err.code, err.message);
-      setError(getAuthErrorMessage(err.code));
-      throw err;
+    } catch (popupErr) {
+      const code = popupErr?.code || 'unknown';
+
+      if (IS_DEV) {
+        console.group('[Auth] Google popup sign-in failed');
+        console.error('Error code:', code);
+        console.error('Error message:', popupErr.message);
+        console.error('Full error:', popupErr);
+        console.groupEnd();
+      }
+
+      // Errors where redirect is a valid fallback
+      const tryRedirectFor = new Set([
+        'auth/popup-blocked',
+        'auth/popup-closed-by-user',
+        'auth/cancelled-popup-request',
+        'auth/internal-error',
+        'auth/operation-not-supported-in-this-environment',
+        'auth/web-storage-unsupported',
+      ]);
+
+      if (tryRedirectFor.has(code)) {
+        if (IS_DEV) console.info('[Auth] Popup failed — falling back to redirect sign-in…');
+
+        // ── Attempt 2: Full-page redirect (always works) ────────────────
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          // Page navigates away — code below never runs
+          return null;
+        } catch (redirectErr) {
+          if (IS_DEV) console.error('[Auth] Redirect also failed:', redirectErr.code, redirectErr.message);
+          setError(getAuthErrorMessage(redirectErr.code, redirectErr.message));
+          throw redirectErr;
+        }
+      }
+
+      // Non-retryable errors (user cancelled, wrong config, etc.)
+      setError(getAuthErrorMessage(code, popupErr.message));
+      throw popupErr;
     }
   }, []);
 
+  // ── Email Sign-In ─────────────────────────────────────────────────────────
   const signInWithEmail = useCallback(async (email, password) => {
     try {
       setError(null);
       const result = await signInWithEmailAndPassword(auth, email, password);
       return result.user;
     } catch (err) {
-      setError(getAuthErrorMessage(err.code));
+      if (IS_DEV) console.error('[Auth] Email sign-in failed:', err.code, err.message);
+      setError(getAuthErrorMessage(err.code, err.message));
       throw err;
     }
   }, []);
 
+  // ── Email Sign-Up ─────────────────────────────────────────────────────────
   const signUpWithEmail = useCallback(async (email, password, displayName) => {
     try {
       setError(null);
@@ -100,57 +169,51 @@ export function AuthProvider({ children }) {
       }
       return result.user;
     } catch (err) {
-      setError(getAuthErrorMessage(err.code));
+      if (IS_DEV) console.error('[Auth] Email sign-up failed:', err.code, err.message);
+      setError(getAuthErrorMessage(err.code, err.message));
       throw err;
     }
   }, []);
 
+  // ── Logout ────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     try {
       setUserProfile(null);
       await signOut(auth);
     } catch (err) {
-      console.error('Logout failed:', err);
+      console.error('[Auth] Logout failed:', err);
       setError('Failed to sign out. Please try again.');
     }
   }, []);
 
-  // Computed helpers for components to use directly
-  const isAdmin      = userProfile?.role === 'admin';
-  const isPending    = userProfile?.status === 'PENDING';
-  const isApproved   = userProfile?.status === 'APPROVED';
-  const isUnlimited  = userProfile?.isUnlimited === true;
-  const trialUsed    = userProfile?.freeTrialUsed    ?? 0;
-  const trialLimit   = userProfile?.freeTrialLimit   ?? 3;
-  const trialLeft    = userProfile?.freeTrialRemaining ?? Math.max(0, trialLimit - trialUsed);
-  const dailyUsed    = userProfile?.dailyCallsUsed   ?? 0;
-  const dailyLimit   = userProfile?.dailyLimit       ?? 20;
-  const dailyLeft    = userProfile?.dailyCallsRemaining ?? Math.max(0, dailyLimit - dailyUsed);
+  // ── Computed convenience flags ─────────────────────────────────────────────
+  const isAdmin     = userProfile?.role === 'admin';
+  const isPending   = userProfile?.status === 'PENDING';
+  const isApproved  = userProfile?.status === 'APPROVED';
+  const isUnlimited = userProfile?.isUnlimited === true;
+  const trialUsed   = userProfile?.freeTrialUsed    ?? 0;
+  const trialLimit  = userProfile?.freeTrialLimit   ?? 3;
+  const trialLeft   = userProfile?.freeTrialRemaining ?? Math.max(0, trialLimit - trialUsed);
+  const dailyUsed   = userProfile?.dailyCallsUsed   ?? 0;
+  const dailyLimit  = userProfile?.dailyLimit       ?? 20;
+  const dailyLeft   = userProfile?.dailyCallsRemaining ?? Math.max(0, dailyLimit - dailyUsed);
 
   const value = useMemo(() => ({
-    // Firebase user object
     user,
-    // Firestore user profile (status, role, quotas)
     userProfile,
-    // Loading states
     loading,
     profileLoading,
-    // Errors
     error,
     clearError,
-    // Auth actions
     signInWithGoogle,
     signInWithEmail,
     signUpWithEmail,
     logout,
-    // Profile refresh (call after admin actions)
     refreshUserProfile,
-    // Computed convenience flags
     isAdmin,
     isPending,
     isApproved,
     isUnlimited,
-    // Quota info
     trialUsed,
     trialLimit,
     trialLeft,
@@ -179,47 +242,59 @@ export function useAuth() {
   return context;
 }
 
-// Human-readable error messages
-// Covers both legacy Firebase codes and modern Firebase v9+ unified codes
-function getAuthErrorMessage(code) {
+// ── Human-readable error messages ────────────────────────────────────────────
+function getAuthErrorMessage(code, rawMessage) {
   const messages = {
-    // ── Firebase v9+ unified credential error (replaces wrong-password + user-not-found) ──
-    'auth/invalid-credential':          'Incorrect email or password. Please try again.',
-
-    // ── Legacy codes (still emitted in some SDK paths) ──
-    'auth/user-not-found':              'No account found with this email.',
-    'auth/wrong-password':              'Incorrect password.',
+    // ── Credential errors ──
+    'auth/invalid-credential':      'Incorrect email or password. Please try again.',
+    'auth/user-not-found':          'No account found with this email.',
+    'auth/wrong-password':          'Incorrect password.',
 
     // ── Email / account ──
-    'auth/email-already-in-use':        'An account with this email already exists.',
-    'auth/invalid-email':               'Please enter a valid email address.',
-    'auth/user-disabled':               'This account has been disabled. Contact support.',
+    'auth/email-already-in-use':    'An account with this email already exists.',
+    'auth/invalid-email':           'Please enter a valid email address.',
+    'auth/user-disabled':           'This account has been disabled. Contact support.',
     'auth/account-exists-with-different-credential':
-                                        'An account already exists with a different sign-in method.',
+                                    'An account already exists with a different sign-in method.',
 
     // ── Password ──
-    'auth/weak-password':               'Password must be at least 6 characters.',
-    'auth/missing-password':            'Please enter your password.',
+    'auth/weak-password':           'Password must be at least 6 characters.',
+    'auth/missing-password':        'Please enter your password.',
 
-    // ── Rate limiting / safety ──
-    'auth/too-many-requests':           'Too many failed attempts. Please wait a few minutes and try again.',
-    'auth/requires-recent-login':       'Please sign out and sign back in to continue.',
+    // ── Rate limiting ──
+    'auth/too-many-requests':       'Too many attempts. Please wait a few minutes and try again.',
+    'auth/requires-recent-login':   'Please sign out and sign back in to continue.',
 
     // ── Google / OAuth popup ──
-    'auth/popup-closed-by-user':        'Sign-in popup was closed. Please try again.',
-    'auth/popup-blocked':               'Pop-up was blocked by your browser. Trying redirect sign-in…',
-    'auth/cancelled-popup-request':     'Only one sign-in popup can be open at a time.',
-    'auth/operation-not-supported-in-this-environment':
-                                        'Google sign-in is not supported in this environment.',
+    'auth/popup-closed-by-user':    'Sign-in was cancelled. Please try again.',
+    'auth/popup-blocked':           'Pop-up blocked — trying a different sign-in method…',
+    'auth/cancelled-popup-request': 'Sign-in already in progress. Please wait.',
 
     // ── Domain / config ──
-    'auth/unauthorized-domain':         'This domain is not authorised for sign-in. Please contact support.',
-    'auth/operation-not-allowed':       'Google sign-in is not enabled. Please contact support.',
-    'auth/invalid-action-code':         'This link has expired or already been used. Please try again.',
-    'auth/internal-error':              'An internal error occurred. Please try again.',
+    'auth/unauthorized-domain':
+      IS_DEV
+        ? 'Unauthorized domain. Check Firebase Console → Auth → Settings → Authorized domains and ensure localhost is listed.'
+        : 'This domain is not authorised for sign-in. Please contact support.',
+    'auth/operation-not-allowed':
+      IS_DEV
+        ? 'Google sign-in is not enabled. Check Firebase Console → Auth → Sign-in method → Google.'
+        : 'Google sign-in is not enabled. Please contact support.',
+    'auth/invalid-action-code':     'This link has expired or already been used.',
 
-    // ── Network ──
-    'auth/network-request-failed':      'Network error. Please check your connection and try again.',
+    // ── Internal / network ──
+    'auth/internal-error':
+      IS_DEV
+        ? `Sign-in failed internally (trying redirect fallback). Check browser console for full details.`
+        : 'Sign-in failed. Please try again.',
+    'auth/network-request-failed':  'Network error. Please check your connection and try again.',
   };
-  return messages[code] || `Authentication failed. Please try again. (${code || 'unknown'})`;
+
+  const mapped = messages[code];
+  if (mapped) return mapped;
+
+  // In development, include the raw code to help diagnose unknown errors
+  if (IS_DEV) {
+    return `Authentication error (${code || 'unknown'}). Check browser console for details.`;
+  }
+  return 'Authentication failed. Please try again.';
 }
