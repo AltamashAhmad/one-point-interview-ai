@@ -42,22 +42,38 @@ app.use(express.json({ limit: '2mb' }));
 // Global IP-based limiter (wide net)
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 150, // Reduced back down to 150 to save AWS costs for production
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many requests. Please try again in 15 minutes.' },
+  skip: (req) => {
+    // Big Company Strategy 1: Bypass completely for local development loopback IPs
+    const isLocalhost = req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === '::ffff:127.0.0.1';
+    return isLocalhost;
+  }
 });
 
 // Per-user limiter on the expensive AI endpoint (prevents one account from
 // consuming the entire IP quota behind a shared network / VPN)
 const chatLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30,                    // 30 AI requests per user per 15 min
+  max: 30,                  // Reduced back to 30 AI requests per 15 min
   standardHeaders: true,
   legacyHeaders: false,
   // Key by Firebase UID attached by verifyToken (falls back to IP before auth)
   keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
-  skip: (req) => !req.user, // auth middleware runs first on the route
+  skip: (req) => {
+    if (!req.user) return true; // auth middleware handles unauthenticated users first
+    
+    // Big Company Strategy 2: Admin accounts completely bypass rate limits
+    if (req.user.uid === process.env.ADMIN_UID) return true;
+    
+    // Big Company Strategy 1: Bypass for local development
+    const isLocalhost = req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === '::ffff:127.0.0.1';
+    if (isLocalhost) return true;
+    
+    return false;
+  },
   message: { error: 'Too many chat requests. Please wait 15 minutes before sending more.' },
 });
 

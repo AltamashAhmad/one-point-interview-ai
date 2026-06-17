@@ -62,7 +62,8 @@
   align-items: center;
   gap: var(--space-3);
   flex: 1;
-  justify-content: center;
+  justify-content: flex-start;
+  margin-left: var(--space-4);
   min-width: 0;
 }
 
@@ -80,6 +81,12 @@
   line-height: 1.2;
 }
 
+.type-text-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .type-fullname {
   font-size: 14px;
   font-weight: 600;
@@ -88,6 +95,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 280px;
+  min-width: 0;
 }
 
 .header-right {
@@ -846,3 +854,45 @@
   }
 }
 
+
+/* ── Modal Overlay for Confirm Dialog ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  animation: slideUp 0.2s ease;
+}
+
+.modal-content h3 {
+  margin: 0 0 12px 0;
+  color: var(--text-color);
+  font-size: 1.25rem;
+}
+
+.modal-content p {
+  color: var(--text-muted);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}

@@ -4,6 +4,7 @@ const { verifyToken }               = require('../middleware/auth');
 const { checkUserAccess }           = require('../middleware/checkUserAccess');
 const { generateInterviewResponse } = require('../services/gemini');
 const { generateGroqResponse, isGroqModel, isGroqQuotaError } = require('../services/groq');
+const { generateOpenRouterResponse, isOpenRouterModel } = require('../services/openrouter');
 const { getSystemPrompt }           = require('../services/prompts');
 const { getQuestion }               = require('../services/questionBank');
 const admin                         = require('../config/firebase');
@@ -64,7 +65,7 @@ router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
       return res.status(400).json({ error: 'Message history too long (max 100 messages)' });
     }
     for (const msg of messages) {
-      if (!msg.role || !msg.content || typeof msg.content !== 'string') {
+      if (!msg.role || msg.content === undefined || msg.content === null || typeof msg.content !== 'string') {
         return res.status(400).json({ error: 'Each message must have a role and content string' });
       }
       if (!['user', 'assistant'].includes(msg.role)) {
@@ -79,8 +80,8 @@ router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
         error: `interviewType must be one of: ${VALID_INTERVIEW_TYPES.join(', ')}`,
       });
     }
-    // Validate model: must be a whitelisted Gemini model or a known Groq model
-    if (model && !VALID_GEMINI_MODELS.includes(model) && !isGroqModel(model)) {
+    // Validate model: must be a whitelisted Gemini model or a known Groq/OpenRouter model
+    if (model && !VALID_GEMINI_MODELS.includes(model) && !isGroqModel(model) && !isOpenRouterModel(model)) {
       return res.status(400).json({ error: 'Invalid model specified.' });
     }
     if (messages[0].role !== 'user') {
@@ -132,15 +133,27 @@ router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
       questionData: messages.length === 1 ? questionData : null,
     });
 
-    // ── Generate Response (route to Groq or Gemini) ─────────────
+    // ── Generate Response (route to Groq, OpenRouter, or Gemini) ─────────────
     let responseText;
-    if (model && isGroqModel(model)) {
+    if (model && isOpenRouterModel(model)) {
+      try {
+        responseText = await generateOpenRouterResponse(model, systemPrompt, messages);
+        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
+      } catch (orErr) {
+        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OpenRouter failed on "${model}" — falling back to Gemini`);
+          responseText = await generateInterviewResponse(messages, systemPrompt, null);
+        } else {
+          throw orErr;
+        }
+      }
+    } else if (model && isGroqModel(model)) {
       try {
         responseText = await generateGroqResponse(messages, systemPrompt, model);
+        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
       } catch (groqErr) {
-        if (isGroqQuotaError(groqErr)) {
-          // Groq quota hit → fall back to Gemini automatically
-          console.warn(`⚠️  Groq quota on "${model}" — falling back to Gemini`);
+        if (isGroqQuotaError(groqErr) || groqErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  Groq failed on "${model}" — falling back to Gemini`);
           responseText = await generateInterviewResponse(messages, systemPrompt, null);
         } else {
           throw groqErr;
@@ -148,6 +161,11 @@ router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
       }
     } else {
       responseText = await generateInterviewResponse(messages, systemPrompt, model);
+    }
+
+    // Final safety check after all fallbacks
+    if (!responseText || responseText.trim() === '') {
+      throw new Error('The AI generated an empty response. Please try sending your message again.');
     }
 
     // Return the response plus the selected question title (for frontend continuity)
@@ -177,9 +195,9 @@ router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
       });
     }
 
-    if (error.isQuotaExhausted || error.message?.includes('rate-limited')) {
+    if (error.isQuotaExhausted || error.message?.includes('rate-limited') || error.code === 'OPENROUTER_QUOTA_EXCEEDED') {
       return res.status(429).json({
-        error: '⏳ The AI interviewer is taking a short break — free tier quota reached. Please try again in a few minutes or after midnight (Pacific Time) when quotas reset.',
+        error: '⏳ The selected AI model is currently overloaded or out of credits. Please try switching to a different model in the settings menu.',
         retryAfter: 60,
       });
     }

@@ -249,7 +249,6 @@
 /* Base text color for code — token spans with inline styles override per-token */
 .code-block-wrapper pre {
   overflow-x: auto !important;
-  color: var(--text-primary) !important;
 }
 
 /* ── Scrollbar inside code ─────────────────────────────────────────────────── */

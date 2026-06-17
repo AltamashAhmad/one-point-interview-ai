@@ -48,7 +48,6 @@ const markdownComponents = {
               borderRadius: '0 0 8px 8px',
               fontSize: '13px',
               lineHeight: '1.7',
-              background: 'var(--bg-input)',
             }}
             showLineNumbers={codeString.split('\n').length > 5}
             lineNumberStyle={{ color: 'var(--text-muted)', fontSize: '12px', paddingRight: '16px' }}
@@ -78,7 +77,6 @@ const markdownComponents = {
               borderRadius: '0 0 8px 8px',
               fontSize: '13px',
               lineHeight: '1.7',
-              background: 'var(--bg-input)',
             }}
           >
             {codeString}

@@ -55,6 +55,8 @@ export default function Interview() {
   const [modelNotice, setModelNotice] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isGeneratingScorecard, setIsGeneratingScorecard] = useState(false);
+  const [hasAutoSubmitFailed, setHasAutoSubmitFailed] = useState(false);
+  const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const pendingCodeSubmitRef = useRef(null);
 
   // ── Voice to text ───────────────────────────────────────────────
@@ -75,6 +77,15 @@ export default function Interview() {
 
   // ── Guards ────────────────────────────────────────────────────────────
   useEffect(() => { if (!config) navigate('/'); }, [config, navigate]);
+
+  // ── Zombie LocalStorage Bug Fix ───────────────────────────────────────
+  // If the app crashed during session start, the user is left on a blank interview page.
+  useEffect(() => {
+    if (setupPhase === false && messages.length === 0 && !isLoading && !error) {
+      clear();
+      setSetupPhase(true);
+    }
+  }, [setupPhase, messages.length, isLoading, error, clear]);
 
   // ── Persist to localStorage whenever important state changes ─────────
   useEffect(() => {
@@ -126,7 +137,7 @@ export default function Interview() {
         type,
         userName,
         cfg.model,
-        { company: cfg.company, difficulty: cfg.difficulty, language: cfg.language }
+        { company: cfg.company, difficulty: cfg.difficulty, language: cfg.language, questionSeed: cfg.questionSeed }
       );
 
       const updatedMessages = [{ role: 'assistant', content: response.content }];
@@ -193,7 +204,7 @@ export default function Interview() {
         type,
         userName,
         selectedModel,        // use currently selected model
-        { company: sessionConfig.company, difficulty: sessionConfig.difficulty, language: sessionConfig.language }
+        { company: sessionConfig.company, difficulty: sessionConfig.difficulty, language: sessionConfig.language, questionSeed: sessionConfig.questionSeed }
       );
 
       const finalMessages = [...newMessages, { role: 'assistant', content: response.content }];
@@ -212,6 +223,7 @@ export default function Interview() {
       const msg = err.response?.data?.error || err.message || 'Failed to get a response. Please try again.';
       setError(msg);
       setMessages(prev => prev.slice(0, -1)); // revert optimistic add using functional update
+      setInput(trimmed); // Restore user input so they don't lose it
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
@@ -264,6 +276,8 @@ export default function Interview() {
     setSelectedModel(null);
     setScorecardModel(null);
     setModelNotice(null);
+    setIsGeneratingScorecard(false);
+    setHasAutoSubmitFailed(false);
   };
 
   const handleEndInterview = useCallback(async (auto = false) => {
@@ -280,13 +294,17 @@ export default function Interview() {
       // Check if the user has actually responded to any questions
       const userMsgCount = messages.filter(m => m.role === 'user').length;
       if (userMsgCount === 0) {
-        alert("You haven't sent any responses yet. Answer at least one question before ending the interview to get a meaningful scorecard.");
+        setError("You haven't sent any responses yet. Answer at least one question before ending the interview to get a meaningful scorecard.");
         return;
       }
 
-      const confirmed = window.confirm("Are you sure you want to end the interview and generate your scorecard?");
-      if (!confirmed) return;
+      if (!showConfirmEnd) {
+        setShowConfirmEnd(true);
+        return;
+      }
     }
+    
+    setShowConfirmEnd(false);
 
     setIsGeneratingScorecard(true);
     try {
@@ -298,17 +316,22 @@ export default function Interview() {
     } catch (err) {
       console.error(err);
       const msg = err.response?.data?.error || err.message || "Unknown error";
-      if (!auto) alert(`Failed to generate scorecard: ${msg}`);
+      if (!auto) {
+        setError(`Failed to generate scorecard: ${msg}`);
+      } else {
+        setHasAutoSubmitFailed(true);
+        setError(`Auto-submit failed: ${msg}. Please try ending the interview manually.`);
+      }
       setIsGeneratingScorecard(false);
     }
-  }, [messages, sessionId, scorecardModel, navigate, isTutor, clear, clearSessionArtifacts, loopId, roundIndex]);
+  }, [messages, sessionId, scorecardModel, navigate, isTutor, clear, clearSessionArtifacts, loopId, roundIndex, showConfirmEnd]);
 
   // ── Auto-submit when timer expires ────────────────────────────────────
   useEffect(() => {
-    if (isExpired && !isTutor && !isGeneratingScorecard && messages.length > 0) {
+    if (isExpired && !isTutor && !isGeneratingScorecard && !hasAutoSubmitFailed && messages.length > 0) {
       handleEndInterview(true);
     }
-  }, [isExpired, isGeneratingScorecard, messages.length, handleEndInterview, isTutor]);
+  }, [isExpired, isGeneratingScorecard, hasAutoSubmitFailed, messages.length, handleEndInterview, isTutor]);
 
   if (!config) return null;
 
@@ -337,12 +360,26 @@ export default function Interview() {
   // ── Interview phase ───────────────────────────────────────────────────
   return (
     <div className="interview-page">
+      {/* Confirmation Modal Overlay */}
+      {showConfirmEnd && (
+        <div className="modal-overlay">
+          <div className="modal-content confirm-modal">
+            <h3>End Interview?</h3>
+            <p>Are you sure you want to end the interview and generate your scorecard?</p>
+            <div className="modal-actions">
+              <button className="btn btn-outline" onClick={() => setShowConfirmEnd(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={() => handleEndInterview(false)}>Generate Scorecard</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="interview-header" style={{ '--type-color': config.color }}>
         <button className="back-btn" onClick={() => navigate('/')} aria-label="Back to home">← Back</button>
         <div className="interview-type-info">
           <span className="type-emoji">{config.emoji}</span>
-          <div>
+          <div className="type-text-container">
             <div className="type-label" style={{ color: config.color }}>{config.label}{isTutor ? ' Session' : ' Interview'}</div>
             <div className="type-fullname">
               {questionMeta?.title
@@ -378,15 +415,16 @@ export default function Interview() {
             <span className="session-dot" />
             Live
           </div>
-          <button 
-            className="btn btn-outline new-session-btn" 
-            onClick={handleEndInterview} 
+          <button className="btn btn-primary" onClick={() => handleEndInterview(false)} 
             disabled={isLoading || isGeneratingScorecard || messages.length === 0}
-            style={{ borderColor: '#ef4444', color: '#ef4444' }}
+            aria-busy={isGeneratingScorecard}
           >
             {isGeneratingScorecard ? 'Generating...' : (isTutor ? 'End Lesson' : 'End Interview')}
           </button>
-          <button className="btn btn-outline new-session-btn" onClick={handleNewSession} disabled={isLoading || isGeneratingScorecard}>
+          <button className="btn btn-outline new-session-btn" onClick={handleNewSession}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
             New Session
           </button>
           <ThemeToggle />

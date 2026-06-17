@@ -79,15 +79,16 @@
 .hero::before {
   content: '';
   position: absolute;
-  top: -60px;
+  top: -150px;
   left: 50%;
   transform: translateX(-50%);
-  width: 700px;
-  height: 400px;
-  background: radial-gradient(ellipse at top, var(--hero-glow-1) 0%, transparent 65%),
-              radial-gradient(ellipse at bottom right, var(--hero-glow-2) 0%, transparent 55%);
+  width: 120vw;
+  height: 800px;
+  background: radial-gradient(ellipse 50% 50% at 50% 30%, var(--hero-glow-1), transparent),
+              radial-gradient(ellipse 40% 40% at 60% 50%, var(--hero-glow-2), transparent);
   pointer-events: none;
   z-index: 0;
+  filter: blur(60px);
 }
 
 .hero > * {
