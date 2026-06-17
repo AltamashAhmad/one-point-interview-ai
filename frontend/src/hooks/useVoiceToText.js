@@ -66,17 +66,18 @@ export function useVoiceToText({ onTranscript, continuous = true, language = 'en
     };
 
     recognition.onresult = (event) => {
-      const results   = Array.from(event.results);
-      const finalText = results
-        .filter(r => r.isFinal)
-        .map(r => r[0].transcript)
-        .join(' ')
-        .trim();
+      let newlyFinalized = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          newlyFinalized += event.results[i][0].transcript;
+        }
+      }
+      
+      newlyFinalized = newlyFinalized.trim();
 
-      // Bug #9 fix: skip if this is the exact same text we already appended
-      if (finalText && finalText !== lastTranscriptRef.current && onTranscript) {
-        lastTranscriptRef.current = finalText;
-        onTranscript(finalText);
+      if (newlyFinalized && newlyFinalized !== lastTranscriptRef.current && onTranscript) {
+        lastTranscriptRef.current = newlyFinalized;
+        onTranscript(newlyFinalized);
       }
     };
 
