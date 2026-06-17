@@ -1,0 +1,458 @@
+/* ─── Access Wall — Premium Dark Theme ─────────────────────────────────────── */
+
+.aw-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(9, 9, 16, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: aw-fade-in 0.35s ease;
+}
+
+@keyframes aw-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.aw-card {
+  background: linear-gradient(145deg, #13131f, #0f0f1a);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 24px;
+  padding: 44px 40px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  text-align: center;
+  box-shadow:
+    0 0 0 1px rgba(99, 102, 241, 0.08),
+    0 32px 64px rgba(0, 0, 0, 0.5),
+    0 0 80px rgba(99, 102, 241, 0.04);
+  animation: aw-card-in 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes aw-card-in {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.aw-form-card {
+  text-align: left;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+.aw-card::-webkit-scrollbar       { width: 4px; }
+.aw-card::-webkit-scrollbar-track { background: transparent; }
+.aw-card::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+
+/* ── Typography ──────────────────────────────────────────────────────────── */
+.aw-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 10px;
+  letter-spacing: -0.4px;
+  line-height: 1.3;
+}
+
+.aw-subtitle {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0 0 28px;
+  line-height: 1.6;
+}
+
+.aw-email {
+  color: #6366f1;
+}
+
+/* ── Wall Icon ───────────────────────────────────────────────────────────── */
+.aw-wall-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1));
+  border: 1px solid rgba(99,102,241,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  margin: 0 auto 20px;
+}
+
+.aw-exhausted-badge {
+  display: inline-block;
+  background: rgba(99,102,241,0.12);
+  border: 1px solid rgba(99,102,241,0.25);
+  color: #a5b4fc;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 5px 14px;
+  border-radius: 99px;
+  margin-bottom: 20px;
+}
+
+/* ── Status Icons ────────────────────────────────────────────────────────── */
+.aw-status-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+  display: block;
+  animation: aw-bounce-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes aw-bounce-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ── Perks List ──────────────────────────────────────────────────────────── */
+.aw-perks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+  text-align: left;
+}
+
+.aw-perk {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.aw-perk-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.aw-perk div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aw-perk strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.aw-perk span {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.aw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 13px 24px;
+}
+
+.aw-btn-primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(99,102,241,0.3);
+}
+
+.aw-btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(99,102,241,0.4);
+}
+
+.aw-btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.aw-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.aw-btn-cta {
+  width: 100%;
+  padding: 15px 24px;
+  font-size: 15px;
+}
+
+.aw-btn-submit {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.aw-review-note {
+  font-size: 12px;
+  color: #4b5563;
+  margin-top: 14px;
+  text-align: center;
+}
+
+.aw-back {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 20px;
+  transition: color 0.2s;
+}
+
+.aw-back:hover { color: #d1d5db; }
+
+/* ── Free Trial Meter ────────────────────────────────────────────────────── */
+.aw-trial-card { padding: 32px; }
+
+.aw-trial-icon {
+  font-size: 40px;
+  margin-bottom: 16px;
+}
+
+.aw-trial-meter {
+  margin: 20px 0;
+}
+
+.aw-trial-meter-track {
+  height: 8px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.aw-trial-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.aw-trial-counts {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.aw-trial-used  { font-size: 12px; color: #9ca3af; }
+.aw-trial-left  { font-size: 12px; color: #6366f1; font-weight: 600; }
+
+.aw-trial-note {
+  font-size: 13px;
+  color: #4b5563;
+  margin: 0;
+}
+
+/* ── Pending Steps ───────────────────────────────────────────────────────── */
+.aw-pending-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 28px 0 16px;
+}
+
+.aw-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #9ca3af;
+  min-width: 72px;
+}
+
+.aw-step-done  { color: #22c55e; }
+.aw-step-active { color: #6366f1; }
+.aw-step-dim   { color: #374151; }
+
+.aw-step-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.aw-step-dot-pulse {
+  background: #6366f1;
+  animation: aw-pulse 1.8s ease-in-out infinite;
+}
+
+.aw-step-dot-dim {
+  background: #1f2937;
+  border: 2px solid #374151;
+}
+
+@keyframes aw-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(99,102,241,0); }
+}
+
+.aw-step-line {
+  height: 2px;
+  flex: 1;
+  background: #22c55e;
+  margin-bottom: 20px;
+}
+
+.aw-step-line-dim {
+  background: #1f2937;
+}
+
+.aw-poll-note {
+  font-size: 12px;
+  color: #374151;
+  margin: 0;
+  text-align: center;
+}
+
+/* ── Denial ──────────────────────────────────────────────────────────────── */
+.aw-denial-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.15);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.aw-denial-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+.aw-denial-text  { font-size: 13px; color: #d1d5db; }
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+.aw-form-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.aw-form-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+.aw-form { display: flex; flex-direction: column; gap: 20px; }
+
+.aw-field { display: flex; flex-direction: column; gap: 8px; }
+
+.aw-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #d1d5db;
+}
+
+.aw-required { color: #6366f1; }
+.aw-optional { color: #4b5563; font-weight: 400; }
+
+.aw-purpose-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.aw-purpose-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.aw-purpose-btn:hover {
+  background: rgba(99,102,241,0.08);
+  border-color: rgba(99,102,241,0.2);
+}
+
+.aw-purpose-btn--selected {
+  background: rgba(99,102,241,0.12);
+  border-color: rgba(99,102,241,0.4);
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.2);
+}
+
+.aw-purpose-label { font-size: 13px; font-weight: 600; color: #e5e7eb; }
+.aw-purpose-desc  { font-size: 11px; color: #6b7280; line-height: 1.4; }
+
+.aw-textarea {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: #e5e7eb;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 90px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+.aw-textarea::placeholder { color: #374151; }
+
+.aw-textarea:focus {
+  border-color: rgba(99,102,241,0.4);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+}
+
+.aw-char-count {
+  font-size: 11px;
+  color: #4b5563;
+  text-align: right;
+  margin-top: -4px;
+}
+
+.aw-error {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #f87171;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────── */
+.aw-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: aw-spin 0.7s linear infinite;
+}
+
+@keyframes aw-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .aw-card { padding: 28px 20px; }
+  .aw-purpose-grid { grid-template-columns: 1fr; }
+  .aw-title { font-size: 19px; }
+}

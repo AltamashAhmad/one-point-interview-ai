@@ -10,6 +10,12 @@ const healthRouter    = require('./routes/health');
 const historyRouter   = require('./routes/history');
 const questionsRouter = require('./routes/questions');
 const loopsRouter     = require('./routes/loops');
+const usersRouter     = require('./routes/users');
+const accessRouter    = require('./routes/access');
+const adminRouter     = require('./routes/admin');
+const publicRouter    = require('./routes/public');
+
+const { verifyAppCheck } = require('./middleware/appCheck');
 
 const app = express();
 app.set('trust proxy', 1); // Trust the Caddy reverse proxy (one hop) for correct client IPs in rate limiting
@@ -57,12 +63,25 @@ const chatLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 
+// ── App Check — must come from the real frontend app ──────────
+// Skipped for the health check (monitoring tools need this unauthenticated)
+app.use('/api/', (req, res, next) => {
+  if (req.path === '/health' || req.path.startsWith('/health/')) return next();
+  verifyAppCheck(req, res, next);
+});
+
 // ── Routes ─────────────────────────────────────────────────────
 app.use('/api/chat',      chatLimiter, chatRouter);
+// Public routes (no auth needed)
+app.use('/api/public', publicRouter);
+
 app.use('/api/health',    healthRouter);
 app.use('/api/history',   historyRouter);
 app.use('/api/questions', questionsRouter);
 app.use('/api/loops',     loopsRouter);
+app.use('/api/users',     usersRouter);
+app.use('/api/access',    accessRouter);
+app.use('/api/admin',     adminRouter);
 
 app.get('/', (req, res) => {
   res.json({ message: '🎯 One Point Interview AI', status: 'running', version: '1.0.0' });
@@ -73,6 +92,7 @@ app.use((err, req, res, next) => {
   console.error(`[ERROR] ${err.message}`);
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
+    code: err.code || undefined,
   });
 });
 

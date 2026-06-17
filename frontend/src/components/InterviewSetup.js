@@ -168,30 +168,28 @@ export default function InterviewSetup({ interviewType, typeConfig, onBegin }) {
           </div>
         </div>
 
-        {/* Language — DSA only */}
-        {isShowingCompanyForType && (
-          <div className="setup-card">
-            <div className="setup-card-header">
-              <span className="setup-card-icon">💻</span>
-              <div>
-                <div className="setup-card-title">Preferred Language</div>
-                <div className="setup-card-desc">The interviewer will evaluate your code in this language</div>
-              </div>
-            </div>
-            <div className="language-grid">
-              {LANGUAGES.map(lang => (
-                <button
-                  key={lang}
-                  className={`lang-btn ${language === lang ? 'lang-btn--active' : ''}`}
-                  onClick={() => setLanguage(lang)}
-                  style={language === lang ? { borderColor: typeConfig.color, background: `${typeConfig.color}18`, color: typeConfig.color } : {}}
-                >
-                  {lang}
-                </button>
-              ))}
+        {/* Language — All Modes */}
+        <div className="setup-card">
+          <div className="setup-card-header">
+            <span className="setup-card-icon">💻</span>
+            <div>
+              <div className="setup-card-title">Preferred Language</div>
+              <div className="setup-card-desc">The interviewer will evaluate your code in this language</div>
             </div>
           </div>
-        )}
+          <div className="language-grid">
+            {LANGUAGES.map(lang => (
+              <button
+                key={lang}
+                className={`lang-btn ${language === lang ? 'lang-btn--active' : ''}`}
+                onClick={() => setLanguage(lang)}
+                style={language === lang ? { borderColor: typeConfig.color, background: `${typeConfig.color}18`, color: typeConfig.color } : {}}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* AI Model */}
         <div className="setup-card">

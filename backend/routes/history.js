@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../middleware/auth');
+const { checkUserAccess, enforceGlobalStatus } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
 const { generateInterviewResponse } = require('../services/gemini');
 const { generateGroqResponse, isGroqModel } = require('../services/groq');
@@ -21,17 +22,25 @@ function isValidDocId(id) {
  * GET /api/history
  * Fetch all past interviews for the authenticated user.
  */
-router.get('/', verifyToken, async (req, res, next) => {
+// Apply global status check to all history endpoints (except scorecard generation which handles quota)
+router.use(verifyToken, enforceGlobalStatus);
+
+router.get('/', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     const snapshot = await db.collection('interviews')
       .where('userId', '==', userId)
-      .orderBy('updatedAt', 'desc')
       .get();
 
     const interviews = [];
     snapshot.forEach(doc => {
       interviews.push({ id: doc.id, ...doc.data() });
+    });
+
+    interviews.sort((a, b) => {
+      const tA = a.updatedAt?.toMillis?.() || 0;
+      const tB = b.updatedAt?.toMillis?.() || 0;
+      return tB - tA; // desc
     });
 
     res.json({ interviews });
@@ -44,7 +53,7 @@ router.get('/', verifyToken, async (req, res, next) => {
  * GET /api/history/:id
  * Fetch a specific interview by ID.
  */
-router.get('/:id', verifyToken, async (req, res, next) => {
+router.get('/:id', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) {
@@ -73,7 +82,7 @@ router.get('/:id', verifyToken, async (req, res, next) => {
  * Create or update an interview session.
  * Body: { sessionId: string, interviewType: string, modelUsed: string, messages: array }
  */
-router.post('/', verifyToken, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     const { sessionId, interviewType, modelUsed, messages,
@@ -132,7 +141,7 @@ router.post('/', verifyToken, async (req, res, next) => {
  * DELETE /api/history/:id
  * Delete a specific interview session.
  */
-router.delete('/:id', verifyToken, async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) {
@@ -160,7 +169,7 @@ router.delete('/:id', verifyToken, async (req, res, next) => {
  * POST /api/history/:id/scorecard
  * Generates an AI scorecard based on the interview transcript.
  */
-router.post('/:id/scorecard', verifyToken, async (req, res, next) => {
+router.post('/:id/scorecard', checkUserAccess, async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) {
