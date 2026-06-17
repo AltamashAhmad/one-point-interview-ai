@@ -16,56 +16,48 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // ── Firebase App Check ─────────────────────────────────────────────────────
-// App Check ensures only our real React app can send requests to Firebase
-// and our backend. Bots, scrapers, and direct API calls are blocked.
 //
-// How it works per environment:
-//   Local dev  → REACT_APP_FIREBASE_APPCHECK_DEBUG_TOKEN=true in .env
-//                A debug token is printed to the browser console on first load.
-//                Copy it → Firebase Console → App Check → Debug tokens → Add.
+// Enterprise pattern (same as Firebase's own docs & major companies):
 //
-//   Production → REACT_APP_RECAPTCHA_SITE_KEY is set in .env.production
-//                Uses reCAPTCHA v3 — invisible, no user friction required.
+//   LOCAL DEV  → App Check is completely OFF.
+//                The backend has SKIP_APP_CHECK=true in backend/.env so no
+//                API requests are blocked. Nothing is initialised here —
+//                initialising with a fake/debug key breaks Firebase Auth
+//                Google sign-in popup with auth/internal-error.
+//
+//   PRODUCTION → App Check ON with reCAPTCHA v3 (invisible, no user friction).
+//                REACT_APP_RECAPTCHA_SITE_KEY must be set in .env.production
+//                or in your CI/CD environment variables (Amplify Console).
+//                All /api/* requests are verified to come from the real app.
+//
+// How to enable App Check in local dev (optional, advanced):
+//   1. Remove the NODE_ENV guard below.
+//   2. Add REACT_APP_FIREBASE_APPCHECK_DEBUG_TOKEN=true to frontend/.env.
+//   3. Call initializeAppCheck with CustomProvider using the debug token.
+//   4. Firebase prints the token to the browser console on first load —
+//      add it to Firebase Console → App Check → your web app → Debug tokens.
+//   5. Set SKIP_APP_CHECK=false in backend/.env.
 
 let appCheckInstance = null;
 
-const siteKey    = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
-const debugMode  = process.env.REACT_APP_FIREBASE_APPCHECK_DEBUG_TOKEN === 'true';
+if (process.env.NODE_ENV === 'production') {
+  const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
 
-if (debugMode) {
-  // Local development: generate a debug token.
-  // On first load, open browser DevTools → Console and look for:
-  // "App Check debug token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-  // Copy that token → Firebase Console → App Check → [your app] → Debug tokens → Add token
-  // eslint-disable-next-line no-restricted-globals
-  window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  if (siteKey) {
+    appCheckInstance = initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } else {
+    // Misconfiguration guard — loud error so it gets fixed before go-live
+    console.error(
+      '[Firebase] PRODUCTION BUILD: REACT_APP_RECAPTCHA_SITE_KEY is not set!\n' +
+      'App Check is DISABLED. Set this key in AWS Amplify Console → Environment variables.'
+    );
+  }
 }
-
-if (siteKey) {
-  // Production: reCAPTCHA v3 (invisible, no user interaction needed)
-  appCheckInstance = initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(siteKey),
-    isTokenAutoRefreshEnabled: true,
-  });
-} else if (debugMode) {
-  // Local dev: App Check uses a real debug token from the console.
-  // The debug token flag is set above via window.FIREBASE_APPCHECK_DEBUG_TOKEN = true.
-  // Firebase will print the auto-generated debug token to the console on first load.
-  // Copy it → Firebase Console → App Check → [your web app] → Debug tokens → Add token.
-  // NOTE: We do NOT initialize App Check here with a fake site key — that would break
-  // Firebase Auth. The backend has SKIP_APP_CHECK=true for local dev.
-  console.info(
-    '[Firebase] App Check debug mode active.\n' +
-    'Check the browser console for your debug token (look for "App Check debug token:").\n' +
-    'Add it to Firebase Console → App Check → your web app → Debug tokens.'
-  );
-} else {
-  console.warn(
-    '[Firebase] App Check not configured.\n' +
-    'Local dev: set REACT_APP_FIREBASE_APPCHECK_DEBUG_TOKEN=true in frontend/.env\n' +
-    'Production: set REACT_APP_RECAPTCHA_SITE_KEY in frontend/.env.production'
-  );
-}
+// Development: App Check intentionally not initialised.
+// Backend uses SKIP_APP_CHECK=true to bypass verification locally.
 
 export const appCheck = appCheckInstance;
 export const auth = getAuth(app);
