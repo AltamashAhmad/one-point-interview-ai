@@ -4,7 +4,8 @@ const { verifyToken } = require('../middleware/auth');
 const { checkUserAccess, enforceGlobalStatus } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
 const { generateInterviewResponse } = require('../services/gemini');
-const { generateGroqResponse, isGroqModel } = require('../services/groq');
+const { generateGroqResponse, isGroqModel, isGroqQuotaError } = require('../services/groq');
+const { generateOpenRouterResponse, isOpenRouterModel } = require('../services/openrouter');
 
 const db = admin.firestore();
 
@@ -246,11 +247,33 @@ ${transcript}`;
     let responseText = '';
     // Use the user's selected scorecard model. If the request arrives with no
     // body (Express 5 leaves req.body undefined), fall back to the model the
-    // interview was conducted with, then to gemini-3.1-pro-preview.
-    const modelUsed = req.body?.model || data.modelUsed || 'gemini-3.1-pro-preview';
+    // interview was conducted with.
+    let modelUsed = req.body?.model || data.modelUsed || 'openai/gpt-oss-120b:free';
     
-    if (isGroqModel(modelUsed)) {
-      responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);
+    if (isOpenRouterModel(modelUsed)) {
+      try {
+        responseText = await generateOpenRouterResponse(modelUsed, systemPrompt, aiMessages);
+        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
+      } catch (orErr) {
+        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OpenRouter failed on scorecard generation with "${modelUsed}" — falling back to Gemini`);
+          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null);
+        } else {
+          throw orErr;
+        }
+      }
+    } else if (isGroqModel(modelUsed)) {
+      try {
+        responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);
+        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
+      } catch (groqErr) {
+        if (isGroqQuotaError(groqErr) || groqErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  Groq failed on scorecard generation with "${modelUsed}" — falling back to Gemini`);
+          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null);
+        } else {
+          throw groqErr;
+        }
+      }
     } else {
       responseText = await generateInterviewResponse(aiMessages, systemPrompt, modelUsed);
     }

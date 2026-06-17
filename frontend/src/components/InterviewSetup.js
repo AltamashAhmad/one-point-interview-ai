@@ -17,7 +17,7 @@ const DIFFICULTIES = [
 export default function InterviewSetup({ interviewType, typeConfig, onBegin }) {
   const isTutor = typeConfig?.isTutor || false;
   const [selectedModel,      setSelectedModel]      = useState(DEFAULT_MODEL.id);
-  const [scorecardModel,     setScorecardModel]     = useState('gemini-3.1-pro-preview');
+  const [scorecardModel,     setScorecardModel]     = useState(DEFAULT_MODEL.id);
   const [difficulty,         setDifficulty]         = useState('MEDIUM');
   const [language,           setLanguage]           = useState('Python');
   const [company,            setCompany]            = useState('');

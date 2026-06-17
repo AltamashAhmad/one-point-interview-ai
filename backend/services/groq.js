@@ -44,10 +44,13 @@ function isGroqQuotaError(err) {
   const code = err?.status || err?.statusCode;
   return (
     code === 429 ||
+    code >= 500 ||
     msg.includes('429') ||
+    msg.includes('503') ||
     msg.includes('rate_limit') ||
     msg.includes('Rate limit') ||
-    msg.includes('RATE_LIMIT_EXCEEDED')
+    msg.includes('RATE_LIMIT_EXCEEDED') ||
+    msg.includes('Service Unavailable')
   );
 }
 

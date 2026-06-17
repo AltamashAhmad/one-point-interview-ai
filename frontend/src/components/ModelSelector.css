@@ -137,8 +137,9 @@
 }
 
 /* Provider brand accent colors retained intentionally */
-.provider-dot--groq   { background: #f97316; box-shadow: 0 0 6px rgba(249,115,22,0.5); }
-.provider-dot--gemini { background: var(--purple); box-shadow: 0 0 6px var(--purple-glow); }
+.provider-dot--groq       { background: #f97316; box-shadow: 0 0 6px rgba(249,115,22,0.5); }
+.provider-dot--gemini     { background: var(--purple); box-shadow: 0 0 6px var(--purple-glow); }
+.provider-dot--openrouter { background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.5); }
 
 /* ── Model Options ───────────────────────────────────────────────────── */
 .model-option {
