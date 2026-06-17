@@ -10,7 +10,7 @@ const PURPOSE_OPTIONS = [
   { value: 'other',    label: '💡 Other', desc: 'Tell us more in the message below' },
 ];
 
-export default function AccessWall() {
+export default function AccessWall({ onClose }) {
   const { user, trialUsed, trialLimit, refreshUserProfile } = useAuth();
 
   const [view, setView]           = useState('wall');   // 'wall' | 'form' | 'pending' | 'denied'
@@ -293,6 +293,16 @@ export default function AccessWall() {
         >
           Request Full Access — It's Free
         </button>
+
+        {onClose && (
+          <button
+            className="aw-btn aw-btn-ghost"
+            style={{ marginTop: '12px', fontSize: '14px', color: '#9ca3af' }}
+            onClick={onClose}
+          >
+            Maybe Later
+          </button>
+        )}
 
         <p className="aw-review-note">
           🔍 Requests are reviewed by a human. Usually approved within 24 hours.

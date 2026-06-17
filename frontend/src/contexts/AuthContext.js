@@ -5,7 +5,6 @@ import React, {
   useState,
   useMemo,
   useCallback,
-  useRef,
 } from 'react';
 import {
   onAuthStateChanged,
@@ -24,16 +23,16 @@ const AuthContext = createContext(null);
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
+// Module-level lock for strict mode
+const currentlyFetching = new Set();
+
 export function AuthProvider({ children }) {
   const [user, setUser]               = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading]         = useState(true);
-  const [error, setError]             = useState(null);
-
-  // Use a module-level set to track fetching users, to survive React 19 StrictMode double-mounts
   const [profileLoading, setProfileLoading] = useState(false);
-// Module-level lock for strict mode
-const currentlyFetching = new Set();
+  const [error, setError]             = useState(null);
+  const [wallDismissed, setWallDismissed] = useState(false);
 
   // ── Fetch user profile from backend ───────────────────────────────────────
   const fetchUserProfile = useCallback(async (firebaseUser) => {
@@ -49,6 +48,10 @@ const currentlyFetching = new Set();
       setUserProfile(data?.profile ?? data ?? null);
     } catch (err) {
       if (IS_DEV) console.warn('[AuthContext] Profile fetch failed:', err.message);
+      if (err.response?.data?.code === 'SIGNUPS_DISABLED') {
+        import('firebase/auth').then(({ signOut }) => signOut(auth)).catch(console.error);
+        setError(err.response.data.error || 'New account registrations are disabled.');
+      }
       setUserProfile(null);
     } finally {
       setProfileLoading(false);
@@ -199,7 +202,10 @@ const currentlyFetching = new Set();
   const isAdmin     = userProfile?.role === 'admin';
   const isPending   = userProfile?.status === 'PENDING';
   const isApproved  = userProfile?.status === 'APPROVED';
+  const isBanned    = userProfile?.status === 'BANNED';
+  const isSuspended = userProfile?.status === 'SUSPENDED';
   const isUnlimited = userProfile?.isUnlimited === true;
+  const isMaintenanceMode = userProfile?.maintenanceMode === true;
   const trialUsed   = userProfile?.freeTrialUsed    ?? 0;
   const trialLimit  = userProfile?.freeTrialLimit   ?? 3;
   const trialLeft   = userProfile?.freeTrialRemaining ?? Math.max(0, trialLimit - trialUsed);
@@ -219,10 +225,15 @@ const currentlyFetching = new Set();
     signUpWithEmail,
     logout,
     refreshUserProfile,
+    wallDismissed,
+    setWallDismissed,
     isAdmin,
     isPending,
     isApproved,
+    isBanned,
+    isSuspended,
     isUnlimited,
+    isMaintenanceMode,
     trialUsed,
     trialLimit,
     trialLeft,
@@ -232,7 +243,8 @@ const currentlyFetching = new Set();
   }), [
     user, userProfile, loading, profileLoading, error,
     clearError, signInWithGoogle, signInWithEmail, signUpWithEmail, logout, refreshUserProfile,
-    isAdmin, isPending, isApproved, isUnlimited,
+    wallDismissed, setWallDismissed,
+    isAdmin, isPending, isApproved, isBanned, isSuspended, isUnlimited, isMaintenanceMode,
     trialUsed, trialLimit, trialLeft, dailyUsed, dailyLimit, dailyLeft,
   ]);
 

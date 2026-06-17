@@ -13,6 +13,7 @@ const loopsRouter     = require('./routes/loops');
 const usersRouter     = require('./routes/users');
 const accessRouter    = require('./routes/access');
 const adminRouter     = require('./routes/admin');
+const publicRouter    = require('./routes/public');
 
 const { verifyAppCheck } = require('./middleware/appCheck');
 
@@ -71,6 +72,9 @@ app.use('/api/', (req, res, next) => {
 
 // ── Routes ─────────────────────────────────────────────────────
 app.use('/api/chat',      chatLimiter, chatRouter);
+// Public routes (no auth needed)
+app.use('/api/public', publicRouter);
+
 app.use('/api/health',    healthRouter);
 app.use('/api/history',   historyRouter);
 app.use('/api/questions', questionsRouter);
@@ -88,6 +92,7 @@ app.use((err, req, res, next) => {
   console.error(`[ERROR] ${err.message}`);
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',
+    code: err.code || undefined,
   });
 });
 

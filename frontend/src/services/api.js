@@ -4,10 +4,10 @@ import { getToken } from 'firebase/app-check';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
 
-// Use a dedicated axios instance with a default timeout of 10s to all requests so the app never hangs indefinitely
+// Use a dedicated axios instance with no timeout so massive LLM generations
+// never abort prematurely.
 const apiClient = axios.create({
   baseURL: API_BASE,
-  timeout: 10000,
 });
 
 /**
@@ -271,6 +271,24 @@ export async function getAdminUsers(params = {}) {
 export async function getAdminUser(uid) {
   const headers = await getHeaders();
   const { data } = await apiClient.get(`/api/admin/users/${uid}`, { headers });
+  return data;
+}
+
+/**
+ * Fetch public platform settings (e.g. signups enabled).
+ */
+export async function getPublicPlatformStatus() {
+  const { data } = await apiClient.get('/api/public/status');
+  return data;
+}
+
+/**
+ * Delete a user permanently.
+ * @param {string} uid
+ */
+export async function deleteUserPermanent(uid) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.delete(`/api/admin/users/${uid}`, { headers });
   return data;
 }
 

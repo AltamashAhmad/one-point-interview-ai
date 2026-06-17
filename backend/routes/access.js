@@ -1,6 +1,7 @@
 const express = require('express');
 const router  = express.Router();
 const { verifyToken }              = require('../middleware/auth');
+const { enforceGlobalStatus }      = require('../middleware/checkUserAccess');
 const { sendAccessRequestEmail }   = require('../services/emailService');
 const admin = require('../config/firebase');
 
@@ -17,7 +18,10 @@ const VALID_PURPOSES = ['job_prep', 'learning', 'academic', 'other'];
  *
  * Body: { purpose: string, reason?: string }
  */
-router.post('/request', verifyToken, async (req, res, next) => {
+// Apply global status check to all access endpoints
+router.use(verifyToken, enforceGlobalStatus);
+
+router.post('/request', async (req, res, next) => {
   try {
     const uid = req.user.uid;
 
@@ -119,7 +123,7 @@ router.post('/request', verifyToken, async (req, res, next) => {
  *
  * Response: { status: 'none'|'pending'|'approved'|'denied', request?: object }
  */
-router.get('/status', verifyToken, async (req, res, next) => {
+router.get('/status', async (req, res, next) => {
   try {
     const uid = req.user.uid;
 
@@ -139,15 +143,21 @@ router.get('/status', verifyToken, async (req, res, next) => {
     // Look up the most recent access request for this user
     const query = await db.collection('accessRequests')
       .where('uid', '==', uid)
-      .orderBy('createdAt', 'desc')
-      .limit(1)
       .get();
 
     if (query.empty) {
       return res.json({ status: 'none', userStatus: profile.status });
     }
 
-    const doc     = query.docs[0];
+    // Sort in memory to avoid Firestore composite index requirement
+    const docs = query.docs;
+    docs.sort((a, b) => {
+      const tA = a.data().createdAt?.toMillis?.() || 0;
+      const tB = b.data().createdAt?.toMillis?.() || 0;
+      return tB - tA; // desc
+    });
+
+    const doc     = docs[0];
     const request = { id: doc.id, ...doc.data() };
 
     return res.json({

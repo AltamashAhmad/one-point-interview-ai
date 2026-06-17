@@ -25,13 +25,32 @@ router.get('/me', verifyToken, async (req, res, next) => {
       // Get platform settings for defaults
       let freeTrialLimit = 3;
       let defaultDailyLimit = 20;
+      let maintenanceMode = false;
+      let allowNewSignups = true;
       try {
         const settingsDoc = await db.collection('platformSettings').doc('main').get();
         if (settingsDoc.exists) {
           freeTrialLimit    = settingsDoc.data().freeTrialLimit    ?? 3;
           defaultDailyLimit = settingsDoc.data().defaultDailyLimit ?? 20;
+          maintenanceMode   = settingsDoc.data().maintenanceMode === true;
+          allowNewSignups   = settingsDoc.data().allowNewSignups !== false;
         }
       } catch { /* use defaults */ }
+
+      // If signups are disabled, immediately reject and delete the auth record so they aren't stuck
+      if (!allowNewSignups) {
+        try {
+          await admin.auth().deleteUser(uid);
+        } catch (e) {
+          if (e.code !== 'auth/user-not-found') {
+            console.error('[Auth] Failed to delete blocked signup user:', e.message);
+          }
+        }
+        return res.status(403).json({
+          code: 'SIGNUPS_DISABLED',
+          error: 'New account registrations are currently disabled.',
+        });
+      }
 
       const newProfile = {
         uid,
@@ -64,11 +83,20 @@ router.get('/me', verifyToken, async (req, res, next) => {
           createdAt: new Date().toISOString(),
           // remaining trial count for the frontend
           freeTrialRemaining: freeTrialLimit,
+          maintenanceMode,
         },
       });
     }
 
     const profile = doc.data();
+
+    let maintenanceMode = false;
+    try {
+      const settingsDoc = await db.collection('platformSettings').doc('main').get();
+      if (settingsDoc.exists) {
+        maintenanceMode = settingsDoc.data().maintenanceMode === true;
+      }
+    } catch { /* use defaults */ }
 
     // Calculate remaining free trial (for UI display)
     const freeTrialRemaining = Math.max(
@@ -87,6 +115,7 @@ router.get('/me', verifyToken, async (req, res, next) => {
         // Computed fields for frontend convenience
         freeTrialRemaining,
         dailyCallsRemaining,
+        maintenanceMode,
       },
     });
 

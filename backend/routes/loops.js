@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { verifyToken } = require('../middleware/auth');
+const { enforceGlobalStatus } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
 
 const db = admin.firestore();
@@ -35,7 +36,10 @@ const VALID_LOOP_STATUS = ['in-progress', 'passed', 'failed'];
  * GET /api/loops
  * List all loops for the authenticated user (newest first).
  */
-router.get('/', verifyToken, async (req, res, next) => {
+// Apply global status check to all loops endpoints
+router.use(verifyToken, enforceGlobalStatus);
+
+router.get('/', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     // Avoid a composite index requirement: filter by userId, sort in memory.
@@ -64,7 +68,7 @@ router.get('/', verifyToken, async (req, res, next) => {
  * GET /api/loops/:id
  * Fetch a specific loop by ID.
  */
-router.get('/:id', verifyToken, async (req, res, next) => {
+router.get('/:id', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) {
@@ -93,7 +97,7 @@ router.get('/:id', verifyToken, async (req, res, next) => {
  * The optional status / currentRoundIndex / round states are accepted so that
  * existing localStorage loops can be migrated without losing progress.
  */
-router.post('/', verifyToken, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     const { company, level, rounds, status, currentRoundIndex } = req.body;
@@ -136,7 +140,7 @@ router.post('/', verifyToken, async (req, res, next) => {
  * Update a single round's status/score/sessionId and apply progression logic.
  * Body: { roundIndex, status?, score?, sessionId? }
  */
-router.put('/:id/round', verifyToken, async (req, res, next) => {
+router.put('/:id/round', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) {
@@ -199,7 +203,7 @@ router.put('/:id/round', verifyToken, async (req, res, next) => {
  * DELETE /api/loops/:id
  * Delete a specific loop.
  */
-router.delete('/:id', verifyToken, async (req, res, next) => {
+router.delete('/:id', async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) {

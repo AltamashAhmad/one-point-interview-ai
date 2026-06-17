@@ -45,15 +45,24 @@ async function getPlatformSettings() {
 
 // ── Auto-create user profile on first login ──────────────────────────────────
 async function createUserProfile(uid, firebaseUser) {
-  const settings = await getPlatformSettings();
+  // Always fetch fresh settings for new user creation to avoid ghost accounts
+  // due to 5-minute settings cache mismatch with users.js
+  let settings = { allowNewSignups: true, maintenanceMode: false, freeTrialLimit: 3, defaultDailyLimit: 20 };
+  try {
+    const doc = await db.collection('platformSettings').doc('main').get();
+    if (doc.exists) {
+      settings = { ...settings, ...doc.data() };
+    }
+  } catch { /* use defaults */ }
+
   const today    = new Date().toISOString().split('T')[0];
   const now      = admin.firestore.FieldValue.serverTimestamp();
 
   const newProfile = {
     uid,
     email:               firebaseUser.email       || null,
-    displayName:         firebaseUser.displayName || null,
-    photoURL:            firebaseUser.photoURL    || null,
+    displayName:         firebaseUser.name        || firebaseUser.displayName || null,
+    photoURL:            firebaseUser.picture     || firebaseUser.photoURL    || null,
     role:                'user',
     status:              'PENDING',
     isUnlimited:         false,
@@ -71,6 +80,21 @@ async function createUserProfile(uid, firebaseUser) {
     approvedAt:          null,
     approvedBy:          null,
   };
+
+  // If signups are disabled, reject and delete the auth record
+  if (settings.allowNewSignups === false) {
+    try {
+      await admin.auth().deleteUser(uid);
+    } catch (e) {
+      if (e.code !== 'auth/user-not-found') {
+        console.error('[Auth] Failed to delete blocked signup user in middleware:', e.message);
+      }
+    }
+    const err = new Error('New account registrations are currently disabled.');
+    err.status = 403;
+    err.code = 'SIGNUPS_DISABLED';
+    throw err;
+  }
 
   await db.collection('users').doc(uid).set(newProfile);
   // Return a plain object (serverTimestamp not yet resolved)
@@ -109,6 +133,17 @@ async function checkUserAccess(req, res, next) {
         profile = doc.data();
       }
       setCache(uid, profile);
+    }
+
+    // ── 2.5 MAINTENANCE MODE check ────────────────────────────────────────
+    if (profile.role !== 'admin') {
+      const settings = await getPlatformSettings();
+      if (settings.maintenanceMode === true) {
+        return res.status(503).json({
+          code:  'MAINTENANCE_MODE',
+          error: 'System is currently under maintenance. Please try again later.',
+        });
+      }
     }
 
     // ── 3. BANNED check ───────────────────────────────────────────────────
@@ -238,4 +273,52 @@ async function checkUserAccess(req, res, next) {
   }
 }
 
-module.exports = { checkUserAccess, evictCache, getPlatformSettings };
+/**
+ * enforceGlobalStatus — secondary middleware to check BANNED/SUSPENDED/MAINTENANCE_MODE
+ * without incrementing any AI quotas. Used for standard GET/PUT/POST routes.
+ */
+async function enforceGlobalStatus(req, res, next) {
+  try {
+    const uid = req.user.uid;
+    let profile = getCached(uid);
+
+    if (!profile) {
+      const doc = await db.collection('users').doc(uid).get();
+      if (!doc.exists) {
+        profile = await createUserProfile(uid, req.user);
+      } else {
+        profile = doc.data();
+      }
+      setCache(uid, profile);
+    }
+
+    if (profile.role !== 'admin') {
+      const settings = await getPlatformSettings();
+      if (settings.maintenanceMode === true) {
+        return res.status(503).json({ code: 'MAINTENANCE_MODE', error: 'System is under maintenance.' });
+      }
+    }
+
+    if (profile.status === 'BANNED') {
+      return res.status(403).json({ code: 'BANNED', error: 'Account banned.' });
+    }
+
+    if (profile.status === 'SUSPENDED') {
+      const until = profile.suspendedUntil?.toDate ? profile.suspendedUntil.toDate() : new Date(profile.suspendedUntil);
+      if (until && Date.now() >= until.getTime()) {
+        // Auto-lift
+        await db.collection('users').doc(uid).update({ status: 'APPROVED', suspendedUntil: null, suspendNote: null });
+        evictCache(uid);
+      } else {
+        return res.status(403).json({ code: 'SUSPENDED', error: 'Account suspended.' });
+      }
+    }
+
+    req.userProfile = profile;
+    next();
+  } catch (err) {
+    next();
+  }
+}
+
+module.exports = { checkUserAccess, enforceGlobalStatus, evictCache, getPlatformSettings };

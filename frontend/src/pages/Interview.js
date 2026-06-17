@@ -23,7 +23,7 @@ export default function Interview() {
   const loopId       = searchParams.get('loopId');
   const roundIndex   = searchParams.get('roundIndex');
   
-  const { user }     = useAuth();
+  const { user, refreshUserProfile, setWallDismissed } = useAuth();
   const config       = TYPE_CONFIG[type];
   const isTutor      = config?.isTutor || false;
 
@@ -200,6 +200,14 @@ export default function Interview() {
       setMessages(finalMessages);
       saveSession(sessionId, type, selectedModel, finalMessages).catch(console.error);
     } catch (err) {
+      // If we hit a quota limit, tell the AuthContext to re-fetch the profile immediately
+      // This will instantly trigger the AccessWall full-screen overlay from App.js!
+      const code = err.response?.data?.code;
+      if (code === 'FREE_TRIAL_EXHAUSTED' || code === 'DAILY_QUOTA_EXCEEDED') {
+        refreshUserProfile();
+        setWallDismissed(false);
+      }
+
       // Handle both axios response errors (Gemini) and direct SDK errors (Groq)
       const msg = err.response?.data?.error || err.message || 'Failed to get a response. Please try again.';
       setError(msg);
@@ -208,7 +216,7 @@ export default function Interview() {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [input, isLoading, messages, type, userName, selectedModel, sessionId, sessionConfig, buildInitialMessage]);
+  }, [input, isLoading, messages, type, userName, selectedModel, sessionId, sessionConfig, buildInitialMessage, refreshUserProfile, setWallDismissed]);
 
   // ── Auto-send when code is submitted from editor ──────────────────────
   useEffect(() => {

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getPublicPlatformStatus } from '../services/api';
 import ThemeToggle from '../components/ThemeToggle';
 import './Login.css';
 
@@ -12,6 +13,18 @@ export default function Login() {
   const [form, setForm] = useState({ name: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [allowNewSignups, setAllowNewSignups] = useState(true);
+
+  useEffect(() => {
+    getPublicPlatformStatus()
+      .then((status) => {
+        setAllowNewSignups(status.allowNewSignups);
+        if (!status.allowNewSignups) {
+          setMode('signin');
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   const displayError = localError || error;
 
@@ -61,6 +74,7 @@ export default function Login() {
   };
 
   const toggleMode = () => {
+    if (!allowNewSignups && mode === 'signin') return; // Cannot switch to signup
     setMode((m) => (m === 'signin' ? 'signup' : 'signin'));
     setLocalError('');
     clearError();
@@ -77,6 +91,19 @@ export default function Login() {
           <span className="logo-icon">🎯</span>
           <span className="logo-text">OnePoint<span className="logo-ai"> AI</span></span>
         </div>
+
+        {!allowNewSignups && (
+          <div style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-color)', 
+            padding: '12px', borderRadius: '8px', marginBottom: '24px', 
+            display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)'
+          }}>
+            <span style={{ fontSize: '20px' }}>⚠️</span>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+              New account registrations are currently disabled. Only existing users can sign in.
+            </p>
+          </div>
+        )}
 
         <h1 className="login-title">
           {mode === 'signin' ? 'Welcome back' : 'Create your account'}
@@ -164,12 +191,14 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="toggle-mode">
-          {mode === 'signin' ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <button className="toggle-btn" onClick={toggleMode} type="button">
-            {mode === 'signin' ? 'Sign up' : 'Sign in'}
-          </button>
-        </p>
+        {allowNewSignups && (
+          <p className="toggle-mode">
+            {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
+            <button type="button" onClick={toggleMode} className="toggle-btn">
+              {mode === 'signin' ? 'Sign up' : 'Sign in'}
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

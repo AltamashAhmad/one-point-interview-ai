@@ -1,6 +1,6 @@
 // Firebase web app configuration
 // Get these from: Firebase Console → Project Settings → Your apps → Web app
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
 
@@ -13,7 +13,7 @@ const firebaseConfig = {
   appId:             process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // ── Firebase App Check ─────────────────────────────────────────────────────
 //
@@ -32,14 +32,22 @@ const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
 // Use debug token in local development to bypass reCAPTCHA completely
 // This prevents ad-blocker or race condition issues locally.
 if (process.env.NODE_ENV !== 'production') {
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  window.FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.REACT_APP_FIREBASE_APPCHECK_DEBUG_TOKEN || true;
 }
 
 if (siteKey) {
-  appCheckInstance = initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(siteKey),
-    isTokenAutoRefreshEnabled: true,
-  });
+  if (typeof window !== 'undefined') {
+    // Prevent double-initialization during Hot Module Reloading
+    if (!window.__FIREBASE_APP_CHECK__) {
+      appCheckInstance = initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(siteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+      window.__FIREBASE_APP_CHECK__ = appCheckInstance;
+    } else {
+      appCheckInstance = window.__FIREBASE_APP_CHECK__;
+    }
+  }
 } else {
   console.error(
     '[Firebase] REACT_APP_RECAPTCHA_SITE_KEY is not set!\n' +

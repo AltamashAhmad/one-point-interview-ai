@@ -62,7 +62,7 @@ router.get('/users', async (req, res, next) => {
     const { status, search, page = 1 } = req.query;
     const PAGE_SIZE = 20;
 
-    let query = db.collection('users').orderBy('createdAt', 'desc');
+    let query = db.collection('users');
 
     if (status && status !== 'ALL') {
       query = query.where('status', '==', status.toUpperCase());
@@ -71,6 +71,13 @@ router.get('/users', async (req, res, next) => {
     const snap = await query.limit(200).get(); // cap at 200 for now
     let users = [];
     snap.forEach(doc => users.push({ uid: doc.id, ...doc.data() }));
+
+    // Sort in-memory to avoid requiring a Firestore composite index (status + createdAt)
+    users.sort((a, b) => {
+      const tA = a.createdAt?.toMillis?.() || 0;
+      const tB = b.createdAt?.toMillis?.() || 0;
+      return tB - tA; // desc
+    });
 
     // Client-side search (works across email + displayName)
     if (search && search.trim()) {
@@ -95,6 +102,60 @@ router.get('/users/:uid', async (req, res, next) => {
     const doc = await db.collection('users').doc(req.params.uid).get();
     if (!doc.exists) return res.status(404).json({ error: 'User not found' });
     res.json({ user: { uid: doc.id, ...doc.data() } });
+  } catch (err) { next(err); }
+});
+
+router.delete('/users/:uid', async (req, res, next) => {
+  try {
+    const { uid } = req.params;
+    
+    // Safety check - don't let admin delete themselves
+    if (uid === req.user.uid) {
+      return res.status(400).json({ error: 'You cannot delete your own account' });
+    }
+
+    // 1. Delete from Firebase Auth
+    try {
+      await admin.auth().deleteUser(uid);
+    } catch (authErr) {
+      if (authErr.code !== 'auth/user-not-found') {
+        throw authErr;
+      }
+    }
+
+    // 2. Delete the user profile from Firestore
+    await db.collection('users').doc(uid).delete();
+
+    // 3. Clean up other records asynchronously to not block the response
+    const cleanup = async () => {
+      try {
+        const batch = db.batch();
+        let ops = 0;
+
+        const cleanupQuery = async (query) => {
+          const snapshot = await query.get();
+          for (const doc of snapshot.docs) {
+            batch.delete(doc.ref);
+            ops++;
+            if (ops >= 400) {
+              await batch.commit();
+              ops = 0;
+            }
+          }
+        };
+
+        await cleanupQuery(db.collection('interviews').where('userId', '==', uid));
+        await cleanupQuery(db.collection('loops').where('userId', '==', uid));
+        await cleanupQuery(db.collection('accessRequests').where('uid', '==', uid));
+
+        if (ops > 0) await batch.commit();
+      } catch (err) {
+        console.error('[Admin] Cleanup failed for user', uid, err.message);
+      }
+    };
+    cleanup();
+
+    res.json({ success: true, message: 'User deleted permanently' });
   } catch (err) { next(err); }
 });
 
@@ -180,7 +241,7 @@ router.put('/users/:uid/quota', async (req, res, next) => {
       update.dailyLimit = dailyLimit;
     }
 
-    if (Object.keys(update).length === 1) {
+    if (!('isUnlimited' in update) && !('dailyLimit' in update)) {
       return res.status(400).json({ error: 'Provide dailyLimit or isUnlimited' });
     }
 
@@ -216,7 +277,7 @@ router.get('/requests', async (req, res, next) => {
   try {
     const { status = 'pending' } = req.query;
 
-    let query = db.collection('accessRequests').orderBy('createdAt', 'desc');
+    let query = db.collection('accessRequests');
     if (status !== 'all') {
       query = query.where('status', '==', status);
     }
@@ -224,6 +285,18 @@ router.get('/requests', async (req, res, next) => {
     const snap = await query.limit(100).get();
     const requests = [];
     snap.forEach(doc => requests.push({ id: doc.id, ...doc.data() }));
+
+    // Sort in-memory to avoid requiring a Firestore composite index (status + createdAt)
+    requests.sort((a, b) => {
+      const getMs = (t) => {
+        if (!t) return 0;
+        if (typeof t.toMillis === 'function') return t.toMillis();
+        if (t._seconds) return t._seconds * 1000;
+        if (typeof t === 'string' || typeof t === 'number') return new Date(t).getTime();
+        return 0;
+      };
+      return getMs(b.createdAt) - getMs(a.createdAt);
+    });
 
     res.json({ requests });
   } catch (err) { next(err); }

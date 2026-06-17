@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   getAdminStats,
   getAdminUsers,
@@ -10,6 +11,7 @@ import {
   updateUserStatus,
   updateUserQuota,
   resetUserDailyQuota,
+  deleteUserPermanent,
   getAdminSettings,
   updateAdminSettings,
 } from '../services/api';
@@ -18,9 +20,21 @@ import './Admin.css';
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function timeAgo(ts) {
   if (!ts) return '—';
-  const d = ts?.toDate ? ts.toDate() : new Date(ts);
+  let d;
+  if (ts?.toDate) {
+    d = ts.toDate();
+  } else if (ts?._seconds) {
+    d = new Date(ts._seconds * 1000);
+  } else if (ts?.seconds) {
+    d = new Date(ts.seconds * 1000);
+  } else {
+    d = new Date(ts);
+  }
+  
+  if (isNaN(d.getTime())) return '—';
+  
   const s = Math.floor((Date.now() - d) / 1000);
-  if (s < 60)   return `${s}s ago`;
+  if (s < 60)   return `${Math.max(0, s)}s ago`;
   if (s < 3600) return `${Math.floor(s/60)}m ago`;
   if (s < 86400) return `${Math.floor(s/3600)}h ago`;
   return `${Math.floor(s/86400)}d ago`;
@@ -64,8 +78,10 @@ function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, confirmLabe
 // ─── Main Admin Component ────────────────────────────────────────────────────
 export default function Admin() {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate  = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [showFooterMenu, setShowFooterMenu] = useState(false);
 
   const TABS = ['dashboard', 'requests', 'users', 'settings'];
   const tab  = TABS.includes(searchParams.get('tab')) ? searchParams.get('tab') : 'dashboard';
@@ -102,19 +118,62 @@ export default function Admin() {
           ))}
         </nav>
 
-        <div className="admin-sidebar-footer">
+        <div className="admin-sidebar-footer" style={{ position: 'relative' }}>
           <img
             src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName}&background=6366f1&color=fff`}
             alt="admin"
             className="admin-avatar"
           />
           <div className="admin-user-info">
-            <div className="admin-user-name">{user?.displayName?.split(' ')[0]}</div>
+            <div className="admin-user-name" title={user?.displayName}>{user?.displayName}</div>
             <div className="admin-user-role">Administrator</div>
           </div>
-          <button className="btn-ghost admin-back-btn" onClick={() => navigate('/')} title="Back to app">
-            ↩
+          
+          <button 
+            className="btn-ghost admin-back-btn" 
+            onClick={() => setShowFooterMenu(!showFooterMenu)} 
+            title="Menu"
+          >
+            ⋮
           </button>
+
+          {showFooterMenu && (
+            <>
+              <div 
+                style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 90 }} 
+                onClick={() => setShowFooterMenu(false)}
+              />
+              <div className="admin-footer-menu" style={{
+                position: 'absolute',
+                bottom: '100%',
+                right: '10px',
+                marginBottom: '10px',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '6px',
+                minWidth: '160px',
+                zIndex: 100,
+                boxShadow: 'var(--shadow-card)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px'
+              }}>
+                <button 
+                  onClick={() => { toggleTheme(); setShowFooterMenu(false); }}
+                  className="admin-footer-menu-item"
+                >
+                  {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+                </button>
+                <button 
+                  onClick={() => navigate('/')}
+                  className="admin-footer-menu-item"
+                >
+                  ↩ Back to App
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </aside>
 
@@ -350,6 +409,7 @@ function UsersTab() {
   const [actionModal, setAction]  = useState(null);
   const [selectedUser, setSelected] = useState(null);
   const [modalInput, setModalInput] = useState('');
+  const [modalInput2, setModalInput2] = useState('');
   const [working, setWorking]     = useState(false);
   const searchRef                 = useRef(null);
 
@@ -387,7 +447,7 @@ function UsersTab() {
         showToast('User unbanned');
       } else if (actionModal === 'suspend') {
         const days = parseInt(modalInput) || 7;
-        await updateUserStatus(uid, { action: 'suspend', suspendDays: days, reason: '' });
+        await updateUserStatus(uid, { action: 'suspend', suspendDays: days, reason: modalInput2 });
         showToast(`⏸️ User suspended for ${days} days`);
       } else if (actionModal === 'unsuspend') {
         await updateUserStatus(uid, { action: 'unsuspend' });
@@ -406,15 +466,19 @@ function UsersTab() {
       } else if (actionModal === 'reset-quota') {
         await resetUserDailyQuota(uid);
         showToast('Daily quota reset to 0');
+      } else if (actionModal === 'delete') {
+        await deleteUserPermanent(uid);
+        showToast('🗑️ User deleted permanently');
       }
       setAction(null);
       setModalInput('');
+      setModalInput2('');
       load();
     } catch { showToast('Action failed. Try again.', false); }
     finally { setWorking(false); }
-  }, [actionModal, selectedUser, modalInput, load, showToast]);
+  }, [actionModal, selectedUser, modalInput, modalInput2, load, showToast]);
 
-  const openModal = (type, user) => { setAction(type); setSelected(user); setModalInput(''); };
+  const openModal = (type, user) => { setAction(type); setSelected(user); setModalInput(''); setModalInput2(''); };
 
   const STATUS_FILTERS = ['ALL', 'PENDING', 'APPROVED', 'SUSPENDED', 'BANNED'];
 
@@ -496,6 +560,7 @@ function UsersTab() {
                         {u.isUnlimited  && <button className="action-btn action-suspend"   onClick={() => openModal('revoke-unlimited', u)}>⬇ Revoke ∞</button>}
                         <button className="action-btn action-quota" onClick={() => openModal('set-limit', u)}>✏️ Set Limit</button>
                         <button className="action-btn action-reset" onClick={() => openModal('reset-quota', u)}>↺ Reset Quota</button>
+                        <button className="action-btn action-delete" onClick={() => openModal('delete', u)} style={{color: '#f87171'}}>🗑️ Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -584,7 +649,7 @@ function UsersTab() {
       <ConfirmModal
         isOpen={actionModal === 'suspend'}
         title="Suspend User"
-        message={`Suspend ${selectedUser?.displayName || selectedUser?.email}. Enter duration in days.`}
+        message={`Suspend ${selectedUser?.displayName || selectedUser?.email}.`}
         confirmLabel={working ? 'Suspending…' : '⏸ Suspend'}
         danger
         onConfirm={doAction}
@@ -598,6 +663,13 @@ function UsersTab() {
           onChange={e => setModalInput(e.target.value)}
           min={1}
           max={365}
+          style={{ marginBottom: '10px' }}
+        />
+        <input
+          className="modal-input"
+          placeholder="Reason for suspension (optional)…"
+          value={modalInput2}
+          onChange={e => setModalInput2(e.target.value)}
         />
       </ConfirmModal>
       <ConfirmModal
@@ -611,13 +683,21 @@ function UsersTab() {
         <input
           className="modal-input"
           type="number"
-          placeholder="Daily limit (e.g. 50, 100, 500)"
+          placeholder="New daily limit (e.g. 50)"
           value={modalInput}
           onChange={e => setModalInput(e.target.value)}
           min={1}
-          max={10000}
         />
       </ConfirmModal>
+      <ConfirmModal
+        isOpen={actionModal === 'delete'}
+        title="Delete User Permanently"
+        message={`Are you absolutely sure you want to delete ${selectedUser?.displayName || selectedUser?.email}? This will erase all their history and CANNOT be undone.`}
+        confirmLabel={working ? 'Deleting…' : '🗑️ Delete Permanently'}
+        danger
+        onConfirm={doAction}
+        onCancel={() => setAction(null)}
+      />
     </div>
   );
 }
