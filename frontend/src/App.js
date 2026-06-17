@@ -93,7 +93,7 @@ function AdminRoute({ children }) {
  * Admins and APPROVED users pass straight through.
  */
 function AccessGate({ children }) {
-  const { userProfile, profileLoading, isAdmin, isPending, trialUsed, trialLimit } = useAuth();
+  const { profileLoading, isAdmin, isPending, trialUsed, trialLimit } = useAuth();
 
   // Don't gate while profile is loading
   if (profileLoading) return children;

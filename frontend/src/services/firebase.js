@@ -37,7 +37,8 @@ if (debugMode) {
   // On first load, open browser DevTools → Console and look for:
   // "App Check debug token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
   // Copy that token → Firebase Console → App Check → [your app] → Debug tokens → Add token
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+  // eslint-disable-next-line no-restricted-globals
+  window.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 }
 
 if (siteKey) {

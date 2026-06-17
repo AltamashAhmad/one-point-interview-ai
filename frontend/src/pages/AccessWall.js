@@ -11,7 +11,7 @@ const PURPOSE_OPTIONS = [
 ];
 
 export default function AccessWall() {
-  const { user, userProfile, trialUsed, trialLimit, refreshUserProfile } = useAuth();
+  const { user, trialUsed, trialLimit, refreshUserProfile } = useAuth();
 
   const [view, setView]           = useState('wall');   // 'wall' | 'form' | 'pending' | 'denied'
   const [purpose, setPurpose]     = useState('');

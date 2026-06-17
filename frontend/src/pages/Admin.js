@@ -624,7 +624,7 @@ function UsersTab() {
 
 // ─── SETTINGS TAB ────────────────────────────────────────────────────────────
 function SettingsTab() {
-  const [settings, setSettings]   = useState(null);
+  const [, setSettings]        = useState(null);
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
   const [toast, setToast]         = useState(null);
