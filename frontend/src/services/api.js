@@ -4,6 +4,9 @@ import { getToken } from 'firebase/app-check';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
 
+// Apply a default timeout of 10s to all requests so the app never hangs indefinitely
+axios.defaults.timeout = 10000;
+
 /**
  * Get the current user's Firebase ID token for auth headers.
  */

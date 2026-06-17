@@ -72,8 +72,9 @@ export function AuthProvider({ children }) {
         const code = err?.code || '';
         // Ignore the "no redirect pending" non-error
         if (code && code !== 'auth/no-redirect-result') {
-          if (IS_DEV) console.error('[Auth] getRedirectResult error:', code, err.message);
-          setError(getAuthErrorMessage(code, err.message));
+          if (IS_DEV) console.warn('[Auth] getRedirectResult stale error (swallowed):', code, err.message);
+          // Do NOT setError here! It causes the login page to show an error before the user even clicks anything 
+          // because it reads stale failure states from session storage from past redirect attempts.
         }
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -83,11 +84,17 @@ export function AuthProvider({ children }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
-        await fetchUserProfile(firebaseUser);
+        try {
+          await fetchUserProfile(firebaseUser);
+        } catch (e) {
+          console.warn('[Auth] fetchUserProfile threw during auth state change:', e);
+        } finally {
+          setLoading(false);
+        }
       } else {
         setUserProfile(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
     return unsubscribe;
   }, [fetchUserProfile]);

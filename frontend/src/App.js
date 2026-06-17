@@ -81,7 +81,9 @@ function AdminRoute({ children }) {
 
   if (loading || profileLoading) return <PageLoader />;
   if (!user) return <Navigate to="/login" replace />;
-  if (!userProfile) return <PageLoader />;
+  // If userProfile is still null after loading completes, the profile fetch failed (e.g. backend down).
+  // Do not spin forever. Fallback to assuming they are not an admin.
+  if (!userProfile) return <Navigate to="/" replace />;
   if (userProfile.role !== 'admin') return <Navigate to="/" replace />;
 
   return children;
