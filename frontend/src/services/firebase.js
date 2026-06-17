@@ -29,6 +29,12 @@ let appCheckInstance = null;
 
 const siteKey = process.env.REACT_APP_RECAPTCHA_SITE_KEY;
 
+// Use debug token in local development to bypass reCAPTCHA completely
+// This prevents ad-blocker or race condition issues locally.
+if (process.env.NODE_ENV !== 'production') {
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+}
+
 if (siteKey) {
   appCheckInstance = initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider(siteKey),
@@ -45,5 +51,6 @@ if (siteKey) {
 export const appCheck = appCheckInstance;
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 export default app;

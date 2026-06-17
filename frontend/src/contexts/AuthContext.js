@@ -28,15 +28,20 @@ export function AuthProvider({ children }) {
   const [user, setUser]               = useState(null);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading]         = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError]             = useState(null);
-  const profileFetchRef               = useRef(false);
+
+  // Use a module-level set to track fetching users, to survive React 19 StrictMode double-mounts
+  const [profileLoading, setProfileLoading] = useState(false);
+// Module-level lock for strict mode
+const currentlyFetching = new Set();
 
   // ── Fetch user profile from backend ───────────────────────────────────────
   const fetchUserProfile = useCallback(async (firebaseUser) => {
     if (!firebaseUser) { setUserProfile(null); return; }
-    if (profileFetchRef.current) return;
-    profileFetchRef.current = true;
+    
+    const uid = firebaseUser.uid;
+    if (currentlyFetching.has(uid)) return;
+    currentlyFetching.add(uid);
 
     setProfileLoading(true);
     try {
@@ -44,11 +49,10 @@ export function AuthProvider({ children }) {
       setUserProfile(data?.profile ?? data ?? null);
     } catch (err) {
       if (IS_DEV) console.warn('[AuthContext] Profile fetch failed:', err.message);
-      // Non-fatal — the app still works, access control falls back to backend
       setUserProfile(null);
     } finally {
       setProfileLoading(false);
-      profileFetchRef.current = false;
+      currentlyFetching.delete(uid);
     }
   }, []);
 
@@ -58,23 +62,21 @@ export function AuthProvider({ children }) {
 
   // ── Handle redirect sign-in result on page load ───────────────────────────
   // This runs once on mount and captures the result of signInWithRedirect
-  // (which is the automatic fallback when popup is blocked or fails).
   useEffect(() => {
     getRedirectResult(auth)
       .then((result) => {
-        if (result?.user) {
-          if (IS_DEV) console.log('[Auth] Redirect sign-in succeeded for', result.user.email);
-          // onAuthStateChanged will fire too, but we fetch profile immediately
-          setUser(result.user);
+        if (result?.user && IS_DEV) {
+          console.log('[Auth] Redirect sign-in succeeded for', result.user.email);
+          // Don't call setUser here. onAuthStateChanged handles it safely.
         }
       })
       .catch((err) => {
         const code = err?.code || '';
         // Ignore the "no redirect pending" non-error
         if (code && code !== 'auth/no-redirect-result') {
-          if (IS_DEV) console.warn('[Auth] getRedirectResult stale error (swallowed):', code, err.message);
-          // Do NOT setError here! It causes the login page to show an error before the user even clicks anything 
-          // because it reads stale failure states from session storage from past redirect attempts.
+          if (IS_DEV) console.error('[Auth] getRedirectResult error:', code, err.message);
+          // Show real failures to the user!
+          setError(getAuthErrorMessage(code, err.message));
         }
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

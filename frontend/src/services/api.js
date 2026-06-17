@@ -4,8 +4,11 @@ import { getToken } from 'firebase/app-check';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
 
-// Apply a default timeout of 10s to all requests so the app never hangs indefinitely
-axios.defaults.timeout = 10000;
+// Use a dedicated axios instance with a default timeout of 10s to all requests so the app never hangs indefinitely
+const apiClient = axios.create({
+  baseURL: API_BASE,
+  timeout: 10000,
+});
 
 /**
  * Get the current user's Firebase ID token for auth headers.
@@ -56,8 +59,8 @@ async function getHeaders() {
  */
 export async function sendMessage(messages, interviewType, userName = 'there', model, config = {}, signal) {
   const headers = await getHeaders();
-  const { data } = await axios.post(
-    `${API_BASE}/api/chat`,
+  const { data } = await apiClient.post(
+    '/api/chat',
     {
       messages,
       interviewType,
@@ -78,7 +81,7 @@ export async function sendMessage(messages, interviewType, userName = 'there', m
 export async function getCompanyList() {
   try {
     const headers = await getHeaders();
-    const { data } = await axios.get(`${API_BASE}/api/questions/companies`, { headers });
+    const { data } = await apiClient.get('/api/questions/companies', { headers });
     return data.companies;
   } catch (err) {
     console.warn('Could not load company list:', err.message);
@@ -90,7 +93,7 @@ export async function getCompanyList() {
  * Fetch available interview types from the backend.
  */
 export async function getInterviewTypes() {
-  const { data } = await axios.get(`${API_BASE}/api/chat/types`);
+  const { data } = await apiClient.get('/api/chat/types');
   return data;
 }
 
@@ -99,7 +102,7 @@ export async function getInterviewTypes() {
  */
 export async function getHistory() {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/history`, { headers });
+  const { data } = await apiClient.get('/api/history', { headers });
   return data.interviews;
 }
 
@@ -109,7 +112,7 @@ export async function getHistory() {
  */
 export async function getHistoryById(id) {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/history/${id}`, { headers });
+  const { data } = await apiClient.get(`/api/history/${id}`, { headers });
   return data.interview;
 }
 
@@ -123,8 +126,8 @@ export async function getHistoryById(id) {
  */
 export async function saveSession(sessionId, interviewType, modelUsed, messages, meta = {}) {
   const headers = await getHeaders();
-  const { data } = await axios.post(
-    `${API_BASE}/api/history`,
+  const { data } = await apiClient.post(
+    '/api/history',
     { sessionId, interviewType, modelUsed, messages, ...meta },
     { headers }
   );
@@ -137,7 +140,7 @@ export async function saveSession(sessionId, interviewType, modelUsed, messages,
  */
 export async function deleteSession(id) {
   const headers = await getHeaders();
-  const { data } = await axios.delete(`${API_BASE}/api/history/${id}`, { headers });
+  const { data } = await apiClient.delete(`/api/history/${id}`, { headers });
   return data;
 }
 
@@ -146,7 +149,7 @@ export async function deleteSession(id) {
  */
 export async function generateScorecard(sessionId, model) {
   const headers = await getHeaders();
-  const { data } = await axios.post(`${API_BASE}/api/history/${sessionId}/scorecard`, { model }, { headers });
+  const { data } = await apiClient.post(`/api/history/${sessionId}/scorecard`, { model }, { headers });
   return data.scorecard;
 }
 
@@ -154,7 +157,7 @@ export async function generateScorecard(sessionId, model) {
  * Check if the backend is reachable.
  */
 export async function healthCheck() {
-  const { data } = await axios.get(`${API_BASE}/api/health`);
+  const { data } = await apiClient.get('/api/health');
   return data;
 }
 
@@ -165,7 +168,7 @@ export async function healthCheck() {
  */
 export async function getLoops() {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/loops`, { headers });
+  const { data } = await apiClient.get('/api/loops', { headers });
   return data.loops;
 }
 
@@ -175,7 +178,7 @@ export async function getLoops() {
  */
 export async function getLoop(id) {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/loops/${id}`, { headers });
+  const { data } = await apiClient.get(`/api/loops/${id}`, { headers });
   return data.loop;
 }
 
@@ -185,7 +188,7 @@ export async function getLoop(id) {
  */
 export async function createLoop(payload) {
   const headers = await getHeaders();
-  const { data } = await axios.post(`${API_BASE}/api/loops`, payload, { headers });
+  const { data } = await apiClient.post('/api/loops', payload, { headers });
   return data.loop;
 }
 
@@ -196,7 +199,7 @@ export async function createLoop(payload) {
  */
 export async function updateLoopRound(loopId, payload) {
   const headers = await getHeaders();
-  const { data } = await axios.put(`${API_BASE}/api/loops/${loopId}/round`, payload, { headers });
+  const { data } = await apiClient.put(`/api/loops/${loopId}/round`, payload, { headers });
   return data.loop;
 }
 
@@ -206,7 +209,7 @@ export async function updateLoopRound(loopId, payload) {
  */
 export async function deleteLoop(id) {
   const headers = await getHeaders();
-  const { data } = await axios.delete(`${API_BASE}/api/loops/${id}`, { headers });
+  const { data } = await apiClient.delete(`/api/loops/${id}`, { headers });
   return data;
 }
 
@@ -218,7 +221,7 @@ export async function deleteLoop(id) {
  */
 export async function getMyProfile() {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/users/me`, { headers });
+  const { data } = await apiClient.get('/api/users/me', { headers });
   return data.profile;
 }
 
@@ -228,7 +231,7 @@ export async function getMyProfile() {
  */
 export async function submitAccessRequest(payload) {
   const headers = await getHeaders();
-  const { data } = await axios.post(`${API_BASE}/api/access/request`, payload, { headers });
+  const { data } = await apiClient.post('/api/access/request', payload, { headers });
   return data;
 }
 
@@ -238,7 +241,7 @@ export async function submitAccessRequest(payload) {
  */
 export async function getAccessRequestStatus() {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/access/status`, { headers });
+  const { data } = await apiClient.get('/api/access/status', { headers });
   return data;
 }
 
@@ -249,7 +252,7 @@ export async function getAccessRequestStatus() {
  */
 export async function getAdminStats() {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/admin/stats`, { headers });
+  const { data } = await apiClient.get('/api/admin/stats', { headers });
   return data;
 }
 
@@ -258,7 +261,7 @@ export async function getAdminStats() {
  */
 export async function getAdminUsers(params = {}) {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/admin/users`, { headers, params });
+  const { data } = await apiClient.get('/api/admin/users', { headers, params });
   return data;
 }
 
@@ -267,7 +270,7 @@ export async function getAdminUsers(params = {}) {
  */
 export async function getAdminUser(uid) {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/admin/users/${uid}`, { headers });
+  const { data } = await apiClient.get(`/api/admin/users/${uid}`, { headers });
   return data;
 }
 
@@ -278,7 +281,7 @@ export async function getAdminUser(uid) {
  */
 export async function updateUserStatus(uid, payload) {
   const headers = await getHeaders();
-  const { data } = await axios.put(`${API_BASE}/api/admin/users/${uid}/status`, payload, { headers });
+  const { data } = await apiClient.put(`/api/admin/users/${uid}/status`, payload, { headers });
   return data;
 }
 
@@ -289,7 +292,7 @@ export async function updateUserStatus(uid, payload) {
  */
 export async function updateUserQuota(uid, payload) {
   const headers = await getHeaders();
-  const { data } = await axios.put(`${API_BASE}/api/admin/users/${uid}/quota`, payload, { headers });
+  const { data } = await apiClient.put(`/api/admin/users/${uid}/quota`, payload, { headers });
   return data;
 }
 
@@ -298,7 +301,7 @@ export async function updateUserQuota(uid, payload) {
  */
 export async function resetUserDailyQuota(uid) {
   const headers = await getHeaders();
-  const { data } = await axios.post(`${API_BASE}/api/admin/users/${uid}/reset-quota`, {}, { headers });
+  const { data } = await apiClient.post(`/api/admin/users/${uid}/reset-quota`, {}, { headers });
   return data;
 }
 
@@ -307,7 +310,7 @@ export async function resetUserDailyQuota(uid) {
  */
 export async function getAccessRequests(params = {}) {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/admin/requests`, { headers, params });
+  const { data } = await apiClient.get('/api/admin/requests', { headers, params });
   return data;
 }
 
@@ -316,7 +319,7 @@ export async function getAccessRequests(params = {}) {
  */
 export async function approveAccessRequest(requestId) {
   const headers = await getHeaders();
-  const { data } = await axios.put(`${API_BASE}/api/admin/requests/${requestId}/approve`, {}, { headers });
+  const { data } = await apiClient.put(`/api/admin/requests/${requestId}/approve`, {}, { headers });
   return data;
 }
 
@@ -327,7 +330,7 @@ export async function approveAccessRequest(requestId) {
  */
 export async function denyAccessRequest(requestId, payload = {}) {
   const headers = await getHeaders();
-  const { data } = await axios.put(`${API_BASE}/api/admin/requests/${requestId}/deny`, payload, { headers });
+  const { data } = await apiClient.put(`/api/admin/requests/${requestId}/deny`, payload, { headers });
   return data;
 }
 
@@ -336,7 +339,7 @@ export async function denyAccessRequest(requestId, payload = {}) {
  */
 export async function getAdminUsage(params = { days: 30 }) {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/admin/usage`, { headers, params });
+  const { data } = await apiClient.get('/api/admin/usage', { headers, params });
   return data;
 }
 
@@ -345,7 +348,7 @@ export async function getAdminUsage(params = { days: 30 }) {
  */
 export async function getAdminSettings() {
   const headers = await getHeaders();
-  const { data } = await axios.get(`${API_BASE}/api/admin/settings`, { headers });
+  const { data } = await apiClient.get('/api/admin/settings', { headers });
   return data.settings;
 }
 
@@ -355,6 +358,6 @@ export async function getAdminSettings() {
  */
 export async function updateAdminSettings(payload) {
   const headers = await getHeaders();
-  const { data } = await axios.put(`${API_BASE}/api/admin/settings`, payload, { headers });
+  const { data } = await apiClient.put('/api/admin/settings', payload, { headers });
   return data;
 }

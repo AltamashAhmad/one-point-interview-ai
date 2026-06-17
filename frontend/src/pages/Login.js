@@ -22,8 +22,13 @@ export default function Login() {
     try {
       const result = await signInWithGoogle();
       // result is null when signInWithRedirect was triggered (page navigates away)
-      if (result) navigate('/');
-      // else: redirect is in progress, keep loading=true until page reloads
+      if (result) {
+        navigate('/');
+      } else {
+        // Redirect is in progress. Reset loading after 3 seconds to fix BFCache issues 
+        // if the user presses the browser 'Back' button later.
+        setTimeout(() => setLoading(false), 3000);
+      }
     } catch {
       // error set by context
       setLoading(false);
