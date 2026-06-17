@@ -48,11 +48,17 @@ if (siteKey) {
     isTokenAutoRefreshEnabled: true,
   });
 } else if (debugMode) {
-  // Local dev: App Check still initialises but uses the debug token printed to console
-  appCheckInstance = initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider('debug-placeholder'),
-    isTokenAutoRefreshEnabled: true,
-  });
+  // Local dev: App Check uses a real debug token from the console.
+  // The debug token flag is set above via window.FIREBASE_APPCHECK_DEBUG_TOKEN = true.
+  // Firebase will print the auto-generated debug token to the console on first load.
+  // Copy it → Firebase Console → App Check → [your web app] → Debug tokens → Add token.
+  // NOTE: We do NOT initialize App Check here with a fake site key — that would break
+  // Firebase Auth. The backend has SKIP_APP_CHECK=true for local dev.
+  console.info(
+    '[Firebase] App Check debug mode active.\n' +
+    'Check the browser console for your debug token (look for "App Check debug token:").\n' +
+    'Add it to Firebase Console → App Check → your web app → Debug tokens.'
+  );
 } else {
   console.warn(
     '[Firebase] App Check not configured.\n' +
