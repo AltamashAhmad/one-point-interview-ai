@@ -12,6 +12,8 @@ const History       = React.lazy(() => import('./pages/History'));
 const HistoryDetail = React.lazy(() => import('./pages/HistoryDetail'));
 const Scorecard     = React.lazy(() => import('./pages/Scorecard'));
 const LoopDashboard = React.lazy(() => import('./pages/LoopDashboard'));
+const AccessWall    = React.lazy(() => import('./pages/AccessWall'));
+const Admin         = React.lazy(() => import('./pages/Admin'));
 
 // ── Loading fallback for Suspense ──────────────────────────────────────────
 function PageLoader() {
@@ -73,6 +75,48 @@ function ProtectedRoute({ children }) {
   return user ? children : <Navigate to="/login" replace />;
 }
 
+// Admin-only route wrapper — non-admins redirected to home
+function AdminRoute({ children }) {
+  const { user, loading, userProfile, profileLoading } = useAuth();
+
+  if (loading || profileLoading) return <PageLoader />;
+  if (!user) return <Navigate to="/login" replace />;
+  if (!userProfile) return <PageLoader />;
+  if (userProfile.role !== 'admin') return <Navigate to="/" replace />;
+
+  return children;
+}
+
+/**
+ * AccessGate — wraps all protected pages.
+ * If a PENDING user's free trial is exhausted, renders the AccessWall overlay.
+ * Admins and APPROVED users pass straight through.
+ */
+function AccessGate({ children }) {
+  const { userProfile, profileLoading, isAdmin, isPending, trialUsed, trialLimit } = useAuth();
+
+  // Don't gate while profile is loading
+  if (profileLoading) return children;
+
+  // Admins always pass through
+  if (isAdmin) return children;
+
+  // PENDING user with exhausted trial → show the wall as an overlay
+  const exhausted = isPending && (trialUsed ?? 0) >= (trialLimit ?? 3);
+  if (exhausted) {
+    return (
+      <>
+        {children}
+        <React.Suspense fallback={null}>
+          <AccessWall />
+        </React.Suspense>
+      </>
+    );
+  }
+
+  return children;
+}
+
 // Public route — redirect to home if already logged in
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
@@ -92,7 +136,9 @@ function AppRoutes() {
           path="/"
           element={
             <ProtectedRoute>
-              <Landing />
+              <AccessGate>
+                <Landing />
+              </AccessGate>
             </ProtectedRoute>
           }
         />
@@ -108,7 +154,9 @@ function AppRoutes() {
           path="/interview/:type"
           element={
             <ProtectedRoute>
-              <Interview />
+              <AccessGate>
+                <Interview />
+              </AccessGate>
             </ProtectedRoute>
           }
         />
@@ -116,7 +164,9 @@ function AppRoutes() {
           path="/history"
           element={
             <ProtectedRoute>
-              <History />
+              <AccessGate>
+                <History />
+              </AccessGate>
             </ProtectedRoute>
           }
         />
@@ -124,7 +174,9 @@ function AppRoutes() {
           path="/history/:id"
           element={
             <ProtectedRoute>
-              <HistoryDetail />
+              <AccessGate>
+                <HistoryDetail />
+              </AccessGate>
             </ProtectedRoute>
           }
         />
@@ -132,7 +184,9 @@ function AppRoutes() {
           path="/scorecard/:id"
           element={
             <ProtectedRoute>
-              <Scorecard />
+              <AccessGate>
+                <Scorecard />
+              </AccessGate>
             </ProtectedRoute>
           }
         />
@@ -140,8 +194,18 @@ function AppRoutes() {
           path="/loop/:id"
           element={
             <ProtectedRoute>
-              <LoopDashboard />
+              <AccessGate>
+                <LoopDashboard />
+              </AccessGate>
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
