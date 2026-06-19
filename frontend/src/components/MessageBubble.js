@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import MermaidDiagram from './MermaidDiagram';
 import './MessageBubble.css';
 
 /* ── Copy-to-clipboard button for code blocks ─────────────────────────── */
@@ -33,6 +34,10 @@ const markdownComponents = {
 
     // Block code — has a language-* class from the markdown fence
     if (match) {
+      if (language === 'mermaid') {
+        return <MermaidDiagram chart={codeString} />;
+      }
+
       return (
         <div className="code-block-wrapper">
           <div className="code-block-header">

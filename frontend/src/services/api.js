@@ -69,6 +69,7 @@ export async function sendMessage(messages, interviewType, userName = 'there', m
       company:    config.company    || '',
       difficulty: config.difficulty || 'ANY',
       language:   config.language   || 'any language',
+      questionSeed: config.questionSeed || null,
     },
     { headers, ...(signal && { signal }) }
   );
@@ -151,6 +152,24 @@ export async function generateScorecard(sessionId, model) {
   const headers = await getHeaders();
   const { data } = await apiClient.post(`/api/history/${sessionId}/scorecard`, { model }, { headers });
   return data.scorecard;
+}
+
+/**
+ * Generate AI revision notes for an interview session.
+ */
+export async function generateNotes(sessionId, model) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.post(`${API_BASE}/api/history/${sessionId}/notes`, { model }, { headers });
+  return data.notes;
+}
+
+/**
+ * Update user-edited revision notes.
+ */
+export async function updateNotes(sessionId, notes) {
+  const headers = await getAuthHeader();
+  const { data } = await axios.put(`${API_BASE}/api/history/${sessionId}/notes`, { notes }, { headers });
+  return data.notes;
 }
 
 /**

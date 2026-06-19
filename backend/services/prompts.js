@@ -44,6 +44,10 @@ Output: [output here]
 - Use **bold** for important terms
 - Put ALL code in triple-backtick blocks, never scattered inline
 - Never wrap single letters or variable names in backticks inside sentences
+
+VISUAL DRY RUNS (MERMAID.JS):
+- If the user explicitly asks for a "dry run", to "visualize", or to "draw", you MUST use Mermaid.js syntax inside a \`\`\`mermaid block.
+- For arrays and pointers, use flowcharts (graph LR or TD). For trees, use graph TD. For System Design architectures, use graph TD or architecture.
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -453,7 +457,14 @@ function getSystemPrompt(interviewType, userName = 'there', config = {}) {
   let   problemBlock  = '';
 
   if (questionData) {
-    if (interviewType === 'dsa' || interviewType === 'tutorDsa') {
+    if (questionData.isSeed) {
+      problemBlock = `---
+ASSIGNED PROBLEM (present this to the candidate):
+**${questionData.title}**
+
+The candidate has specifically selected to practice the problem "${questionData.title}". You MUST use this exact problem for the interview. Present the standard description, examples, and constraints for this problem.
+---`;
+    } else if (interviewType === 'dsa' || interviewType === 'tutorDsa') {
       problemBlock = buildDSAProblemBlock(questionData.question, safeLanguage);
     } else if (interviewType === 'systemDesign' || interviewType === 'tutorSystemDesign') {
       problemBlock = buildSDProblemBlock(questionData.problem, safeLanguage);

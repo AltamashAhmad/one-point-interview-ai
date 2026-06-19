@@ -305,4 +305,106 @@ ${transcript}`;
   }
 });
 
+/**
+ * POST /api/history/:id/notes
+ * Generates AI revision notes based on the interview transcript.
+ */
+router.post('/:id/notes', verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    if (!isValidDocId(req.params.id)) return res.status(400).json({ error: 'Invalid session ID.' });
+    const docRef = db.collection('interviews').doc(req.params.id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) return res.status(404).json({ error: 'Interview not found' });
+    const data = doc.data();
+    if (data.userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+    if (data.notes) {
+      return res.json({ notes: data.notes });
+    }
+
+    const messages = data.messages || [];
+    if (messages.length === 0) return res.status(400).json({ error: 'No transcript available to generate notes' });
+
+    const transcript = messages
+      .filter(m => m.role !== 'system')
+      .map(m => `${m.role.toUpperCase()}: ${m.content}`)
+      .join('\n\n');
+
+    const systemPrompt = `You are an expert Computer Science tutor.
+Your task is to analyze the following interview transcript and generate comprehensive, personalized revision notes for the candidate in Markdown format.
+
+The notes MUST include the following sections exactly:
+### 1. Intuition & Approach
+(Explain how to identify the pattern and approach the problem based on the discussion)
+
+### 2. Brute Force
+(Describe the naive approach and its Time/Space complexity)
+
+### 3. Optimization Path
+(Explain the thought process to move from brute force to optimal)
+
+### 4. Optimal Solution
+(Provide the final code and its complexity)
+
+Format the output strictly as a Markdown document. Do not wrap the whole response in a JSON object.
+
+Transcript:
+${transcript}`;
+
+    const aiMessages = [{ role: 'user', content: 'Generate my personalized revision notes in Markdown.' }];
+    
+    // We can use any available model, falling back to gemini
+    const modelUsed = req.body?.model || data.modelUsed || 'gemini-3.1-pro-preview';
+    let responseText = '';
+    
+    if (isGroqModel(modelUsed)) {
+      responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);
+    } else {
+      responseText = await generateInterviewResponse(aiMessages, systemPrompt, modelUsed);
+    }
+
+    const notes = responseText.trim();
+
+    await docRef.update({
+      notes,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ notes });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * PUT /api/history/:id/notes
+ * Saves user-edited revision notes.
+ */
+router.put('/:id/notes', verifyToken, async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    const { notes } = req.body;
+    
+    if (typeof notes !== 'string') return res.status(400).json({ error: 'Notes must be a string' });
+    if (!isValidDocId(req.params.id)) return res.status(400).json({ error: 'Invalid session ID.' });
+    
+    const docRef = db.collection('interviews').doc(req.params.id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) return res.status(404).json({ error: 'Interview not found' });
+    if (doc.data().userId !== userId) return res.status(403).json({ error: 'Unauthorized' });
+
+    await docRef.update({
+      notes,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true, notes });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

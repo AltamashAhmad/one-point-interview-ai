@@ -71,10 +71,10 @@ export const AVAILABLE_MODELS = [
     icon: '⚡',
   },
   {
-    id: 'qwen/qwen3-32b',
-    name: 'Qwen 3 32B',
+    id: 'qwen-2.5-coder-32b',
+    name: 'Qwen 2.5 Coder',
     provider: 'groq',
-    badge: 'Coding Alternative',
+    badge: 'New Coder',
     badgeColor: '#10b981',
     rpm: 30,
     rpd: 1000,
@@ -155,6 +155,43 @@ export const AVAILABLE_MODELS = [
     contextWindow: '1M tokens',
     description: 'Google · Fastest Gemini API',
     icon: '🚀',
+  },
+  {
+    id: 'gemini-3.1-flash-lite',
+    name: 'Gemini 3.1 Flash Lite',
+    provider: 'gemini',
+    badge: 'Newest',
+    badgeColor: '#3b82f6',
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: '1M tokens',
+    description: 'Google · Latest generation',
+    icon: '🔬',
+  },
+  // ── OpenRouter Models ──────────────────────────────────────────
+  {
+    id: 'deepseek/deepseek-r1',
+    name: 'DeepSeek R1',
+    provider: 'openrouter',
+    badge: 'Best for Logic',
+    badgeColor: '#8b5cf6',
+    rpm: 'N/A',
+    rpd: 'N/A',
+    contextWindow: '128K',
+    description: 'OpenRouter · DeepSeek Reasoning Model',
+    icon: '🧠',
+  },
+  {
+    id: 'deepseek/deepseek-chat',
+    name: 'DeepSeek V3 Chat',
+    provider: 'openrouter',
+    badge: 'Reasoning',
+    badgeColor: '#8b5cf6',
+    rpm: 'N/A',
+    rpd: 'N/A',
+    contextWindow: '128K',
+    description: 'OpenRouter · DeepSeek General Chat',
+    icon: '🐋',
   },
 ];
 
@@ -353,6 +390,54 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
                     <div className="model-stat">
                       <span className="stat-val">{model.rpd}</span>
                       <span className="stat-label">RPD</span>
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <svg className="model-check" width="14" height="14" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* OpenRouter section */}
+          <div className="model-provider-group">
+            <div className="model-provider-label">
+              <span className="provider-dot" style={{ background: '#3b82f6' }} />
+              OpenRouter
+            </div>
+            {AVAILABLE_MODELS.filter(m => m.provider === 'openrouter').map((model) => {
+              const isSelected = model.id === selectedModel;
+              return (
+                <button
+                  key={model.id}
+                  className={`model-option ${isSelected ? 'model-option--selected' : ''}`}
+                  onClick={() => handleSelect(model.id)}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <div className="model-option-left">
+                    <span className="model-option-icon">{model.icon}</span>
+                    <div className="model-option-info">
+                      <div className="model-option-name">
+                        {model.name}
+                        <span
+                          className="model-badge"
+                          style={{ background: `${model.badgeColor}22`, color: model.badgeColor, border: `1px solid ${model.badgeColor}44` }}
+                        >
+                          {model.badge}
+                        </span>
+                      </div>
+                      <div className="model-option-desc">{model.description}</div>
+                    </div>
+                  </div>
+                  <div className="model-option-stats">
+                    <div className="model-stat">
+                      <span className="stat-val">{model.rpm}</span>
+                      <span className="stat-label">RPM</span>
                     </div>
                   </div>
                   {isSelected && (

@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { sendMessage, saveSession, generateScorecard } from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import TypingIndicator from '../components/TypingIndicator';
-import ModelSelector, { AVAILABLE_MODELS } from '../components/ModelSelector';
+import ModelSelector, { AVAILABLE_MODELS, DEFAULT_MODEL } from '../components/ModelSelector';
 import InterviewSetup  from '../components/InterviewSetup';
 import { useVoiceToText }     from '../hooks/useVoiceToText';
 import { useSessionPersist }  from '../hooks/useSessionPersist';
@@ -174,6 +174,34 @@ export default function Interview() {
     setSetupPhase(false);
     startInterview(cfg);
   }, [startInterview]);
+
+  // ── Auto-start from Roadmap ───────────────────────────────────────────
+  useEffect(() => {
+    if (setupPhase && location.state?.autoStart && location.state?.questionSeed) {
+      // Clear autoStart from history state to prevent infinite loops on refresh
+      window.history.replaceState({}, document.title);
+      
+      const cfg = {
+        model: DEFAULT_MODEL.id,
+        scorecardModel: isTutor ? null : 'gemini-3.1-pro-preview',
+        difficulty: 'ANY',
+        language: 'Python',
+        company: '',
+        questionSeed: location.state.questionSeed
+      };
+      
+      setSetupPhase(false);
+      startInterview(cfg);
+    }
+  }, [setupPhase, location.state, isTutor, startInterview]);
+
+  // ── Session Deadlock Fix ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!setupPhase && messages.length === 0 && !isLoading && !error) {
+      console.warn("Deadlock detected: Session started but no messages and no loading state. Resetting.");
+      setSetupPhase(true);
+    }
+  }, [setupPhase, messages.length, isLoading, error]);
 
   // ── Handle Submitting Code from Editor ────────────────────────────────
   const handleCodeSubmit = useCallback((code, lang) => {
