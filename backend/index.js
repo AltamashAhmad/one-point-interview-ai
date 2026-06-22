@@ -53,30 +53,6 @@ const apiLimiter = rateLimit({
   }
 });
 
-// Per-user limiter on the expensive AI endpoint (prevents one account from
-// consuming the entire IP quota behind a shared network / VPN)
-const chatLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30,                  // Reduced back to 30 AI requests per 15 min
-  standardHeaders: true,
-  legacyHeaders: false,
-  // Key by Firebase UID attached by verifyToken (falls back to IP before auth)
-  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
-  skip: (req) => {
-    if (!req.user) return true; // auth middleware handles unauthenticated users first
-    
-    // Big Company Strategy 2: Admin accounts completely bypass rate limits
-    if (req.user.uid === process.env.ADMIN_UID) return true;
-    
-    // Big Company Strategy 1: Bypass for local development
-    const isLocalhost = req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === '::ffff:127.0.0.1';
-    if (isLocalhost) return true;
-    
-    return false;
-  },
-  message: { error: 'Too many chat requests. Please wait 15 minutes before sending more.' },
-});
-
 app.use('/api/', apiLimiter);
 
 // ── App Check — must come from the real frontend app ──────────
@@ -87,7 +63,7 @@ app.use('/api/', (req, res, next) => {
 });
 
 // ── Routes ─────────────────────────────────────────────────────
-app.use('/api/chat',      chatLimiter, chatRouter);
+app.use('/api/chat',      chatRouter);
 // Public routes (no auth needed)
 app.use('/api/public', publicRouter);
 

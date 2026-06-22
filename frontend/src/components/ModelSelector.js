@@ -3,158 +3,158 @@ import './ModelSelector.css';
 
 /**
  * All available models with metadata.
- * Ordered: Best choice first per provider. Updated May 2026.
- * provider: 'gemini' | 'groq'
+ * Ordered: Best choice first per provider. Updated June 2026.
+ * provider: 'gemini' | 'groq' | 'openrouter'
+ * tier: 1 (Flagship), 2 (Fast Backup), 3 (Heavy Backup)
  */
 export const AVAILABLE_MODELS = [
-  // ── OpenRouter Models (Massive Capacity) ───────────────────
+  // ── TIER 1: The Flagships ───────────────────
   {
-    id: 'openai/gpt-oss-120b:free',
-    name: 'GPT OSS 120B (Free)',
-    provider: 'openrouter',
-    badge: 'Best for DSA',
-    badgeColor: '#2563eb',
-    rpm: 'Unlimited',
-    rpd: 'Unlimited',
-    contextWindow: '131K',
-    description: 'OpenAI OSS · Excellent for Data Structures & Algorithms',
-    icon: '💻',
+    id: 'gemini-3.5-flash',
+    name: 'Gemini 3.5 Flash',
+    provider: 'gemini',
+    tier: 1,
+    badge: 'Best for Coding',
+    badgeColor: '#8b5cf6',
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: '1M tokens',
+    description: 'Google · Fastest new 2026 generation for coding tasks',
+    icon: '🚀',
   },
   {
-    id: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
-    name: 'NVIDIA Nemotron 3',
-    provider: 'openrouter',
+    id: 'gemini-3.1-pro-preview',
+    name: 'Gemini 3.1 Pro',
+    provider: 'gemini',
+    tier: 1,
     badge: 'Best for System Design',
-    badgeColor: '#4f46e5',
-    rpm: 'Unlimited',
-    rpd: 'Unlimited',
-    contextWindow: '256K',
-    description: 'NVIDIA · Advanced architecture and reasoning engine',
-    icon: '🧠',
-  },
-
-  // ── Groq Models (Fastest) ──────────────────
-  {
-    id: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    name: 'Llama 4 Scout',
-    provider: 'groq',
-    badge: 'Fast',
-    badgeColor: '#f97316',
-    rpm: 30,
-    rpd: 1000,
-    contextWindow: '500K',
-    description: 'Groq · Meta Llama 4 · fast',
-    icon: '🦙',
+    badgeColor: '#ec4899',
+    rpm: 10,
+    rpd: 50,
+    contextWindow: '2M tokens',
+    description: 'Google · Absolute best reasoning for complex architectures',
+    icon: '🔬',
   },
   {
     id: 'llama-3.3-70b-versatile',
     name: 'Llama 3.3 70B',
     provider: 'groq',
-    badge: 'Best Free Overall',
+    tier: 1,
+    badge: 'Most Human-Like',
     badgeColor: '#f97316',
     rpm: 30,
     rpd: 1000,
     contextWindow: '100K',
-    description: 'Groq · Fastest and highly reliable general model',
+    description: 'Groq · Massive open-weights model, lightning fast',
     icon: '🔥',
-  },
-  {
-    id: 'llama-3.1-8b-instant',
-    name: 'Llama 3.1 8B',
-    provider: 'groq',
-    badge: 'Highest Quota',
-    badgeColor: '#10b981',
-    rpm: 30,
-    rpd: 14400,
-    contextWindow: '128K',
-    description: 'Groq · Ultra fast · highest quota',
-    icon: '⚡',
   },
   {
     id: 'qwen/qwen3-32b',
     name: 'Qwen 3 32B',
     provider: 'groq',
-    badge: 'Coding Alternative',
+    tier: 1,
+    badge: 'Flawless DSA',
     badgeColor: '#10b981',
     rpm: 30,
     rpd: 1000,
     contextWindow: '128K',
-    description: 'Groq · Fast & excellent coding',
+    description: 'Groq · Trained exclusively on code and algorithms',
     icon: '💻',
   },
 
-  // ── Gemini Models ──────────────────────────────────────────────
+  // ── TIER 2: Fast Backups ──────────────────
   {
-    id: 'gemini-3.1-pro-preview',
-    name: 'Gemini 3.1 Pro',
-    provider: 'gemini',
-    badge: 'Most Powerful',
-    badgeColor: '#ec4899',
-    rpm: 10,
-    rpd: 50,
-    contextWindow: '2M tokens',
-    description: 'Google · Absolute best reasoning for complex problems',
-    icon: '🔬',
+    id: 'meta-llama/llama-4-scout-17b-16e-instruct',
+    name: 'Llama 4 Scout',
+    provider: 'groq',
+    tier: 2,
+    badge: 'Newest Gen',
+    badgeColor: '#f97316',
+    rpm: 30,
+    rpd: 1000,
+    contextWindow: '500K',
+    description: 'Groq · Meta\'s newest lightweight Llama 4',
+    icon: '🦙',
   },
   {
-    id: 'gemini-3.5-flash',
-    name: 'Gemini 3.5 Flash',
-    provider: 'gemini',
-    badge: 'Recommended Gemini',
-    badgeColor: '#8b5cf6',
-    rpm: 15,
-    rpd: 1500,
-    contextWindow: '1M tokens',
-    description: 'Google · Fastest new generation',
-    icon: '🚀',
-  },
-  {
-    id: 'gemini-2.5-pro',
-    name: 'Gemini 2.5 Pro',
-    provider: 'gemini',
-    badge: 'Pro Tier',
-    badgeColor: '#3b82f6',
-    rpm: 15,
-    rpd: 50,
-    contextWindow: '2M tokens',
-    description: 'Google · Heavy logic & coding',
-    icon: '🧠',
-  },
-  {
-    id: 'gemma-4-31b-it',
-    name: 'Gemma 4 31B',
-    provider: 'gemini',
-    badge: 'Open Weight',
+    id: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B',
+    provider: 'groq',
+    tier: 2,
+    badge: 'Highest Quota',
     badgeColor: '#10b981',
-    rpm: 15,
-    rpd: 1500,
+    rpm: 30,
+    rpd: 14400,
     contextWindow: '128K',
-    description: 'Google · OSS Gemma 4',
-    icon: '🌍',
+    description: 'Groq · Ultra fast · highest quota backup',
+    icon: '⚡',
+  },
+  {
+    id: 'qwen/qwen3.6-27b',
+    name: 'Qwen 3.6 27B',
+    provider: 'groq',
+    tier: 2,
+    badge: 'Code Backup',
+    badgeColor: '#10b981',
+    rpm: 30,
+    rpd: 1000,
+    contextWindow: '128K',
+    description: 'Groq · Solid alternative for DSA',
+    icon: '⌨️',
   },
   {
     id: 'gemini-2.5-flash',
     name: 'Gemini 2.5 Flash',
     provider: 'gemini',
-    badge: 'Stable',
+    tier: 2,
+    badge: 'Stable Backup',
     badgeColor: '#8b5cf6',
     rpm: 10,
     rpd: 1500,
     contextWindow: '1M tokens',
-    description: 'Google · Best stable quality',
+    description: 'Google · Extremely stable older generation',
     icon: '✨',
   },
+
+  // ── TIER 3: Heavyweight Backups ──────────────────────────────────────────────
   {
-    id: 'gemini-2.5-flash-lite',
-    name: 'Gemini 2.5 Flash Lite',
+    id: 'openai/gpt-oss-120b',
+    name: 'GPT OSS 120B',
+    provider: 'groq',
+    tier: 3,
+    badge: 'Massive Size',
+    badgeColor: '#2563eb',
+    rpm: 'Unlimited',
+    rpd: 'Unlimited',
+    contextWindow: '131K',
+    description: 'Groq · 120 Billion parameters for deep reasoning',
+    icon: '🏋️',
+  },
+  {
+    id: 'gemma-4-31b-it',
+    name: 'Gemma 4 31B',
     provider: 'gemini',
-    badge: 'Lightweight',
-    badgeColor: '#8b5cf6',
-    rpm: 30,
+    tier: 3,
+    badge: 'Open Weight',
+    badgeColor: '#10b981',
+    rpm: 15,
     rpd: 1500,
-    contextWindow: '1M tokens',
-    description: 'Google · Fastest Gemini API',
-    icon: '🚀',
+    contextWindow: '128K',
+    description: 'Google · OSS Gemma 4 architecture',
+    icon: '🌍',
+  },
+  {
+    id: 'gemini-2.5-pro',
+    name: 'Gemini 2.5 Pro',
+    provider: 'gemini',
+    tier: 3,
+    badge: 'Pro Backup',
+    badgeColor: '#3b82f6',
+    rpm: 15,
+    rpd: 50,
+    contextWindow: '2M tokens',
+    description: 'Google · Older reasoning generation',
+    icon: '🧠',
   },
 ];
 
@@ -210,13 +210,13 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
         <div className="model-dropdown" role="listbox">
           <div className="model-dropdown-header">Choose AI Model</div>
 
-          {/* OpenRouter section */}
+          {/* Tier 1 section */}
           <div className="model-provider-group">
             <div className="model-provider-label">
-              <span className="provider-dot provider-dot--openrouter" />
-              OpenRouter — Free High-Capacity Models
+              <span className="provider-dot" style={{background: '#ec4899'}} />
+              🌟 Tier 1: The Flagships (Try these first)
             </div>
-            {AVAILABLE_MODELS.filter(m => m.provider === 'openrouter').map((model) => {
+            {AVAILABLE_MODELS.filter(m => m.tier === 1).map((model) => {
               const isSelected = model.id === selectedModel;
               return (
                 <button
@@ -262,13 +262,13 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
             })}
           </div>
 
-          {/* Groq section */}
+          {/* Tier 2 section */}
           <div className="model-provider-group">
             <div className="model-provider-label">
-              <span className="provider-dot provider-dot--groq" />
-              Groq — Lightning Fast Inference
+              <span className="provider-dot" style={{background: '#10b981'}} />
+              🟢 Tier 2: Fast Backups
             </div>
-            {AVAILABLE_MODELS.filter(m => m.provider === 'groq').map((model) => {
+            {AVAILABLE_MODELS.filter(m => m.tier === 2).map((model) => {
               const isSelected = model.id === selectedModel;
               return (
                 <button
@@ -314,13 +314,13 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
             })}
           </div>
 
-          {/* Gemini section */}
+          {/* Tier 3 section */}
           <div className="model-provider-group">
             <div className="model-provider-label">
-              <span className="provider-dot provider-dot--gemini" />
-              Google Gemini
+              <span className="provider-dot" style={{background: '#3b82f6'}} />
+              🔵 Tier 3: Heavyweight Backups
             </div>
-            {AVAILABLE_MODELS.filter(m => m.provider === 'gemini').map((model) => {
+            {AVAILABLE_MODELS.filter(m => m.tier === 3).map((model) => {
               const isSelected = model.id === selectedModel;
               return (
                 <button

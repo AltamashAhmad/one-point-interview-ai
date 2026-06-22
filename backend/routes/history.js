@@ -250,32 +250,35 @@ ${transcript}`;
     // interview was conducted with.
     let modelUsed = req.body?.model || data.modelUsed || 'openai/gpt-oss-120b:free';
     
-    if (isOpenRouterModel(modelUsed)) {
-      try {
-        responseText = await generateOpenRouterResponse(modelUsed, systemPrompt, aiMessages);
-        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
-      } catch (orErr) {
-        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
-          console.warn(`⚠️  OpenRouter failed on scorecard generation with "${modelUsed}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null);
-        } else {
-          throw orErr;
-        }
-      }
-    } else if (isGroqModel(modelUsed)) {
+    // Check if user is admin for VIP API key routing
+    const isAdmin = req.userProfile?.role === 'admin';
+
+    if (modelUsed && isGroqModel(modelUsed)) {
       try {
         responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);
         if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
       } catch (groqErr) {
         if (isGroqQuotaError(groqErr) || groqErr.message === 'EMPTY_RESPONSE') {
           console.warn(`⚠️  Groq failed on scorecard generation with "${modelUsed}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null);
+          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null, isAdmin);
         } else {
           throw groqErr;
         }
       }
+    } else if (modelUsed && isOpenRouterModel(modelUsed)) {
+      try {
+        responseText = await generateOpenRouterResponse(modelUsed, systemPrompt, aiMessages);
+        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
+      } catch (orErr) {
+        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OpenRouter failed on scorecard generation with "${modelUsed}" — falling back to Gemini`);
+          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null, isAdmin);
+        } else {
+          throw orErr;
+        }
+      }
     } else {
-      responseText = await generateInterviewResponse(aiMessages, systemPrompt, modelUsed);
+      responseText = await generateInterviewResponse(aiMessages, systemPrompt, modelUsed, isAdmin);
     }
 
     // Robust JSON extraction

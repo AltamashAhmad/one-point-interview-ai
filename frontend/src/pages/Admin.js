@@ -399,6 +399,7 @@ function RequestsTab({ setTab }) {
 
 // ─── USERS TAB ───────────────────────────────────────────────────────────────
 function UsersTab() {
+  const { user }                  = useAuth();
   const [users, setUsers]         = useState([]);
   const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
@@ -445,6 +446,12 @@ function UsersTab() {
       } else if (actionModal === 'unban') {
         await updateUserStatus(uid, { action: 'unban' });
         showToast('User unbanned');
+      } else if (actionModal === 'promote') {
+        await updateUserStatus(uid, { action: 'promote' });
+        showToast('👑 Promoted to Admin');
+      } else if (actionModal === 'demote') {
+        await updateUserStatus(uid, { action: 'demote' });
+        showToast('⬇️ Demoted from Admin');
       } else if (actionModal === 'suspend') {
         const days = parseInt(modalInput) || 7;
         await updateUserStatus(uid, { action: 'suspend', suspendDays: days, reason: modalInput2 });
@@ -550,18 +557,31 @@ function UsersTab() {
                     <td><span className="total-calls">{(u.totalAiCalls || 0).toLocaleString()}</span></td>
                     <td><span className="joined-cell">{timeAgo(u.createdAt)}</span></td>
                     <td>
-                      <div className="action-menu">
-                        {u.status === 'PENDING'   && <button className="action-btn action-approve" onClick={() => openModal('approve', u)}>✅ Approve</button>}
-                        {u.status === 'APPROVED'  && <button className="action-btn action-suspend" onClick={() => openModal('suspend', u)}>⏸ Suspend</button>}
-                        {u.status === 'SUSPENDED' && <button className="action-btn action-approve" onClick={() => openModal('unsuspend', u)}>▶ Lift</button>}
-                        {u.status !== 'BANNED'    && <button className="action-btn action-ban"     onClick={() => openModal('ban', u)}>🚫 Ban</button>}
-                        {u.status === 'BANNED'    && <button className="action-btn action-approve" onClick={() => openModal('unban', u)}>↩ Unban</button>}
-                        {!u.isUnlimited && <button className="action-btn action-unlimited" onClick={() => openModal('unlimited', u)}>♾️ Unlimited</button>}
-                        {u.isUnlimited  && <button className="action-btn action-suspend"   onClick={() => openModal('revoke-unlimited', u)}>⬇ Revoke ∞</button>}
-                        <button className="action-btn action-quota" onClick={() => openModal('set-limit', u)}>✏️ Set Limit</button>
-                        <button className="action-btn action-reset" onClick={() => openModal('reset-quota', u)}>↺ Reset Quota</button>
-                        <button className="action-btn action-delete" onClick={() => openModal('delete', u)} style={{color: '#f87171'}}>🗑️ Delete</button>
-                      </div>
+                      {u.isSuperAdmin ? (
+                        <div className="supreme-leader-badge" style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                          background: 'linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(245,158,11,0.1) 100%)',
+                          color: '#fbbf24', padding: '0.5rem 1rem', borderRadius: '100px',
+                          fontWeight: '600', fontSize: '0.85rem', border: '1px solid rgba(251,191,36,0.3)'
+                        }}>
+                          <span style={{ fontSize: '1.2rem' }}>👑</span> Supreme Leader
+                        </div>
+                      ) : (
+                        <div className="action-menu">
+                          {u.role !== 'admin' && <button className="action-btn action-approve" onClick={() => openModal('promote', u)}>👑 Promote Admin</button>}
+                          {u.role === 'admin' && u.uid !== user?.uid && <button className="action-btn action-delete" onClick={() => openModal('demote', u)}>⬇ Demote Admin</button>}
+                          {u.status === 'PENDING'   && <button className="action-btn action-approve" onClick={() => openModal('approve', u)}>✅ Approve</button>}
+                          {u.status === 'APPROVED'  && <button className="action-btn action-suspend" onClick={() => openModal('suspend', u)}>⏸ Suspend</button>}
+                          {u.status === 'SUSPENDED' && <button className="action-btn action-approve" onClick={() => openModal('unsuspend', u)}>▶ Lift</button>}
+                          {u.status !== 'BANNED'    && <button className="action-btn action-ban"     onClick={() => openModal('ban', u)}>🚫 Ban</button>}
+                          {u.status === 'BANNED'    && <button className="action-btn action-approve" onClick={() => openModal('unban', u)}>↩ Unban</button>}
+                          {!u.isUnlimited && <button className="action-btn action-unlimited" onClick={() => openModal('unlimited', u)}>♾️ Unlimited</button>}
+                          {u.isUnlimited  && <button className="action-btn action-suspend"   onClick={() => openModal('revoke-unlimited', u)}>⬇ Revoke ∞</button>}
+                          <button className="action-btn action-quota" onClick={() => openModal('set-limit', u)}>✏️ Set Limit</button>
+                          <button className="action-btn action-reset" onClick={() => openModal('reset-quota', u)}>↺ Reset Quota</button>
+                          {u.uid !== user?.uid && <button className="action-btn action-delete" onClick={() => openModal('delete', u)} style={{color: '#f87171'}}>🗑️ Delete</button>}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -594,6 +614,23 @@ function UsersTab() {
         title="Unban User"
         message={`Remove the ban on ${selectedUser?.displayName || selectedUser?.email}? Their status will return to PENDING.`}
         confirmLabel={working ? 'Unbanning…' : 'Unban'}
+        onConfirm={doAction}
+        onCancel={() => setAction(null)}
+      />
+      <ConfirmModal
+        isOpen={actionModal === 'promote'}
+        title="Promote to Admin"
+        message={`Give full administrator privileges to ${selectedUser?.displayName || selectedUser?.email}? They will get VIP AI keys and rate limit bypass.`}
+        confirmLabel={working ? 'Promoting…' : 'Promote to Admin'}
+        onConfirm={doAction}
+        onCancel={() => setAction(null)}
+      />
+      <ConfirmModal
+        isOpen={actionModal === 'demote'}
+        title="Demote from Admin"
+        message={`Remove administrator privileges from ${selectedUser?.displayName || selectedUser?.email}?`}
+        confirmLabel={working ? 'Demoting…' : 'Demote Admin'}
+        danger
         onConfirm={doAction}
         onCancel={() => setAction(null)}
       />

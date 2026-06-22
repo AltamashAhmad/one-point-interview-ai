@@ -8,8 +8,25 @@ const { generateOpenRouterResponse, isOpenRouterModel } = require('../services/o
 const { getSystemPrompt }           = require('../services/prompts');
 const { getQuestion }               = require('../services/questionBank');
 const admin                         = require('../config/firebase');
+const rateLimit                     = require('express-rate-limit');
+const { ipKeyGenerator }            = require('express-rate-limit');
 
 const db = admin.firestore();
+
+// Per-user limiter on the expensive AI endpoint
+const chatLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.uid || ipKeyGenerator(req),
+  skip: (req) => {
+    if (req.userProfile?.role === 'admin' || req.userProfile?.isUnlimited) return true;
+    const isLocalhost = req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === '::ffff:127.0.0.1';
+    return isLocalhost;
+  },
+  message: { error: 'Too many chat requests. Please wait 15 minutes before sending more.' },
+});
 
 const VALID_INTERVIEW_TYPES = ['dsa', 'systemDesign', 'lld', 'tutorDsa', 'tutorLld', 'tutorSystemDesign', 'managerial'];
 const VALID_DIFFICULTIES    = ['EASY', 'MEDIUM', 'HARD', 'ANY'];
@@ -44,7 +61,7 @@ const VALID_GEMINI_MODELS = [
  * Response:
  *   { role: 'assistant', content: string, questionTitle?: string }
  */
-router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
+router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, next) => {
   try {
     const {
       messages,
@@ -133,34 +150,38 @@ router.post('/', verifyToken, checkUserAccess, async (req, res, next) => {
       questionData: messages.length === 1 ? questionData : null,
     });
 
+    // Check if user is admin for VIP API key routing
+    // This allows any promoted admin to get VIP keys, not just the single .env UID.
+    const isAdmin = req.userProfile?.role === 'admin';
+
     // ── Generate Response (route to Groq, OpenRouter, or Gemini) ─────────────
     let responseText;
-    if (model && isOpenRouterModel(model)) {
-      try {
-        responseText = await generateOpenRouterResponse(model, systemPrompt, messages);
-        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
-      } catch (orErr) {
-        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
-          console.warn(`⚠️  OpenRouter failed on "${model}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(messages, systemPrompt, null);
-        } else {
-          throw orErr;
-        }
-      }
-    } else if (model && isGroqModel(model)) {
+    if (model && isGroqModel(model)) {
       try {
         responseText = await generateGroqResponse(messages, systemPrompt, model);
         if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
       } catch (groqErr) {
         if (isGroqQuotaError(groqErr) || groqErr.message === 'EMPTY_RESPONSE') {
           console.warn(`⚠️  Groq failed on "${model}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(messages, systemPrompt, null);
+          responseText = await generateInterviewResponse(messages, systemPrompt, null, isAdmin);
         } else {
           throw groqErr;
         }
       }
+    } else if (model && isOpenRouterModel(model)) {
+      try {
+        responseText = await generateOpenRouterResponse(model, systemPrompt, messages);
+        if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
+      } catch (orErr) {
+        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OpenRouter failed on "${model}" — falling back to Gemini`);
+          responseText = await generateInterviewResponse(messages, systemPrompt, null, isAdmin);
+        } else {
+          throw orErr;
+        }
+      }
     } else {
-      responseText = await generateInterviewResponse(messages, systemPrompt, model);
+      responseText = await generateInterviewResponse(messages, systemPrompt, model, isAdmin);
     }
 
     // Final safety check after all fallbacks

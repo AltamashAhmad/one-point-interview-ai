@@ -4,7 +4,11 @@ if (!process.env.GEMINI_API_KEY) {
   throw new Error('GEMINI_API_KEY environment variable is required');
 }
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const defaultKey = process.env.GEMINI_API_KEY;
+// Parse comma-separated VIP keys if they exist
+const vipKeys = process.env.VIP_GEMINI_API_KEYS 
+  ? process.env.VIP_GEMINI_API_KEYS.split(',').map(k => k.trim()).filter(Boolean)
+  : [];
 
 /**
  * Default fallback chain when user hasn't picked a model.
@@ -26,15 +30,21 @@ const MODEL_FALLBACK_CHAIN = [
 ];
 
 /**
- * Returns true if the error is a quota / rate-limit error (HTTP 429).
+ * Returns true if the error is a quota / rate-limit error (HTTP 429)
+ * or a temporary 503 Service Unavailable / Overloaded error.
  */
 function isQuotaError(err) {
   const msg = err?.message || '';
   return (
     msg.includes('429') ||
+    msg.includes('503') ||
+    msg.includes('500') ||
     msg.includes('quota') ||
     msg.includes('RESOURCE_EXHAUSTED') ||
-    msg.includes('Too Many Requests')
+    msg.includes('Too Many Requests') ||
+    msg.includes('Service Unavailable') ||
+    msg.includes('high demand') ||
+    msg.includes('overloaded')
   );
 }
 
@@ -47,9 +57,20 @@ function isQuotaError(err) {
  * @param {Array<{role: 'user'|'assistant', content: string}>} messages
  * @param {string} systemPrompt - The interviewer persona / instructions
  * @param {string} [preferredModel]  - Model chosen by the user in the UI
+ * @param {boolean} [isAdmin] - If true, selects an API key from the VIP pool
  * @returns {Promise<string>} - The AI response text
  */
-async function generateInterviewResponse(messages, systemPrompt, preferredModel) {
+async function generateInterviewResponse(messages, systemPrompt, preferredModel, isAdmin = false) {
+  // Select API key logic
+  let apiKeyToUse = defaultKey;
+  if (isAdmin && vipKeys.length > 0) {
+    const randomIndex = Math.floor(Math.random() * vipKeys.length);
+    apiKeyToUse = vipKeys[randomIndex];
+    console.info(`👑 Admin detected! Routing through VIP API Key Pool...`);
+  }
+  
+  const genAI = new GoogleGenerativeAI(apiKeyToUse);
+
   // Build the chain: user's pick first, then every other fallback
   const chain = preferredModel
     ? [preferredModel, ...MODEL_FALLBACK_CHAIN.filter((m) => m !== preferredModel)]
