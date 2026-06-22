@@ -93,7 +93,7 @@ router.get('/users', async (req, res, next) => {
     const start = (Number(page) - 1) * PAGE_SIZE;
     const paged = users.slice(start, start + PAGE_SIZE).map(u => ({
       ...u,
-      isSuperAdmin: u.email === process.env.ADMIN_EMAIL
+      isSuperAdmin: (u.email || '').trim().toLowerCase() === (process.env.ADMIN_EMAIL || '').trim().toLowerCase()
     }));
 
     res.json({ users: paged, total, page: Number(page), pageSize: PAGE_SIZE });
@@ -119,7 +119,7 @@ router.delete('/users/:uid', async (req, res, next) => {
 
     const userDoc = await db.collection('users').doc(uid).get();
     const profile = userDoc.data();
-    if (profile?.email === process.env.ADMIN_EMAIL) {
+    if ((profile?.email || '').trim().toLowerCase() === (process.env.ADMIN_EMAIL || '').trim().toLowerCase()) {
       return res.status(403).json({ error: 'The Super Admin cannot be deleted!' });
     }
 
