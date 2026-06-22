@@ -1,0 +1,35 @@
+name: Deploy Backend to EC2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-deploy.yml'
+
+jobs:
+  deploy-main:
+    name: Deploy to Production (main)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute SSH commands on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Navigate to the backend directory
+            cd ~/one-point-interview-ai/backend
+            
+            # Discard any local changes just in case, then pull the latest code
+            git reset --hard
+            git pull origin main
+            
+            # Install dependencies (only updates if package.json changed)
+            npm install
+            
+            # Restart the PM2 process for the backend
+            # Make sure your PM2 process was originally started with: pm2 start index.js --name "backend-main" --port 8080
+            pm2 restart backend-main || pm2 start index.js --name "backend-main"
