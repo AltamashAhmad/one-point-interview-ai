@@ -91,7 +91,10 @@ router.get('/users', async (req, res, next) => {
 
     const total = users.length;
     const start = (Number(page) - 1) * PAGE_SIZE;
-    const paged = users.slice(start, start + PAGE_SIZE);
+    const paged = users.slice(start, start + PAGE_SIZE).map(u => ({
+      ...u,
+      isSuperAdmin: (u.email || '').trim().toLowerCase() === (process.env.ADMIN_EMAIL || '').trim().toLowerCase()
+    }));
 
     res.json({ users: paged, total, page: Number(page), pageSize: PAGE_SIZE });
   } catch (err) { next(err); }
@@ -112,6 +115,12 @@ router.delete('/users/:uid', async (req, res, next) => {
     // Safety check - don't let admin delete themselves
     if (uid === req.user.uid) {
       return res.status(400).json({ error: 'You cannot delete your own account' });
+    }
+
+    const userDoc = await db.collection('users').doc(uid).get();
+    const profile = userDoc.data();
+    if ((profile?.email || '').trim().toLowerCase() === (process.env.ADMIN_EMAIL || '').trim().toLowerCase()) {
+      return res.status(403).json({ error: 'The Super Admin cannot be deleted!' });
     }
 
     // 1. Delete from Firebase Auth
@@ -164,7 +173,7 @@ router.put('/users/:uid/status', async (req, res, next) => {
     const { uid }    = req.params;
     const { action, suspendDays, reason } = req.body;
 
-    if (!['approve', 'suspend', 'ban', 'unban', 'unsuspend'].includes(action)) {
+    if (!['approve', 'suspend', 'ban', 'unban', 'unsuspend', 'promote', 'demote'].includes(action)) {
       return res.status(400).json({ error: 'Invalid action' });
     }
 
@@ -173,6 +182,21 @@ router.put('/users/:uid/status', async (req, res, next) => {
     const profile = userDoc.data();
 
     let update = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
+
+    if (action === 'promote') {
+      update.role = 'admin';
+      update.isUnlimited = true;
+    }
+
+    if (action === 'demote') {
+      if (uid === req.user.uid) {
+        return res.status(400).json({ error: 'You cannot demote yourself. Ask another admin to do it.' });
+      }
+      if (profile.email === process.env.ADMIN_EMAIL) {
+        return res.status(403).json({ error: 'The Super Admin (Supreme Leader) cannot be demoted!' });
+      }
+      update.role = 'user';
+    }
 
     if (action === 'approve') {
       update.status    = 'APPROVED';
@@ -193,6 +217,9 @@ router.put('/users/:uid/status', async (req, res, next) => {
     }
 
     if (action === 'ban') {
+      if (profile.email === process.env.ADMIN_EMAIL) {
+        return res.status(403).json({ error: 'The Super Admin cannot be banned!' });
+      }
       update.status    = 'BANNED';
       update.banReason = reason || 'No reason provided';
     }
@@ -203,6 +230,9 @@ router.put('/users/:uid/status', async (req, res, next) => {
     }
 
     if (action === 'suspend') {
+      if (profile.email === process.env.ADMIN_EMAIL) {
+        return res.status(403).json({ error: 'The Super Admin cannot be suspended!' });
+      }
       const days = Math.max(1, Math.min(365, Number(suspendDays) || 7));
       const until = new Date();
       until.setDate(until.getDate() + days);
@@ -233,6 +263,13 @@ router.put('/users/:uid/quota', async (req, res, next) => {
   try {
     const { uid } = req.params;
     const { dailyLimit, isUnlimited } = req.body;
+
+    const userDoc = await db.collection('users').doc(uid).get();
+    const profile = userDoc.data();
+
+    if (profile?.email === process.env.ADMIN_EMAIL) {
+      return res.status(403).json({ error: 'The Super Admin cannot have their unlimited access modified!' });
+    }
 
     const update = { updatedAt: admin.firestore.FieldValue.serverTimestamp() };
 

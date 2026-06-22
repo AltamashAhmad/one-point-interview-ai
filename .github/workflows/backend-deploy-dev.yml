@@ -1,0 +1,43 @@
+name: Deploy Backend to EC2 (Dev)
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-deploy-dev.yml'
+
+jobs:
+  deploy-dev:
+    name: Deploy to Development (dev)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute SSH commands on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Create a separate folder for dev backend to avoid git checkout conflicts!
+            # Since the main backend is tracking the 'main' branch, the dev backend MUST run in a separate directory tracking the 'dev' branch.
+            
+            mkdir -p ~/one-point-interview-ai-dev
+            if [ ! -d "~/one-point-interview-ai-dev/.git" ]; then
+              git clone -b dev https://github.com/AltamashAhmad/one-point-interview-ai.git ~/one-point-interview-ai-dev || echo "Already cloned"
+            fi
+            
+            cd ~/one-point-interview-ai-dev/backend
+            git reset --hard
+            git checkout dev
+            git pull origin dev
+            
+            # Copy .env from main backend, then override PORT
+            cp ~/one-point-interview-ai/backend/.env ./
+            
+            # Install dependencies
+            npm install
+            
+            # Restart the PM2 process for the dev backend on port 8081
+            PORT=8081 pm2 restart backend-dev --update-env || PORT=8081 pm2 start index.js --name "backend-dev"
