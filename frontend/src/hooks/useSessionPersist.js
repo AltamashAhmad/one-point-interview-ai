@@ -17,9 +17,15 @@ const PREFIX = 'opi_session_'; // one-point-interview
  *   scorecardModel: string | null,
  * }
  */
-export function useSessionPersist(type) {
-  const key = PREFIX + (type || 'unknown');
+export function useSessionPersist(identifier) {
+  const key = PREFIX + (identifier || 'unknown');
   const cachedRestore = useRef(undefined); // undefined = not yet read
+  const lastKey = useRef(key);
+
+  if (lastKey.current !== key) {
+    cachedRestore.current = undefined;
+    lastKey.current = key;
+  }
 
   /** Save current state to localStorage */
   const persist = useCallback((state) => {

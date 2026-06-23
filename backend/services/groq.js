@@ -80,7 +80,7 @@ async function generateGroqResponse(messages, systemPrompt, modelId) {
   ];
 
   // Add timeout to prevent indefinite hangs
-  const timeoutMs = 30_000;
+  const timeoutMs = 90_000;
   const completion = await Promise.race([
     groq.chat.completions.create({
       model:              modelId,

@@ -115,6 +115,32 @@
   color: #ef4444;
 }
 
+.roadmap-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 3px 6px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s, background 0.15s, transform 0.15s;
+  line-height: 1;
+}
+
+.roadmap-action-btn:hover {
+  opacity: 1;
+  background: var(--bg-card-hover);
+  transform: scale(1.1);
+}
+
+.roadmap-action-btn.unchecked {
+  opacity: 0.8;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
 /* Modal */
 .modal-overlay {
   position: fixed;
@@ -195,4 +221,104 @@
 
 .modal-btn--cancel:hover {
   background: var(--bg-input);
+}
+
+/* ── Inline History ──────────────────────────────────────────────────────────── */
+.inline-history-container {
+  margin: var(--space-2) 0 var(--space-4) var(--space-6);
+  padding: var(--space-3);
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.inline-history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.inline-history-row:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--blue);
+}
+
+.inline-history-row.pinned {
+  border-color: rgba(245,158,11, 0.4);
+}
+
+.inline-history-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.inline-history-emoji {
+  font-size: 16px;
+}
+
+.inline-history-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.inline-history-type {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.inline-history-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.inline-history-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.inline-history-model {
+  font-size: 10px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-weight: 600;
+  background: rgba(255,255,255,0.05);
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+}
+
+.inline-pin-btn {
+  background: transparent;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity var(--t-fast), transform var(--t-fast);
+  padding: 4px;
+}
+
+.inline-pin-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.inline-pin-btn.active {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px rgba(245,158,11,0.5));
 }

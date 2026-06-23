@@ -139,6 +139,54 @@ router.post('/', async (req, res, next) => {
 });
 
 /**
+ * PUT /api/history/:id/pin
+ * Toggle pin status of an interview session.
+ * Max 3 pinned sessions per user.
+ */
+router.put('/:id/pin', async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    if (!isValidDocId(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid session ID.' });
+    }
+
+    const docRef = db.collection('interviews').doc(req.params.id);
+    const doc = await docRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Interview not found' });
+    }
+
+    if (doc.data().userId !== userId) {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const currentPinStatus = doc.data().isPinned || false;
+
+    // If we are pinning it, check if they already have 3 pinned
+    if (!currentPinStatus) {
+      const pinnedSnapshot = await db.collection('interviews')
+        .where('userId', '==', userId)
+        .where('isPinned', '==', true)
+        .get();
+        
+      if (pinnedSnapshot.size >= 3) {
+        return res.status(400).json({ error: 'You can only pin up to 3 histories. Please unpin one first.' });
+      }
+    }
+
+    await docRef.update({
+      isPinned: !currentPinStatus,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    res.json({ success: true, isPinned: !currentPinStatus });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * DELETE /api/history/:id
  * Delete a specific interview session.
  */

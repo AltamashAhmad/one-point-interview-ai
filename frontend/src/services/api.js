@@ -146,6 +146,15 @@ export async function deleteSession(id) {
 }
 
 /**
+ * Toggle pin status for an interview session (max 3 pins).
+ */
+export async function pinSession(id) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.put(`/api/history/${id}/pin`, {}, { headers });
+  return data; // { success: true, isPinned: boolean }
+}
+
+/**
  * Generate and fetch the scorecard for an interview session.
  */
 export async function generateScorecard(sessionId, model) {
@@ -242,6 +251,15 @@ export async function getMyProfile() {
   const headers = await getHeaders();
   const { data } = await apiClient.get('/api/users/me', { headers });
   return data.profile;
+}
+
+/**
+ * Toggle the unchecked status of a question.
+ */
+export async function toggleUncheckQuestion(questionTitle, unchecked) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.put('/api/users/me/uncheck', { questionTitle, unchecked }, { headers });
+  return data;
 }
 
 /**

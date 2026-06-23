@@ -124,4 +124,36 @@ router.get('/me', verifyToken, async (req, res, next) => {
   }
 });
 
+/**
+ * PUT /api/users/me/uncheck
+ * Toggles the unchecked (manually marked as unsolved) status of a question.
+ * Body: { questionTitle: string, unchecked: boolean }
+ */
+router.put('/me/uncheck', verifyToken, async (req, res, next) => {
+  try {
+    const uid = req.user.uid;
+    const { questionTitle, unchecked } = req.body;
+
+    if (!questionTitle || typeof unchecked !== 'boolean') {
+      return res.status(400).json({ error: 'Missing questionTitle or unchecked status' });
+    }
+
+    const docRef = db.collection('users').doc(uid);
+    
+    if (unchecked) {
+      await docRef.update({
+        uncheckedQuestions: admin.firestore.FieldValue.arrayUnion(questionTitle)
+      });
+    } else {
+      await docRef.update({
+        uncheckedQuestions: admin.firestore.FieldValue.arrayRemove(questionTitle)
+      });
+    }
+
+    res.json({ success: true, questionTitle, unchecked });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;

@@ -248,37 +248,37 @@
   .type-emoji {
     font-size: 20px;
   }
+}
 
-/* ── Tabs & Notes UI ──────────────────────────────────────────────────────── */
+
 .history-tabs {
   display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 8px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  padding: 0 var(--space-6);
 }
 
 .tab-btn {
   background: transparent;
   border: none;
+  border-bottom: 2px solid transparent;
   color: var(--text-secondary);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  padding: var(--space-3) var(--space-2);
+  margin-bottom: -1px;
+  transition: color var(--t-fast), border-color var(--t-fast);
 }
 
 .tab-btn:hover {
-  background: var(--bg-input);
   color: var(--text-primary);
 }
 
 .tab-btn.active {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  color: var(--blue);
+  border-bottom: 2px solid var(--blue);
 }
 
 .notes-container {
@@ -324,13 +324,13 @@
 .notes-view-actions, .notes-editor-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .notes-editor-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-3);
   height: 100%;
 }
 
@@ -339,21 +339,23 @@
   min-height: 500px;
   background: var(--bg-input);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 16px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 14px;
   line-height: 1.6;
   resize: vertical;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .notes-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-glow);
 }
 
+@media (max-width: 480px) {
   .header-question-title {
     font-size: 12px;
     white-space: normal;
@@ -394,4 +396,3 @@
     display: block;
   }
 }
-
