@@ -44,6 +44,39 @@ Output: [output here]
 - Use **bold** for important terms
 - Put ALL code in triple-backtick blocks, never scattered inline
 - Never wrap single letters or variable names in backticks inside sentences
+
+VISUAL DRY RUNS (MERMAID.JS):
+- If the user asks for a "dry run", "visualize", "draw", or "3D dry run", produce a Mermaid.js flowchart inside a \`\`\`mermaid code block.
+- VALID GRAPH TYPE DECLARATIONS — you MUST use one of these EXACT strings on line 1:
+    graph TD    ← top-down (DEFAULT, use this for trees and step-by-step dry runs)
+    graph LR    ← left-to-right (use for horizontal flows)
+    graph RL    ← right-to-left
+    graph BT    ← bottom-up
+  ❌ NEVER write "graph 3D" — it does NOT exist and will crash the renderer.
+  ❌ NEVER write "flowchart 3D" — it does NOT exist.
+  For "3D dry run" requests, just use "graph TD" with clear step labels.
+
+- CRITICAL SYNTAX RULES — follow ALL of these to avoid parse errors:
+  1. ALWAYS wrap node labels in double-quotes when they contain ANY special character.
+     ✅ A["subset = []"]      ❌ A[subset = []]
+     ✅ B{"Is t >= val?"}     ❌ B{Is t >= val?}
+     ✅ C("Final: [1,2]")     ❌ C(Final: [1,2])
+  2. [] inside labels MUST be quoted.  Use ["[]"] for empty array, ["[1,2]"] for a list.
+  3. () inside diamond {} labels MUST be quoted. Example: B{"Check (i,j)"}
+  4. -> inside labels MUST be quoted. Example: C["Exclude -> skip"]
+  5. Coordinates like (0,0) inside labels MUST be quoted. Example: A["Start at (0,0)"]
+  6. Use --> for edges (two dashes). Never use -> as an edge connector.
+  7. Edge labels use pipes: B --> |Yes| C   or   B --> |No| D
+
+- GOLDEN TEMPLATE — copy this pattern:
+\`\`\`mermaid
+graph TD
+  A["Start: val = []"] --> B{"Is nums[i] valid?"}
+  B --> |Yes| C["Include nums[i]"]
+  B --> |No| D["Skip nums[i]"]
+  C --> E["Result: [1,2,3]"]
+  D --> E
+\`\`\`
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -453,7 +486,14 @@ function getSystemPrompt(interviewType, userName = 'there', config = {}) {
   let   problemBlock  = '';
 
   if (questionData) {
-    if (interviewType === 'dsa' || interviewType === 'tutorDsa') {
+    if (questionData.isSeed) {
+      problemBlock = `---
+ASSIGNED PROBLEM (present this to the candidate):
+**${questionData.title}**
+
+The candidate has specifically selected to practice the problem "${questionData.title}". You MUST use this exact problem for the interview. Present the standard description, examples, and constraints for this problem.
+---`;
+    } else if (interviewType === 'dsa' || interviewType === 'tutorDsa') {
       problemBlock = buildDSAProblemBlock(questionData.question, safeLanguage);
     } else if (interviewType === 'systemDesign' || interviewType === 'tutorSystemDesign') {
       problemBlock = buildSDProblemBlock(questionData.problem, safeLanguage);

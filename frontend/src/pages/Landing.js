@@ -203,6 +203,17 @@ export default function Landing() {
           </button>
         </div>
 
+        {/* Roadmap Banner */}
+        <div className="loop-banner" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', marginTop: '16px' }} onClick={() => navigate('/roadmap')}>
+          <div className="loop-banner-content">
+            <h2>🗺️ NeetCode 150 Roadmap</h2>
+            <p>Master Data Structures & Algorithms step-by-step. Track your progress and practice with guided AI Tutor dry runs or Mock Interviews.</p>
+          </div>
+          <button className="btn btn-outline" style={{ borderColor: 'white', color: 'white' }}>
+            View Roadmap →
+          </button>
+        </div>
+
         {/* My Loops — resume any saved loop from any device */}
         {!loadingLoops && myLoops.length > 0 && (
           <div className="my-loops-section">

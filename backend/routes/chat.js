@@ -115,8 +115,11 @@ router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, nex
     let questionData = null;
 
     if (messages.length === 1) {
-      // First message — pick a real question from the bank
-      // Fetch practiced questions to avoid duplicates
+      if (questionSeed) {
+        questionData = { title: questionSeed, isSeed: true };
+      } else {
+        // First message — pick a real question from the bank
+        // Fetch practiced questions to avoid duplicates
       const userId = req.user.uid;
       const snapshot = await db.collection('interviews')
         .where('userId', '==', userId)
@@ -138,6 +141,7 @@ router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, nex
         : interviewType;
 
       questionData = getQuestion(baseType, company, diff, practicedQuestions);
+      }
     }
     // For subsequent messages, the question is already embedded in the
     // conversation history, so we don't need to re-inject it.

@@ -248,7 +248,114 @@
   .type-emoji {
     font-size: 20px;
   }
+}
 
+
+.history-tabs {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+  padding: 0 var(--space-6);
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: var(--space-3) var(--space-2);
+  margin-bottom: -1px;
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+
+.tab-btn:hover {
+  color: var(--text-primary);
+}
+
+.tab-btn.active {
+  color: var(--blue);
+  border-bottom: 2px solid var(--blue);
+}
+
+.notes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+.notes-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-color);
+  border-radius: 12px;
+}
+
+.notes-empty-state h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.notes-empty-state p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.notes-loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px;
+  color: var(--text-secondary);
+}
+
+.notes-view-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.notes-view-actions, .notes-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.notes-editor-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  height: 100%;
+}
+
+.notes-textarea {
+  width: 100%;
+  min-height: 500px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+  resize: vertical;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.notes-textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-glow);
+}
+
+@media (max-width: 480px) {
   .header-question-title {
     font-size: 12px;
     white-space: normal;
@@ -289,4 +396,3 @@
     display: block;
   }
 }
-

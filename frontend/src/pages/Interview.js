@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { sendMessage, saveSession, generateScorecard } from '../services/api';
+import { sendMessage, saveSession, generateScorecard, getHistoryById } from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import TypingIndicator from '../components/TypingIndicator';
-import ModelSelector, { AVAILABLE_MODELS } from '../components/ModelSelector';
+import ModelSelector, { AVAILABLE_MODELS, DEFAULT_MODEL } from '../components/ModelSelector';
 import InterviewSetup  from '../components/InterviewSetup';
 import { useVoiceToText }     from '../hooks/useVoiceToText';
 import { useSessionPersist }  from '../hooks/useSessionPersist';
@@ -22,6 +22,7 @@ export default function Interview() {
   const searchParams = new URLSearchParams(location.search);
   const loopId       = searchParams.get('loopId');
   const roundIndex   = searchParams.get('roundIndex');
+  const sessionIdFromUrl = searchParams.get('session');
   
   const { user, refreshUserProfile, setWallDismissed } = useAuth();
   const config       = TYPE_CONFIG[type];
@@ -30,7 +31,7 @@ export default function Interview() {
   const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
 
   // ── Session persistence (survives page refresh) ─────────────────────
-  const { persist, restore, clear } = useSessionPersist(type);
+  const { persist, restore, clear } = useSessionPersist(sessionIdFromUrl || type);
 
   // Restore from localStorage on first render ONLY (lazy state initializer)
   const [setupPhase,    setSetupPhaseRaw]    = useState(() => { const s = restore(); return s ? s.setupPhase    : true; });
@@ -75,6 +76,15 @@ export default function Interview() {
   const messagesEndRef = useRef(null);
   const inputRef       = useRef(null);
 
+  // ── Clean up session-scoped localStorage keys (timer + editor code) ───
+  const clearSessionArtifacts = useCallback((id) => {
+    if (!id) return;
+    try {
+      localStorage.removeItem(`interview_timer_${id}`);
+      localStorage.removeItem(`code_${id}`);
+    } catch (_) { /* private mode / storage disabled — ignore */ }
+  }, []);
+
   // ── Guards ────────────────────────────────────────────────────────────
   useEffect(() => { if (!config) navigate('/'); }, [config, navigate]);
 
@@ -86,6 +96,43 @@ export default function Interview() {
       setSetupPhase(true);
     }
   }, [setupPhase, messages.length, isLoading, error, clear]);
+
+  // ── Auto-resume from URL or Navigation State ──────────────────────────
+  useEffect(() => {
+    const sId = location.state?.resumeSessionId || sessionIdFromUrl;
+    if (setupPhase && sId && messages.length === 0 && !error) {
+      if (location.state?.resumeSessionId) {
+        window.history.replaceState({}, document.title, `${location.pathname}?session=${sId}`);
+      }
+
+      setIsLoading(true);
+      getHistoryById(sId).then(data => {
+        setMessages(data.messages || []);
+        setSessionId(sId);
+        setSessionConfig({
+          model: data.modelUsed,
+          company: data.company,
+          difficulty: data.difficulty,
+          language: data.language,
+          questionSeed: data.questionTitle
+        });
+        setSelectedModel(data.modelUsed);
+        if (data.questionTitle) {
+          setQuestionMeta({
+            title: data.questionTitle,
+            link: data.questionLink,
+            companyName: data.company
+          });
+        }
+        setSetupPhase(false);
+      }).catch(err => {
+        console.error('Failed to restore session from DB:', err);
+        window.history.replaceState({}, document.title, location.pathname);
+      }).finally(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [setupPhase, location.pathname, sessionIdFromUrl, location.state, messages.length, error]);
 
   // ── Persist to localStorage whenever important state changes ─────────
   useEffect(() => {
@@ -127,6 +174,9 @@ export default function Interview() {
 
     const newSessionId = crypto.randomUUID();
     setSessionId(newSessionId);
+    
+    // Update URL to reflect the active session
+    window.history.replaceState({}, document.title, `${location.pathname}?session=${newSessionId}`);
 
     const initialMessage  = buildInitialMessage(cfg);
     const initialMessages = [initialMessage];
@@ -167,13 +217,43 @@ export default function Interview() {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [type, userName, buildInitialMessage]);
+  }, [type, userName, buildInitialMessage, location.pathname]);
 
   // ── Handle "Begin Interview" from setup screen ────────────────────────
   const handleBegin = useCallback((cfg) => {
     setSetupPhase(false);
     startInterview(cfg);
   }, [startInterview]);
+
+  // ── Auto-start from Roadmap ───────────────────────────────────────────
+  useEffect(() => {
+    if (setupPhase && location.state?.autoStart && location.state?.questionSeed) {
+      // Clear autoStart from history state to prevent infinite loops on refresh
+      window.history.replaceState({}, document.title, location.pathname);
+      
+      const cfg = {
+        model: location.state.model || DEFAULT_MODEL.id,
+        scorecardModel: isTutor ? null : 'gemini-3.1-pro-preview',
+        difficulty: 'ANY',
+        language: location.state.language || 'Java',
+        company: '',
+        questionSeed: location.state.questionSeed
+      };
+      
+      clearSessionArtifacts(sessionId);
+      clear();
+      setSetupPhase(false);
+      startInterview(cfg);
+    }
+  }, [setupPhase, location.state, isTutor, startInterview, clear, clearSessionArtifacts, sessionId, location.pathname]);
+
+  // ── Session Deadlock Fix ──────────────────────────────────────────────
+  useEffect(() => {
+    if (!setupPhase && messages.length === 0 && !isLoading && !error) {
+      console.warn("Deadlock detected: Session started but no messages and no loading state. Resetting.");
+      setSetupPhase(true);
+    }
+  }, [setupPhase, messages.length, isLoading, error]);
 
   // ── Handle Submitting Code from Editor ────────────────────────────────
   const handleCodeSubmit = useCallback((code, lang) => {
@@ -253,19 +333,12 @@ export default function Interview() {
     setTimeout(() => setModelNotice(null), 4000);
   };
 
-  // ── Clean up session-scoped localStorage keys (timer + editor code) ───
-  const clearSessionArtifacts = useCallback((id) => {
-    if (!id) return;
-    try {
-      localStorage.removeItem(`interview_timer_${id}`);
-      localStorage.removeItem(`code_${id}`);
-    } catch (_) { /* private mode / storage disabled — ignore */ }
-  }, []);
 
   // ── New session ───────────────────────────────────────────────────────
   const handleNewSession = () => {
     clearSessionArtifacts(sessionId); // remove old timer + code before resetting
     clear();                     // wipe localStorage
+    window.history.replaceState({}, document.title, location.pathname); // clear session from URL
     setSetupPhase(true);
     setMessages([]);
     setInput('');

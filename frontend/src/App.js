@@ -14,6 +14,7 @@ const Scorecard     = React.lazy(() => import('./pages/Scorecard'));
 const LoopDashboard = React.lazy(() => import('./pages/LoopDashboard'));
 const AccessWall    = React.lazy(() => import('./pages/AccessWall'));
 const Admin         = React.lazy(() => import('./pages/Admin'));
+const Roadmap       = React.lazy(() => import('./pages/Roadmap'));
 
 // ── Loading fallback for Suspense ──────────────────────────────────────────
 function PageLoader() {
@@ -288,6 +289,16 @@ function AppRoutes() {
             <AdminRoute>
               <Admin />
             </AdminRoute>
+          }
+        />
+        <Route
+          path="/roadmap"
+          element={
+            <ProtectedRoute>
+              <AccessGate>
+                <Roadmap />
+              </AccessGate>
+            </ProtectedRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

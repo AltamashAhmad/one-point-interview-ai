@@ -49,11 +49,22 @@ export const AVAILABLE_MODELS = [
     icon: '🔥',
   },
   {
-    id: 'qwen/qwen3-32b',
-    name: 'Qwen 3 32B',
+    id: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B',
     provider: 'groq',
-    tier: 1,
-    badge: 'Flawless DSA',
+    badge: 'Highest Quota',
+    badgeColor: '#10b981',
+    rpm: 30,
+    rpd: 14400,
+    contextWindow: '128K',
+    description: 'Groq · Ultra fast · highest quota',
+    icon: '⚡',
+  },
+  {
+    id: 'qwen-2.5-coder-32b',
+    name: 'Qwen 2.5 Coder',
+    provider: 'groq',
+    badge: 'New Coder',
     badgeColor: '#10b981',
     rpm: 30,
     rpd: 1000,
@@ -75,19 +86,6 @@ export const AVAILABLE_MODELS = [
     contextWindow: '500K',
     description: 'Groq · Meta\'s newest lightweight Llama 4',
     icon: '🦙',
-  },
-  {
-    id: 'llama-3.1-8b-instant',
-    name: 'Llama 3.1 8B',
-    provider: 'groq',
-    tier: 2,
-    badge: 'Highest Quota',
-    badgeColor: '#10b981',
-    rpm: 30,
-    rpd: 14400,
-    contextWindow: '128K',
-    description: 'Groq · Ultra fast · highest quota backup',
-    icon: '⚡',
   },
   {
     id: 'qwen/qwen3.6-27b',
@@ -156,6 +154,19 @@ export const AVAILABLE_MODELS = [
     description: 'Google · Older reasoning generation',
     icon: '🧠',
   },
+  {
+    id: 'gemini-3.1-flash-lite',
+    name: 'Gemini 3.1 Flash Lite',
+    provider: 'gemini',
+    badge: 'Newest',
+    badgeColor: '#3b82f6',
+    rpm: 15,
+    rpd: 1500,
+    contextWindow: '1M tokens',
+    description: 'Google · Latest generation',
+    icon: '🔬',
+  },
+
 ];
 
 export const DEFAULT_MODEL = AVAILABLE_MODELS[0];
@@ -353,6 +364,54 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
                     <div className="model-stat">
                       <span className="stat-val">{model.rpd}</span>
                       <span className="stat-label">RPD</span>
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <svg className="model-check" width="14" height="14" viewBox="0 0 24 24"
+                      fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* OpenRouter section */}
+          <div className="model-provider-group">
+            <div className="model-provider-label">
+              <span className="provider-dot" style={{ background: '#3b82f6' }} />
+              OpenRouter
+            </div>
+            {AVAILABLE_MODELS.filter(m => m.provider === 'openrouter').map((model) => {
+              const isSelected = model.id === selectedModel;
+              return (
+                <button
+                  key={model.id}
+                  className={`model-option ${isSelected ? 'model-option--selected' : ''}`}
+                  onClick={() => handleSelect(model.id)}
+                  role="option"
+                  aria-selected={isSelected}
+                >
+                  <div className="model-option-left">
+                    <span className="model-option-icon">{model.icon}</span>
+                    <div className="model-option-info">
+                      <div className="model-option-name">
+                        {model.name}
+                        <span
+                          className="model-badge"
+                          style={{ background: `${model.badgeColor}22`, color: model.badgeColor, border: `1px solid ${model.badgeColor}44` }}
+                        >
+                          {model.badge}
+                        </span>
+                      </div>
+                      <div className="model-option-desc">{model.description}</div>
+                    </div>
+                  </div>
+                  <div className="model-option-stats">
+                    <div className="model-stat">
+                      <span className="stat-val">{model.rpm}</span>
+                      <span className="stat-label">RPM</span>
                     </div>
                   </div>
                   {isSelected && (

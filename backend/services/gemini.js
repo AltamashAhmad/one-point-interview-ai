@@ -100,7 +100,7 @@ async function generateInterviewResponse(messages, systemPrompt, preferredModel,
       const chat = model.startChat({ history });
 
       // Add timeout to prevent indefinite hangs
-      const timeoutMs = 30_000;
+      const timeoutMs = 90_000;
       const result = await Promise.race([
         chat.sendMessage(lastMessage.content),
         new Promise((_, reject) =>

@@ -24,6 +24,7 @@ const GROQ_MODELS = [
   'llama-3.3-70b-versatile',
   'meta-llama/llama-4-scout-17b-16e-instruct',
   'llama-3.1-8b-instant',
+  'qwen-2.5-coder-32b',
   'qwen/qwen3-32b',
   'qwen/qwen3.6-27b',
 ];
@@ -79,7 +80,7 @@ async function generateGroqResponse(messages, systemPrompt, modelId) {
   ];
 
   // Add timeout to prevent indefinite hangs
-  const timeoutMs = 30_000;
+  const timeoutMs = 90_000;
   const completion = await Promise.race([
     groq.chat.completions.create({
       model:              modelId,
