@@ -37,8 +37,8 @@ export default function CodeEditor({ sessionId, language = 'javascript', onSubmi
 
   return (
     <div className="code-editor-container" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className="code-editor-header" style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#252526', borderBottom: '1px solid #1e1e1e' }}>
-        <div className="editor-lang-badge" style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: '#9cdcfe' }}>
+      <div className="code-editor-header" style={{ padding: '8px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-card)', borderBottom: '1px solid var(--border)' }}>
+        <div className="editor-lang-badge" style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--purple-light)' }}>
           {langKey}
         </div>
         

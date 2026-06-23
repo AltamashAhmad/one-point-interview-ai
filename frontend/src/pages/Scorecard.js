@@ -81,7 +81,7 @@ export default function Scorecard() {
           <div className="error-icon">⚠️</div>
           <h2>Oops!</h2>
           <p>{error}</p>
-          <button className="btn btn-primary" onClick={() => navigate(loopId ? `/loop/${loopId}` : '/')}>Back to {loopId ? 'Loop' : 'Home'}</button>
+          <button className="btn btn-primary" onClick={() => window.history.length > 2 ? navigate(-1) : navigate(loopId ? `/loop/${loopId}` : '/')}>Back</button>
         </div>
       </div>
     );
@@ -102,7 +102,7 @@ export default function Scorecard() {
     <div className="scorecard-page">
       <header className="scorecard-header">
         <div className="scorecard-nav">
-          <button className="btn-back" onClick={() => navigate(loopId ? `/loop/${loopId}` : '/')}>← Back to {loopId ? 'Loop' : 'Home'}</button>
+          <button className="btn-back" onClick={() => window.history.length > 2 ? navigate(-1) : navigate(loopId ? `/loop/${loopId}` : '/')}>← Back</button>
           <ThemeToggleBoundary>
             <ThemeToggle />
           </ThemeToggleBoundary>

@@ -94,7 +94,7 @@ export default function HistoryDetail() {
   return (
     <div className="history-detail-page">
       <header className="history-detail-header" style={{ '--type-color': config.color }}>
-        <button className="back-btn" onClick={() => navigate('/history')}>← Back</button>
+        <button className="back-btn" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/history')}>← Back</button>
 
         <div className="header-info">
           <span className="type-emoji">{config.emoji}</span>

@@ -97,3 +97,23 @@
   display: flex;
   justify-content: flex-end;
 }
+
+@media (max-width: 768px) {
+  .admin-prompt-modal-overlay {
+    padding: 10px;
+  }
+  
+  .admin-prompt-modal-content {
+    max-height: 95vh;
+  }
+  
+  .admin-prompt-textarea-container {
+    padding: 16px;
+    min-height: 200px;
+  }
+  
+  .admin-prompt-textarea {
+    font-size: 14px;
+    padding: 12px;
+  }
+}

@@ -166,7 +166,13 @@ export default function Admin() {
                   {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
                 </button>
                 <button 
-                  onClick={() => navigate('/')}
+                  onClick={() => {
+                    if (window.history.length > 2) {
+                      navigate(-1);
+                    } else {
+                      navigate('/');
+                    }
+                  }}
                   className="admin-footer-menu-item"
                 >
                   ↩ Back to App

@@ -224,7 +224,7 @@ export default function History() {
   return (
     <div className="history-page">
       <header className="history-header">
-        <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
+        <button className="back-btn" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/')}>← Back</button>
         <div style={{ flex: 1 }}>
           <h1>Interview History</h1>
           {questionFilter && (

@@ -79,6 +79,7 @@ export default function Landing({ adminPromptMode }) {
   const navigate = useNavigate();
   const { createLoop, getLoops, deleteLoop, migrateLocalLoops } = useLoopPersist();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [showLoopModal, setShowLoopModal] = useState(false);
   const [loopCompany, setLoopCompany] = useState('');
@@ -171,11 +172,19 @@ export default function Landing({ adminPromptMode }) {
     <div className="landing">
       {/* Navbar */}
       <nav className="navbar">
-        <div className="navbar-brand">
+        <div className="navbar-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="brand-icon">🎯</span>
           <span className="brand-name">OnePoint<span className="brand-ai"> AI</span></span>
         </div>
-        <div className="navbar-right">
+
+        <button 
+          className="mobile-menu-btn" 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        >
+          {isMobileMenuOpen ? '✕' : '☰'}
+        </button>
+
+        <div className={`navbar-right ${isMobileMenuOpen ? 'open' : ''}`}>
           <div className="user-info">
             {user?.photoURL && (
               <img src={user.photoURL} alt={user.displayName} className="user-avatar" referrerPolicy="no-referrer" />
@@ -184,11 +193,11 @@ export default function Landing({ adminPromptMode }) {
           </div>
           <ThemeToggle />
           {isAdmin && (
-            <button className="btn btn-ghost" onClick={() => navigate('/admin/prompts')} style={{ marginRight: '12px', color: '#3b82f6' }}>
+            <button className="btn btn-ghost" onClick={() => navigate('/admin/prompts')} style={{ color: '#3b82f6' }}>
               🛠 Admin Prompt Generator
             </button>
           )}
-          <button className="btn btn-ghost" onClick={() => navigate('/history')} style={{ marginRight: '12px' }}>
+          <button className="btn btn-ghost" onClick={() => navigate('/history')}>
             History
           </button>
           <button className="btn btn-outline" onClick={handleLogout} disabled={loggingOut}>

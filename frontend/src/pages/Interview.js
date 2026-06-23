@@ -60,6 +60,13 @@ export default function Interview() {
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const pendingCodeSubmitRef = useRef(null);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // ── Voice to text ───────────────────────────────────────────────
   const { isListening, isSupported: voiceSupported, startListening, stopListening, error: voiceError } =
     useVoiceToText({
@@ -385,7 +392,7 @@ export default function Interview() {
       clearSessionArtifacts(sessionId); // remove timer + editor code for this session
       clear(); // Wipe local storage session data upon successful completion
       const queryParams = loopId ? `?loopId=${loopId}&roundIndex=${roundIndex}` : '';
-      navigate(`/scorecard/${sessionId}${queryParams}`);
+      navigate(`/scorecard/${sessionId}${queryParams}`, { replace: true });
     } catch (err) {
       console.error(err);
       const msg = err.response?.data?.error || err.message || "Unknown error";
@@ -413,7 +420,7 @@ export default function Interview() {
     return (
       <div className="interview-page">
         <header className="interview-header" style={{ '--type-color': config.color }}>
-          <button className="back-btn" onClick={() => navigate('/')} aria-label="Back to home">← Back</button>
+          <button className="back-btn" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
           <div className="interview-type-info">
             <span className="type-emoji">{config.emoji}</span>
             <div>
@@ -449,7 +456,7 @@ export default function Interview() {
 
       {/* Header */}
       <header className="interview-header" style={{ '--type-color': config.color }}>
-        <button className="back-btn" onClick={() => navigate('/')} aria-label="Back to home">← Back</button>
+        <button className="back-btn" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
         <div className="interview-type-info">
           <span className="type-emoji">{config.emoji}</span>
           <div className="type-text-container">
@@ -506,7 +513,7 @@ export default function Interview() {
 
       {/* Main Body (Chat + optional Editor) */}
       <div className="interview-body">
-        <PanelGroup direction="horizontal" autoSaveId="interview-split">
+        <PanelGroup direction={isMobile ? "vertical" : "horizontal"} autoSaveId={`interview-split-${isMobile ? 'v' : 'h'}`}>
           {/* Chat Panel */}
           <Panel defaultSize={isEditorOpen ? 50 : 100} minSize={30}>
             <div className="chat-full-width">
@@ -613,7 +620,7 @@ export default function Interview() {
           
           {isEditorOpen && (
             <>
-              <PanelResizeHandle className="resize-handle" />
+              <PanelResizeHandle className={isMobile ? "horizontal-handle" : "resize-handle"} />
               <Panel defaultSize={50} minSize={30}>
                 <div className="editor-area">
                   <div className="editor-header-bar">

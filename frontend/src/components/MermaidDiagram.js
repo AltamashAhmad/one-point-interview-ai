@@ -227,7 +227,7 @@ export default function MermaidDiagram({ chart }) {
 
   if (status === 'error') return (
     <div style={{ marginTop: '10px', marginBottom: '10px' }}>
-      <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', color: '#ef4444', borderRadius: '8px 8px 0 0', fontSize: '12px', fontWeight: 600 }}>
+      <div style={{ padding: '10px 14px', background: 'var(--bg-error, rgba(239,68,68,0.1))', color: 'var(--text-error, #ef4444)', borderRadius: '8px 8px 0 0', fontSize: '12px', fontWeight: 600 }}>
         ⚠️ Could not render diagram — showing raw description:
       </div>
       <pre style={{ background: 'var(--bg-input)', color: 'var(--text-primary)', padding: '12px 16px', borderRadius: '0 0 8px 8px', fontSize: '12px', overflowX: 'auto', margin: 0, lineHeight: 1.6, border: '1px solid var(--border)', borderTop: 'none' }}>

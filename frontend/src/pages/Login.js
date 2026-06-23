@@ -87,14 +87,14 @@ export default function Login() {
 
       <div className="login-card">
         {/* Logo */}
-        <div className="login-logo">
+        <div className="login-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <span className="logo-icon">🎯</span>
           <span className="logo-text">OnePoint<span className="logo-ai"> AI</span></span>
         </div>
 
         {!allowNewSignups && (
           <div style={{
-            background: 'var(--bg-card)', border: '1px solid var(--border-color)', 
+            background: 'var(--glass-bg)', border: '1px solid var(--border)', 
             padding: '12px', borderRadius: '8px', marginBottom: '24px', 
             display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)'
           }}>

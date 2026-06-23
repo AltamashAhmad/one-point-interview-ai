@@ -35,7 +35,7 @@ export default function LoopDashboard() {
       <div className="loop-dashboard-content">
         
         <div className="top-bar-nav">
-          <button className="back-btn" onClick={() => navigate('/')}>
+          <button className="back-btn" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/')}>
             ← Back to Home
           </button>
           <ThemeToggle />

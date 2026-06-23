@@ -126,7 +126,7 @@ export default function Roadmap({ adminPromptMode }) {
   return (
     <div className="roadmap-page">
       <header className="roadmap-header">
-        <button className="back-btn" onClick={() => navigate('/')}>← Back</button>
+        <button className="back-btn" onClick={() => window.history.length > 2 ? navigate(-1) : navigate('/')}>← Back</button>
         <h1>NeetCode 150 Roadmap</h1>
         <ThemeToggle />
       </header>

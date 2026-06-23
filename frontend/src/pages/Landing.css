@@ -47,6 +47,16 @@
   gap: var(--space-3);
 }
 
+.mobile-menu-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: var(--space-2);
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -727,8 +737,22 @@
   }
 
   .navbar-right {
-    gap: var(--space-2);
-    flex-wrap: wrap;
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    align-items: flex-start;
+    gap: var(--space-4);
+    margin-top: var(--space-3);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+  }
+
+  .navbar-right.open {
+    display: flex;
+  }
+
+  .mobile-menu-btn {
+    display: block;
   }
 
   .user-name {

@@ -253,6 +253,8 @@
   color: var(--text-secondary);
   line-height: 1.6;
   font-size: 14px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .feedback-card.strengths li::before {

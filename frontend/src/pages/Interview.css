@@ -793,17 +793,6 @@
     max-width: 100%;
   }
 
-  /* Stack the split panels vertically on mobile */
-  .interview-body [data-panel-group-direction="horizontal"] {
-    flex-direction: column !important;
-  }
-
-  .resize-handle {
-    width: 100%;
-    height: 5px;
-    cursor: row-resize;
-  }
-
   .editor-area {
     height: 50vh;
     min-height: 260px;

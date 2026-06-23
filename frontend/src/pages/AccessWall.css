@@ -28,7 +28,9 @@
   width: 100%;
   max-width: 520px;
   max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: auto;
+  overscroll-behavior-y: contain;
   text-align: center;
   box-shadow:
     0 0 0 1px rgba(99, 102, 241, 0.08),

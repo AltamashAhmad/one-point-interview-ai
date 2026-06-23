@@ -17,14 +17,14 @@ export default function AdminPromptModal({ promptData, onClose }) {
     <div className="admin-prompt-modal-overlay" onClick={onClose}>
       <div className="admin-prompt-modal-content" onClick={e => e.stopPropagation()}>
         <div className="admin-prompt-modal-header">
-          <h2 style={{ color: promptData.error ? '#ef4444' : 'var(--text-primary)' }}>
+          <h2 style={{ color: promptData.error ? 'var(--text-error, #ef4444)' : 'var(--text-primary)' }}>
             {promptData.error ? '❌ Error Generating Prompt' : '🛠 Generated System Prompt'}
           </h2>
           <button className="admin-prompt-modal-close" onClick={onClose}>✕</button>
         </div>
         
         {promptData.error ? (
-          <div style={{ padding: '24px', color: '#fca5a5', fontSize: '1.1rem', textAlign: 'center' }}>
+          <div style={{ padding: '24px', color: 'var(--text-error, #fca5a5)', fontSize: '1.1rem', textAlign: 'center' }}>
             {promptData.error}
           </div>
         ) : (

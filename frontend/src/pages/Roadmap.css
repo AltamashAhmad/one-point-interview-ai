@@ -322,3 +322,56 @@
   opacity: 1;
   filter: drop-shadow(0 0 4px rgba(245,158,11,0.5));
 }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .roadmap-page {
+    padding: 20px;
+  }
+
+  .roadmap-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+
+  .roadmap-header h1 {
+    font-size: 24px;
+  }
+
+  .question-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .question-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .inline-history-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .inline-history-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .roadmap-page {
+    padding: 16px 12px;
+  }
+
+  .modal-card {
+    padding: 16px;
+  }
+
+  .modal-options {
+    gap: 8px;
+  }
+}
