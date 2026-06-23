@@ -1,0 +1,99 @@
+.admin-prompt-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000;
+  padding: 20px;
+}
+
+.admin-prompt-modal-content {
+  background-color: var(--bg-primary, #1e293b);
+  border: 1px solid var(--border-color, #334155);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.admin-prompt-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color, #334155);
+  background-color: var(--bg-secondary, #0f172a);
+}
+
+.admin-prompt-modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--text-primary, #f8fafc);
+}
+
+.admin-prompt-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+
+.admin-prompt-modal-close:hover {
+  color: var(--text-primary, #f8fafc);
+}
+
+.admin-prompt-question-meta {
+  padding: 12px 24px;
+  background-color: rgba(56, 189, 248, 0.1);
+  border-bottom: 1px solid var(--border-color, #334155);
+  color: var(--text-secondary, #cbd5e1);
+  font-size: 0.9rem;
+}
+
+.admin-prompt-textarea-container {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+}
+
+.admin-prompt-textarea {
+  flex: 1;
+  width: 100%;
+  resize: none;
+  background-color: #0f111a;
+  color: #e2e8f0;
+  border: 1px solid var(--border-color, #334155);
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'Fira Code', 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.admin-prompt-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.admin-prompt-modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color, #334155);
+  background-color: var(--bg-secondary, #0f172a);
+  display: flex;
+  justify-content: flex-end;
+}

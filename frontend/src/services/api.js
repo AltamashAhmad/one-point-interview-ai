@@ -416,3 +416,13 @@ export async function updateAdminSettings(payload) {
   const { data } = await apiClient.put('/api/admin/settings', payload, { headers });
   return data;
 }
+
+/**
+ * Generate a system prompt (Admin only).
+ * @param {object} payload - { interviewType, userName, config: { company, difficulty, language, questionSeed } }
+ */
+export async function generateAdminPrompt(payload) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.post('/api/prompts/generate', payload, { headers });
+  return data;
+}

@@ -13,6 +13,7 @@ const loopsRouter     = require('./routes/loops');
 const usersRouter     = require('./routes/users');
 const accessRouter    = require('./routes/access');
 const adminRouter     = require('./routes/admin');
+const promptsRouter   = require('./routes/prompts');
 const publicRouter    = require('./routes/public');
 
 const { verifyAppCheck } = require('./middleware/appCheck');
@@ -74,6 +75,7 @@ app.use('/api/loops',     loopsRouter);
 app.use('/api/users',     usersRouter);
 app.use('/api/access',    accessRouter);
 app.use('/api/admin',     adminRouter);
+app.use('/api/prompts',   promptsRouter);
 
 app.get('/', (req, res) => {
   res.json({ message: '🎯 One Point Interview AI', status: 'running', version: '1.0.0' });

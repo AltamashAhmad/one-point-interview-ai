@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLoopPersist } from '../hooks/useLoopPersist';
 import ThemeToggle from '../components/ThemeToggle';
+import { generateAdminPrompt } from '../services/api';
+import AdminPromptModal from '../components/AdminPromptModal';
 import './Landing.css';
 
 const INTERVIEW_TYPES = [
@@ -72,8 +74,8 @@ const TUTOR_TYPES = [
   },
 ];
 
-export default function Landing() {
-  const { user, logout } = useAuth();
+export default function Landing({ adminPromptMode }) {
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { createLoop, getLoops, deleteLoop, migrateLocalLoops } = useLoopPersist();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -82,6 +84,9 @@ export default function Landing() {
   const [loopCompany, setLoopCompany] = useState('');
   const [loopLevel, setLoopLevel] = useState('L4');
   const [creatingLoop, setCreatingLoop] = useState(false);
+
+  const [promptData, setPromptData] = useState(null);
+  const [generatingPrompt, setGeneratingPrompt] = useState(false);
 
   const [myLoops, setMyLoops] = useState([]);
   const [loadingLoops, setLoadingLoops] = useState(true);
@@ -143,6 +148,23 @@ export default function Landing() {
   const handleLogout = async () => {
     setLoggingOut(true);
     await logout();
+    navigate('/login');
+  };
+
+  const handleStartInterview = async (typeId) => {
+    if (adminPromptMode) {
+      try {
+        setGeneratingPrompt(true);
+        const data = await generateAdminPrompt({ interviewType: typeId, userName: user?.displayName });
+        setPromptData(data);
+      } catch (err) {
+        setPromptData({ error: err.response?.data?.error || 'Failed to generate prompt' });
+      } finally {
+        setGeneratingPrompt(false);
+      }
+      return;
+    }
+    navigate(`/interview/${typeId}`);
   };
 
   return (
@@ -161,6 +183,11 @@ export default function Landing() {
             <span className="user-name">{user?.displayName || user?.email?.split('@')[0]}</span>
           </div>
           <ThemeToggle />
+          {isAdmin && (
+            <button className="btn btn-ghost" onClick={() => navigate('/admin/prompts')} style={{ marginRight: '12px', color: '#3b82f6' }}>
+              🛠 Admin Prompt Generator
+            </button>
+          )}
           <button className="btn btn-ghost" onClick={() => navigate('/history')} style={{ marginRight: '12px' }}>
             History
           </button>
@@ -204,7 +231,7 @@ export default function Landing() {
         </div>
 
         {/* Roadmap Banner */}
-        <div className="loop-banner" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', marginTop: '16px' }} onClick={() => navigate('/roadmap')}>
+        <div className="loop-banner" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', marginTop: '16px' }} onClick={() => navigate(adminPromptMode ? '/admin/prompts/roadmap' : '/roadmap')}>
           <div className="loop-banner-content">
             <h2>🗺️ NeetCode 150 Roadmap</h2>
             <p>Master Data Structures & Algorithms step-by-step. Track your progress and practice with guided AI Tutor dry runs or Mock Interviews.</p>
@@ -261,7 +288,7 @@ export default function Landing() {
             <InterviewCard
               key={type.id}
               type={type}
-              onStart={() => navigate(`/interview/${type.id}`)}
+              onStart={() => handleStartInterview(type.id)}
             />
           ))}
         </div>
@@ -275,7 +302,7 @@ export default function Landing() {
         </p>
         <div className="cards-grid">
           {TUTOR_TYPES.map((t) => (
-            <InterviewCard key={t.id} type={t} onStart={() => navigate(`/interview/${t.id}`)} />
+            <InterviewCard key={t.id} type={t} onStart={() => handleStartInterview(t.id)} />
           ))}
         </div>
       </main>
@@ -301,6 +328,15 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Loading Overlay for Prompts */}
+      {generatingPrompt && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="spinner"></div>
+        </div>
+      )}
+
+      <AdminPromptModal promptData={promptData} onClose={() => setPromptData(null)} />
 
       {/* Loop Creation Modal */}
       {showLoopModal && (

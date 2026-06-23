@@ -292,6 +292,22 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/admin/prompts"
+          element={
+            <AdminRoute>
+              <Landing adminPromptMode={true} />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/prompts/roadmap"
+          element={
+            <AdminRoute>
+              <Roadmap adminPromptMode={true} />
+            </AdminRoute>
+          }
+        />
+        <Route
           path="/roadmap"
           element={
             <ProtectedRoute>

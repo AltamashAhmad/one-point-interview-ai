@@ -5,9 +5,13 @@ import { getHistory, pinSession, getMyProfile, toggleUncheckQuestion } from '../
 import { TYPE_CONFIG, formatDate, friendlyModelName, modelProviderColor } from '../utils/constants';
 import ThemeToggle from '../components/ThemeToggle';
 import ModelSelector, { AVAILABLE_MODELS } from '../components/ModelSelector';
+import { generateAdminPrompt } from '../services/api';
+import AdminPromptModal from '../components/AdminPromptModal';
+import { useAuth } from '../contexts/AuthContext';
 import './Roadmap.css';
 
-export default function Roadmap() {
+export default function Roadmap({ adminPromptMode }) {
+  const { user } = useAuth();
   const [completedTitles, setCompletedTitles] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -17,6 +21,8 @@ export default function Roadmap() {
   const [historyRecords, setHistoryRecords] = useState([]);
   const [uncheckedTitles, setUncheckedTitles] = useState(new Set());
   const [expandedHistoryQuestion, setExpandedHistoryQuestion] = useState(null);
+  const [promptData, setPromptData] = useState(null);
+  const [generatingPrompt, setGeneratingPrompt] = useState(false);
   const navigate = useNavigate();
 
   const toggleTopic = (topicName) => {
@@ -72,8 +78,26 @@ export default function Roadmap() {
     }
   };
 
-  const handleStart = (type) => {
+  const handleStart = async (type) => {
     if (!selectedQuestion) return;
+
+    if (adminPromptMode) {
+      try {
+        setGeneratingPrompt(true);
+        const data = await generateAdminPrompt({ 
+          interviewType: type, 
+          userName: user?.displayName,
+          config: { questionSeed: selectedQuestion.title }
+        });
+        setPromptData(data);
+        setSelectedQuestion(null); // Close the option selector
+      } catch (err) {
+        setPromptData({ error: err.response?.data?.error || 'Failed to generate prompt' });
+      } finally {
+        setGeneratingPrompt(false);
+      }
+      return;
+    }
 
     // Check if there is an active (incomplete) session for this exact question & type
     const incompleteSession = historyRecords.find(
@@ -259,6 +283,15 @@ export default function Roadmap() {
           </div>
         </div>
       )}
+
+      {/* Loading Overlay for Prompts */}
+      {generatingPrompt && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 999999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="spinner"></div>
+        </div>
+      )}
+
+      <AdminPromptModal promptData={promptData} onClose={() => setPromptData(null)} />
     </div>
   );
 }
