@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { sendMessage, saveSession, generateScorecard, getHistoryById } from '../services/api';
+import { sendMessage, saveSession, generateScorecard, getHistoryById, getHistory } from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import TypingIndicator from '../components/TypingIndicator';
 import ModelSelector, { AVAILABLE_MODELS, DEFAULT_MODEL } from '../components/ModelSelector';
@@ -57,6 +57,7 @@ export default function Interview() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isGeneratingScorecard, setIsGeneratingScorecard] = useState(false);
   const [hasAutoSubmitFailed, setHasAutoSubmitFailed] = useState(false);
+  const [hasCheckedAutoResume, setHasCheckedAutoResume] = useState(false);
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const pendingCodeSubmitRef = useRef(null);
 
@@ -151,8 +152,49 @@ export default function Interview() {
       }).finally(() => {
         setIsLoading(false);
       });
+    } else if (setupPhase && !sId && !hasCheckedAutoResume) {
+      setHasCheckedAutoResume(true);
+      // Global auto-resume from history
+      getHistory().then(historyRecords => {
+        let activeSession;
+        if (isTutor) {
+          activeSession = historyRecords.find(h => h.interviewType === type);
+        } else {
+          activeSession = historyRecords.find(h => {
+            if (h.interviewType !== type || h.scorecard) return false;
+            // Check if within 45 mins (or relevant timer duration)
+            const duration = (type === 'lld' || type === 'systemDesign') ? 60 * 60 * 1000 : 45 * 60 * 1000;
+            return (Date.now() - new Date(h.startedAt).getTime()) < duration;
+          });
+        }
+        
+        if (activeSession) {
+          window.history.replaceState({}, document.title, `${location.pathname}?session=${activeSession.id}`);
+          setIsLoading(true);
+          getHistoryById(activeSession.id).then(data => {
+            setMessages(data.messages || []);
+            setSessionId(activeSession.id);
+            setSessionConfig({
+              model: data.modelUsed,
+              company: data.company,
+              difficulty: data.difficulty,
+              language: data.language,
+              questionSeed: data.questionTitle
+            });
+            setSelectedModel(data.modelUsed);
+            if (data.questionTitle) {
+              setQuestionMeta({
+                title: data.questionTitle,
+                link: data.questionLink,
+                companyName: data.company
+              });
+            }
+            setSetupPhase(false);
+          }).catch(console.error).finally(() => setIsLoading(false));
+        }
+      }).catch(console.error);
     }
-  }, [setupPhase, location.pathname, sessionIdFromUrl, location.state, messages.length, error]);
+  }, [setupPhase, location.pathname, sessionIdFromUrl, location.state, messages.length, error, hasCheckedAutoResume, isTutor, type]);
 
   // ── Persist to localStorage whenever important state changes ─────────
   useEffect(() => {
@@ -356,21 +398,31 @@ export default function Interview() {
 
   // ── New session ───────────────────────────────────────────────────────
   const handleNewSession = () => {
+    const configToRestart = sessionConfig?.questionSeed ? { ...sessionConfig } : null;
+
     clearSessionArtifacts(sessionId); // remove old timer + code before resetting
     clear();                     // wipe localStorage
     window.history.replaceState({}, document.title, location.pathname); // clear session from URL
-    setSetupPhase(true);
+    setHasCheckedAutoResume(true); // Don't auto-resume after manually requesting a new session
     setMessages([]);
     setInput('');
     setError(null);
-    setQuestionMeta(null);       // Bug #7 fix: reset all session state
     setSessionId(null);
-    setSessionConfig(null);
-    setSelectedModel(null);
-    setScorecardModel(null);
     setModelNotice(null);
     setIsGeneratingScorecard(false);
     setHasAutoSubmitFailed(false);
+
+    if (configToRestart) {
+      // Roadmap restart - bypass setup phase completely
+      setSetupPhase(false);
+      startInterview(configToRestart);
+    } else {
+      setSetupPhase(true);
+      setQuestionMeta(null);       // Bug #7 fix: reset all session state
+      setSessionConfig(null);
+      setSelectedModel(null);
+      setScorecardModel(null);
+    }
   };
 
   const handleEndInterview = useCallback(async (auto = false) => {
@@ -629,19 +681,19 @@ export default function Interview() {
                   <textarea
                     ref={inputRef}
                     className="chat-input"
-                    placeholder="Type your answer… (Shift+Enter for new line, Enter to send)"
+                    placeholder={isExpired && !isTutor ? "Time's up! Click End Interview to get scorecard." : "Type your answer… (Shift+Enter for new line, Enter to send)"}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     rows={1}
-                    disabled={isLoading || isGeneratingScorecard}
+                    disabled={isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
                     style={{ '--focus-color': config.color }}
                   />
                   {voiceSupported && (
                     <button
                       className={`mic-btn ${isListening ? 'mic-btn--active' : ''}`}
                       onClick={isListening ? stopListening : startListening}
-                      disabled={isLoading || isGeneratingScorecard}
+                      disabled={isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
                       aria-label={isListening ? 'Stop recording' : 'Start voice input'}
                       title={isListening ? 'Stop recording' : 'Speak your answer'}
                     >
@@ -662,7 +714,7 @@ export default function Interview() {
                   <button
                     className="send-btn"
                     onClick={handleSend}
-                    disabled={!input.trim() || isLoading || isGeneratingScorecard}
+                    disabled={!input.trim() || isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
                     style={{ background: config.color }}
                     aria-label="Send message"
                   >

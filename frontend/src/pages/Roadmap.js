@@ -99,18 +99,6 @@ export default function Roadmap({ adminPromptMode }) {
       return;
     }
 
-    // Check if there is an active (incomplete) session for this exact question & type
-    const incompleteSession = historyRecords.find(
-      h => h.questionTitle === selectedQuestion.title && h.interviewType === type && !h.scorecard
-    );
-
-    if (incompleteSession) {
-      navigate(`/interview/${type}`, {
-        state: { resumeSessionId: incompleteSession.id }
-      });
-      return;
-    }
-    
     // Pass state to the Interview page via router state so it can prepopulate
     navigate(`/interview/${type}`, {
       state: {

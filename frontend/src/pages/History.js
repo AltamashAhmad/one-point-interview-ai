@@ -131,7 +131,8 @@ export default function History() {
         key={interview.id}
         className={`history-card ${interview.isPinned ? 'history-card--pinned' : ''}`}
         onClick={() => {
-          if (!interview.scorecard) {
+          const isTutor = interview.interviewType === 'tutorDsa' || interview.interviewType === 'tutorLld';
+          if (!interview.scorecard || isTutor) {
             navigate(`/interview/${interview.interviewType}?session=${interview.id}`);
           } else {
             navigate(`/history/${interview.id}`);
