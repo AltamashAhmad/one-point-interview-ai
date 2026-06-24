@@ -61,10 +61,23 @@ export default function Interview() {
   const pendingCodeSubmitRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // ── Voice to text ───────────────────────────────────────────────
@@ -420,7 +433,7 @@ export default function Interview() {
     return (
       <div className="interview-page">
         <header className="interview-header" style={{ '--type-color': config.color }}>
-          <button className="back-btn" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
+          <button className="back-btn desktop-only" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
           <div className="interview-type-info">
             <span className="type-emoji">{config.emoji}</span>
             <div>
@@ -429,7 +442,28 @@ export default function Interview() {
             </div>
           </div>
           <div className="header-right">
-            <ThemeToggle />
+            <div className="desktop-only">
+              <ThemeToggle />
+            </div>
+            {isMobile && (
+              <div className="mobile-menu-wrapper" ref={menuRef}>
+                <button className="hamburger-btn" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Menu">
+                  <span />
+                  <span />
+                  <span />
+                </button>
+                {isMenuOpen && (
+                  <div className="hamburger-dropdown">
+                    <button className="dropdown-item" onClick={() => { setIsMenuOpen(false); clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }}>
+                      ← Back to Home
+                    </button>
+                    <div className="dropdown-item" onClick={(e) => e.stopPropagation()}>
+                      Theme: <ThemeToggle />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </header>
         <InterviewSetup interviewType={type} typeConfig={config} onBegin={handleBegin} />
@@ -456,7 +490,7 @@ export default function Interview() {
 
       {/* Header */}
       <header className="interview-header" style={{ '--type-color': config.color }}>
-        <button className="back-btn" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
+        <button className="back-btn desktop-only" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
         <div className="interview-type-info">
           <span className="type-emoji">{config.emoji}</span>
           <div className="type-text-container">
@@ -491,23 +525,54 @@ export default function Interview() {
             onModelChange={handleModelChange}
             disabled={isLoading}
           />
-          <div className="session-badge">
+          <div className="session-badge desktop-only">
             <span className="session-dot" />
             Live
           </div>
-          <button className="btn btn-primary" onClick={() => handleEndInterview(false)} 
+          <button className="btn btn-primary desktop-only" onClick={() => handleEndInterview(false)} 
             disabled={isLoading || isGeneratingScorecard || messages.length === 0}
             aria-busy={isGeneratingScorecard}
           >
             {isGeneratingScorecard ? 'Generating...' : (isTutor ? 'End Lesson' : 'End Interview')}
           </button>
-          <button className="btn btn-outline new-session-btn" onClick={handleNewSession}>
+          <button className="btn btn-outline new-session-btn desktop-only" onClick={handleNewSession}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12h14"/>
             </svg>
             New Session
           </button>
-          <ThemeToggle />
+          <div className="desktop-only">
+            <ThemeToggle />
+          </div>
+
+          {/* Hamburger Menu (Mobile Only) */}
+          {isMobile && (
+            <div className="mobile-menu-wrapper" ref={menuRef}>
+              <button className="hamburger-btn" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Menu">
+                <span />
+                <span />
+                <span />
+              </button>
+              {isMenuOpen && (
+                <div className="hamburger-dropdown">
+                  <button className="dropdown-item" onClick={() => { setIsMenuOpen(false); clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }}>
+                    ← Back to Home
+                  </button>
+                  <button className="dropdown-item" onClick={() => { setIsMenuOpen(false); handleNewSession(); }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><path d="M12 5v14M5 12h14"/></svg>
+                    New Session
+                  </button>
+                  <div className="dropdown-item" onClick={(e) => e.stopPropagation()}>
+                    Theme: <ThemeToggle />
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                  <button className="dropdown-item danger" onClick={() => { setIsMenuOpen(false); handleEndInterview(false); }} disabled={isLoading || isGeneratingScorecard || messages.length === 0}>
+                    🛑 {isGeneratingScorecard ? 'Generating...' : (isTutor ? 'End Lesson' : 'End Interview')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
