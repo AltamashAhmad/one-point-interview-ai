@@ -10,6 +10,19 @@ import './ModelSelector.css';
 export const AVAILABLE_MODELS = [
   // ── TIER 1: The Flagships ───────────────────
   {
+    id: 'llama-3.1-8b-instant',
+    name: 'Llama 3.1 8B',
+    provider: 'groq',
+    tier: 1,
+    badge: 'Highest Quota',
+    badgeColor: '#10b981',
+    rpm: 30,
+    rpd: 14400,
+    contextWindow: '128K',
+    description: 'Groq · Ultra fast · highest quota',
+    icon: '⚡',
+  },
+  {
     id: 'gemini-3.5-flash',
     name: 'Gemini 3.5 Flash',
     provider: 'gemini',
@@ -47,18 +60,6 @@ export const AVAILABLE_MODELS = [
     contextWindow: '100K',
     description: 'Groq · Massive open-weights model, lightning fast',
     icon: '🔥',
-  },
-  {
-    id: 'llama-3.1-8b-instant',
-    name: 'Llama 3.1 8B',
-    provider: 'groq',
-    badge: 'Highest Quota',
-    badgeColor: '#10b981',
-    rpm: 30,
-    rpd: 14400,
-    contextWindow: '128K',
-    description: 'Groq · Ultra fast · highest quota',
-    icon: '⚡',
   },
   {
     id: 'qwen-2.5-coder-32b',

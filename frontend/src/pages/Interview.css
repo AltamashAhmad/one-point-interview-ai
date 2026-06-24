@@ -18,6 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   padding: var(--space-3) var(--space-5);
   background: var(--nav-bg);
   backdrop-filter: blur(var(--glass-blur));
@@ -102,6 +103,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-wrap: wrap;
   flex-shrink: 0;
 }
 
@@ -257,6 +259,7 @@
   color: var(--red);
   font-size: 14px;
   gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .retry-btn {
@@ -773,11 +776,17 @@
 /* ── ≤768 px: tablet / large phone ─────────────────────────────────────── */
 @media (max-width: 768px) {
   .interview-header {
-    padding: var(--space-2) var(--space-4);
-    gap: var(--space-2);
+    padding: var(--space-2);
+    gap: var(--space-1);
     flex-wrap: nowrap;
   }
 
+  .interview-type-info {
+    margin-left: 0;
+    flex: 0 0 auto;
+  }
+
+  .type-text-container { display: none; }
   .type-fullname { display: none; }
   .session-badge { display: none; }
 
@@ -799,17 +808,113 @@
   }
 
   .header-right {
-    gap: var(--space-1);
+    width: auto;
+    flex: 1;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 0;
   }
 
-  .new-session-btn {
+  .code-btn {
+    padding: 6px 8px !important;
+  }
+  
+  .interview-timer {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  /* Compact Model Selector */
+  .model-selector .model-trigger-name,
+  .model-selector .model-trigger-rpm,
+  .model-selector .model-chevron {
     display: none;
   }
 
-  .back-btn {
-    font-size: 12px;
-    padding: var(--space-1) var(--space-2);
+  .model-selector .model-trigger {
+    padding: 6px 8px;
+    gap: 0;
   }
+
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* ── Mobile Menu Dropdown ────────────────────────────────────────────────── */
+.mobile-menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.hamburger-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.hamburger-btn span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+}
+
+.hamburger-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  box-shadow: var(--shadow-xl);
+  z-index: 1000;
+  animation: slideDown 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.hamburger-dropdown .dropdown-item {
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--t-fast);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.hamburger-dropdown .dropdown-item:hover {
+  background: var(--bg-card-hover);
+}
+
+.hamburger-dropdown .dropdown-item.danger {
+  color: var(--red);
+}
+
+.hamburger-dropdown .dropdown-item.danger:hover {
+  background: color-mix(in srgb, var(--red) 10%, transparent);
 }
 
 /* ── ≤480 px: small phone ───────────────────────────────────────────────── */

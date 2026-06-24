@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useLoopPersist } from '../hooks/useLoopPersist';
@@ -80,6 +80,17 @@ export default function Landing({ adminPromptMode }) {
   const { createLoop, getLoops, deleteLoop, migrateLocalLoops } = useLoopPersist();
   const [loggingOut, setLoggingOut] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsMobileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const [showLoopModal, setShowLoopModal] = useState(false);
   const [loopCompany, setLoopCompany] = useState('');
@@ -177,32 +188,47 @@ export default function Landing({ adminPromptMode }) {
           <span className="brand-name">OnePoint<span className="brand-ai"> AI</span></span>
         </div>
 
-        <button 
-          className="mobile-menu-btn" 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? '✕' : '☰'}
-        </button>
-
-        <div className={`navbar-right ${isMobileMenuOpen ? 'open' : ''}`}>
-          <div className="user-info">
-            {user?.photoURL && (
-              <img src={user.photoURL} alt={user.displayName} className="user-avatar" referrerPolicy="no-referrer" />
-            )}
-            <span className="user-name">{user?.displayName || user?.email?.split('@')[0]}</span>
-          </div>
+        <div className="navbar-actions">
           <ThemeToggle />
-          {isAdmin && (
-            <button className="btn btn-ghost" onClick={() => navigate('/admin/prompts')} style={{ color: '#3b82f6' }}>
-              🛠 Admin Prompt Generator
+          
+          <div className="user-menu-wrapper" ref={dropdownRef}>
+            <button 
+              className="user-avatar-btn" 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt={user.displayName} className="user-avatar" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="user-avatar-fallback">{user?.displayName?.[0] || user?.email?.[0] || 'U'}</div>
+              )}
             </button>
-          )}
-          <button className="btn btn-ghost" onClick={() => navigate('/history')}>
-            History
-          </button>
-          <button className="btn btn-outline" onClick={handleLogout} disabled={loggingOut}>
-            {loggingOut ? 'Signing out...' : 'Sign out'}
-          </button>
+
+            <div className={`user-dropdown ${isMobileMenuOpen ? 'open' : ''}`}>
+              <div className="dropdown-header">
+                <span className="user-name">{user?.displayName || user?.email?.split('@')[0]}</span>
+                <span className="user-email">{user?.email}</span>
+              </div>
+              <div className="dropdown-body">
+                {isAdmin && (
+                  <>
+                    <button className="dropdown-item" onClick={() => navigate('/admin')} style={{ color: '#8b5cf6' }}>
+                      👑 Admin Panel
+                    </button>
+                    <button className="dropdown-item" onClick={() => navigate('/admin/prompts')} style={{ color: '#3b82f6' }}>
+                      🛠 Admin Prompt Generator
+                    </button>
+                  </>
+                )}
+                <button className="dropdown-item" onClick={() => navigate('/history')}>
+                  History
+                </button>
+                <div className="dropdown-divider"></div>
+                <button className="dropdown-item text-danger" onClick={handleLogout} disabled={loggingOut}>
+                  {loggingOut ? 'Signing out...' : 'Sign out'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </nav>
 

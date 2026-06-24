@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { sendMessage, saveSession, generateScorecard, getHistoryById } from '../services/api';
+import { sendMessage, saveSession, generateScorecard, getHistoryById, getHistory } from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import TypingIndicator from '../components/TypingIndicator';
 import ModelSelector, { AVAILABLE_MODELS, DEFAULT_MODEL } from '../components/ModelSelector';
@@ -57,14 +57,29 @@ export default function Interview() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isGeneratingScorecard, setIsGeneratingScorecard] = useState(false);
   const [hasAutoSubmitFailed, setHasAutoSubmitFailed] = useState(false);
+  const [hasCheckedAutoResume, setHasCheckedAutoResume] = useState(false);
+  const [isCheckingHistory, setIsCheckingHistory] = useState(true);
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const pendingCodeSubmitRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // ── Voice to text ───────────────────────────────────────────────
@@ -95,62 +110,6 @@ export default function Interview() {
   // ── Guards ────────────────────────────────────────────────────────────
   useEffect(() => { if (!config) navigate('/'); }, [config, navigate]);
 
-  // ── Zombie LocalStorage Bug Fix ───────────────────────────────────────
-  // If the app crashed during session start, the user is left on a blank interview page.
-  useEffect(() => {
-    if (setupPhase === false && messages.length === 0 && !isLoading && !error) {
-      clear();
-      setSetupPhase(true);
-    }
-  }, [setupPhase, messages.length, isLoading, error, clear]);
-
-  // ── Auto-resume from URL or Navigation State ──────────────────────────
-  useEffect(() => {
-    const sId = location.state?.resumeSessionId || sessionIdFromUrl;
-    if (setupPhase && sId && messages.length === 0 && !error) {
-      if (location.state?.resumeSessionId) {
-        window.history.replaceState({}, document.title, `${location.pathname}?session=${sId}`);
-      }
-
-      setIsLoading(true);
-      getHistoryById(sId).then(data => {
-        setMessages(data.messages || []);
-        setSessionId(sId);
-        setSessionConfig({
-          model: data.modelUsed,
-          company: data.company,
-          difficulty: data.difficulty,
-          language: data.language,
-          questionSeed: data.questionTitle
-        });
-        setSelectedModel(data.modelUsed);
-        if (data.questionTitle) {
-          setQuestionMeta({
-            title: data.questionTitle,
-            link: data.questionLink,
-            companyName: data.company
-          });
-        }
-        setSetupPhase(false);
-      }).catch(err => {
-        console.error('Failed to restore session from DB:', err);
-        window.history.replaceState({}, document.title, location.pathname);
-      }).finally(() => {
-        setIsLoading(false);
-      });
-    }
-  }, [setupPhase, location.pathname, sessionIdFromUrl, location.state, messages.length, error]);
-
-  // ── Persist to localStorage whenever important state changes ─────────
-  useEffect(() => {
-    persist({ setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel });
-  }, [setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel, persist]);
-
-  // ── Auto-scroll ───────────────────────────────────────────────────────
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
-
   // ── Build initial message from session config ─────────────────────────
   const buildInitialMessage = useCallback((cfg) => ({
     role: 'user',
@@ -177,7 +136,7 @@ export default function Interview() {
     setMessages([]);
     setSessionConfig(cfg);
     setSelectedModel(cfg.model);
-    setScorecardModel(cfg.scorecardModel || 'gemini-3.1-pro-preview');
+    setScorecardModel(cfg.scorecardModel || DEFAULT_MODEL.id);
 
     const newSessionId = crypto.randomUUID();
     setSessionId(newSessionId);
@@ -226,33 +185,144 @@ export default function Interview() {
     }
   }, [type, userName, buildInitialMessage, location.pathname]);
 
+  // ── Zombie LocalStorage Bug Fix ───────────────────────────────────────
+  // If the app crashed during session start, the user is left on a blank interview page.
+  useEffect(() => {
+    if (setupPhase === false && messages.length === 0 && !isLoading && !error) {
+      clear();
+      setSetupPhase(true);
+    }
+  }, [setupPhase, messages.length, isLoading, error, clear]);
+
+  // ── Auto-resume from URL or Navigation State ──────────────────────────
+  useEffect(() => {
+    const sId = location.state?.resumeSessionId || sessionIdFromUrl;
+    if (setupPhase && sId && messages.length === 0 && !error) {
+      if (location.state?.resumeSessionId) {
+        window.history.replaceState({}, document.title, `${location.pathname}?session=${sId}`);
+      }
+
+      setIsLoading(true);
+      getHistoryById(sId).then(data => {
+        setMessages(data.messages || []);
+        setSessionId(sId);
+        setSessionConfig({
+          model: data.modelUsed,
+          company: data.company,
+          difficulty: data.difficulty,
+          language: data.language,
+          questionSeed: data.questionTitle
+        });
+        setSelectedModel(data.modelUsed);
+        if (data.questionTitle) {
+          setQuestionMeta({
+            title: data.questionTitle,
+            link: data.questionLink,
+            companyName: data.company
+          });
+        }
+        setSetupPhase(false);
+      }).catch(err => {
+        console.error('Failed to restore session from DB:', err);
+        window.history.replaceState({}, document.title, location.pathname);
+      }).finally(() => {
+        setIsLoading(false);
+        setIsCheckingHistory(false);
+      });
+    } else if (setupPhase && !sId && !hasCheckedAutoResume) {
+      setHasCheckedAutoResume(true);
+      setIsCheckingHistory(true);
+      // Global auto-resume from history
+      getHistory().then(historyRecords => {
+        let activeSession;
+        const seed = location.state?.questionSeed;
+        
+        if (isTutor) {
+          activeSession = historyRecords.find(h => 
+            h.interviewType === type && (!seed || h.questionTitle === seed)
+          );
+        } else {
+          activeSession = historyRecords.find(h => {
+            if (h.interviewType !== type || h.scorecard) return false;
+            if (seed && h.questionTitle !== seed) return false;
+            // Check if within 45 mins (or relevant timer duration)
+            const duration = (type === 'lld' || type === 'systemDesign') ? 60 * 60 * 1000 : 45 * 60 * 1000;
+            const ts = h.startedAt || h.updatedAt;
+            const startedMs = ts ? (ts._seconds ? ts._seconds * 1000 : new Date(ts).getTime()) : Date.now();
+            return (Date.now() - startedMs) < duration;
+          });
+        }
+        
+        if (activeSession) {
+          window.history.replaceState({}, document.title, `${location.pathname}?session=${activeSession.id}`);
+          setIsLoading(true);
+          getHistoryById(activeSession.id).then(data => {
+            setMessages(data.messages || []);
+            setSessionId(activeSession.id);
+            setSessionConfig({
+              model: data.modelUsed,
+              company: data.company,
+              difficulty: data.difficulty,
+              language: data.language,
+              questionSeed: data.questionTitle
+            });
+            setSelectedModel(data.modelUsed);
+            if (data.questionTitle) {
+              setQuestionMeta({
+                title: data.questionTitle,
+                link: data.questionLink,
+                companyName: data.company
+              });
+            }
+            setSetupPhase(false);
+          }).catch(console.error).finally(() => {
+            setIsLoading(false);
+            setIsCheckingHistory(false);
+          });
+        } else if (location.state?.autoStart && seed) {
+          const cfg = {
+            model: location.state.model || DEFAULT_MODEL.id,
+            scorecardModel: isTutor ? null : DEFAULT_MODEL.id,
+            difficulty: 'ANY',
+            language: location.state.language || 'Java',
+            company: '',
+            questionSeed: seed
+          };
+          window.history.replaceState({}, document.title, location.pathname);
+          clearSessionArtifacts(sessionId);
+          clear();
+          setSetupPhase(false);
+          startInterview(cfg);
+          setIsCheckingHistory(false);
+        } else {
+          setIsCheckingHistory(false);
+        }
+      }).catch(err => {
+        console.error(err);
+        setIsCheckingHistory(false);
+      });
+    }
+  }, [setupPhase, location.pathname, sessionIdFromUrl, location.state, messages.length, error, hasCheckedAutoResume, isTutor, type, startInterview, clear, clearSessionArtifacts, sessionId]);
+
+  // ── Persist to localStorage whenever important state changes ─────────
+  useEffect(() => {
+    persist({ setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel });
+  }, [setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel, persist]);
+
+  // ── Auto-scroll ───────────────────────────────────────────────────────
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
+
+
+
   // ── Handle "Begin Interview" from setup screen ────────────────────────
   const handleBegin = useCallback((cfg) => {
     setSetupPhase(false);
     startInterview(cfg);
   }, [startInterview]);
 
-  // ── Auto-start from Roadmap ───────────────────────────────────────────
-  useEffect(() => {
-    if (setupPhase && location.state?.autoStart && location.state?.questionSeed) {
-      // Clear autoStart from history state to prevent infinite loops on refresh
-      window.history.replaceState({}, document.title, location.pathname);
-      
-      const cfg = {
-        model: location.state.model || DEFAULT_MODEL.id,
-        scorecardModel: isTutor ? null : 'gemini-3.1-pro-preview',
-        difficulty: 'ANY',
-        language: location.state.language || 'Java',
-        company: '',
-        questionSeed: location.state.questionSeed
-      };
-      
-      clearSessionArtifacts(sessionId);
-      clear();
-      setSetupPhase(false);
-      startInterview(cfg);
-    }
-  }, [setupPhase, location.state, isTutor, startInterview, clear, clearSessionArtifacts, sessionId, location.pathname]);
+
 
   // ── Session Deadlock Fix ──────────────────────────────────────────────
   useEffect(() => {
@@ -343,21 +413,31 @@ export default function Interview() {
 
   // ── New session ───────────────────────────────────────────────────────
   const handleNewSession = () => {
+    const configToRestart = sessionConfig?.questionSeed ? { ...sessionConfig } : null;
+
     clearSessionArtifacts(sessionId); // remove old timer + code before resetting
     clear();                     // wipe localStorage
     window.history.replaceState({}, document.title, location.pathname); // clear session from URL
-    setSetupPhase(true);
+    setHasCheckedAutoResume(true); // Don't auto-resume after manually requesting a new session
     setMessages([]);
     setInput('');
     setError(null);
-    setQuestionMeta(null);       // Bug #7 fix: reset all session state
     setSessionId(null);
-    setSessionConfig(null);
-    setSelectedModel(null);
-    setScorecardModel(null);
     setModelNotice(null);
     setIsGeneratingScorecard(false);
     setHasAutoSubmitFailed(false);
+
+    if (configToRestart) {
+      // Roadmap restart - bypass setup phase completely
+      setSetupPhase(false);
+      startInterview(configToRestart);
+    } else {
+      setSetupPhase(true);
+      setQuestionMeta(null);       // Bug #7 fix: reset all session state
+      setSessionConfig(null);
+      setSelectedModel(null);
+      setScorecardModel(null);
+    }
   };
 
   const handleEndInterview = useCallback(async (auto = false) => {
@@ -420,7 +500,7 @@ export default function Interview() {
     return (
       <div className="interview-page">
         <header className="interview-header" style={{ '--type-color': config.color }}>
-          <button className="back-btn" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
+          <button className="back-btn desktop-only" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
           <div className="interview-type-info">
             <span className="type-emoji">{config.emoji}</span>
             <div>
@@ -429,10 +509,39 @@ export default function Interview() {
             </div>
           </div>
           <div className="header-right">
-            <ThemeToggle />
+            <div className="desktop-only">
+              <ThemeToggle />
+            </div>
+            {isMobile && (
+              <div className="mobile-menu-wrapper" ref={menuRef}>
+                <button className="hamburger-btn" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Menu">
+                  <span />
+                  <span />
+                  <span />
+                </button>
+                {isMenuOpen && (
+                  <div className="hamburger-dropdown">
+                    <button className="dropdown-item" onClick={() => { setIsMenuOpen(false); clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                      Back to Home
+                    </button>
+                    <div className="dropdown-item" onClick={(e) => e.stopPropagation()}>
+                      Theme: <ThemeToggle />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </header>
-        <InterviewSetup interviewType={type} typeConfig={config} onBegin={handleBegin} />
+        {isCheckingHistory ? (
+          <div className="interview-loading" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="spinner" style={{ width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTopColor: 'var(--type-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading session...</p>
+          </div>
+        ) : (
+          <InterviewSetup interviewType={type} typeConfig={config} onBegin={handleBegin} />
+        )}
       </div>
     );
   }
@@ -456,7 +565,7 @@ export default function Interview() {
 
       {/* Header */}
       <header className="interview-header" style={{ '--type-color': config.color }}>
-        <button className="back-btn" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
+        <button className="back-btn desktop-only" onClick={() => { clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }} aria-label="Back to home">← Back</button>
         <div className="interview-type-info">
           <span className="type-emoji">{config.emoji}</span>
           <div className="type-text-container">
@@ -477,8 +586,9 @@ export default function Interview() {
         </div>
         <div className="header-right">
           {!isEditorOpen && (
-            <button className="btn btn-outline" onClick={() => setIsEditorOpen(true)} disabled={isLoading} title="Open Code Editor">
-              &lt;/&gt; Code
+            <button className="btn btn-outline code-btn" onClick={() => setIsEditorOpen(true)} disabled={isLoading} title="Open Code Editor">
+              <span className="code-icon">&lt;/&gt;</span>
+              <span className="code-text desktop-only" style={{ marginLeft: '6px' }}>Code</span>
             </button>
           )}
           {!isTutor && (
@@ -491,23 +601,55 @@ export default function Interview() {
             onModelChange={handleModelChange}
             disabled={isLoading}
           />
-          <div className="session-badge">
+          <div className="session-badge desktop-only">
             <span className="session-dot" />
             Live
           </div>
-          <button className="btn btn-primary" onClick={() => handleEndInterview(false)} 
+          <button className="btn btn-primary desktop-only" onClick={() => handleEndInterview(false)} 
             disabled={isLoading || isGeneratingScorecard || messages.length === 0}
             aria-busy={isGeneratingScorecard}
           >
             {isGeneratingScorecard ? 'Generating...' : (isTutor ? 'End Lesson' : 'End Interview')}
           </button>
-          <button className="btn btn-outline new-session-btn" onClick={handleNewSession}>
+          <button className="btn btn-outline new-session-btn desktop-only" onClick={handleNewSession}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12h14"/>
             </svg>
             New Session
           </button>
-          <ThemeToggle />
+          <div className="desktop-only">
+            <ThemeToggle />
+          </div>
+
+          {/* Hamburger Menu (Mobile Only) */}
+          {isMobile && (
+            <div className="mobile-menu-wrapper" ref={menuRef}>
+              <button className="hamburger-btn" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Menu">
+                <span />
+                <span />
+                <span />
+              </button>
+              {isMenuOpen && (
+                <div className="hamburger-dropdown">
+                  <button className="dropdown-item" onClick={() => { setIsMenuOpen(false); clearSessionArtifacts(sessionId); clear(); window.history.length > 2 ? navigate(-1) : navigate('/'); }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    Back to Home
+                  </button>
+                  <button className="dropdown-item" onClick={() => { setIsMenuOpen(false); handleNewSession(); }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><path d="M12 5v14M5 12h14"/></svg>
+                    New Session
+                  </button>
+                  <div className="dropdown-item" onClick={(e) => e.stopPropagation()}>
+                    Theme: <ThemeToggle />
+                  </div>
+                  <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                  <button className="dropdown-item danger" onClick={() => { setIsMenuOpen(false); handleEndInterview(false); }} disabled={isLoading || isGeneratingScorecard || messages.length === 0}>
+                    🛑 {isGeneratingScorecard ? 'Generating...' : (isTutor ? 'End Lesson' : 'End Interview')}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -561,19 +703,19 @@ export default function Interview() {
                   <textarea
                     ref={inputRef}
                     className="chat-input"
-                    placeholder="Type your answer… (Shift+Enter for new line, Enter to send)"
+                    placeholder={isExpired && !isTutor ? "Time's up! Click End Interview to get scorecard." : "Type your answer… (Shift+Enter for new line, Enter to send)"}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     rows={1}
-                    disabled={isLoading || isGeneratingScorecard}
+                    disabled={isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
                     style={{ '--focus-color': config.color }}
                   />
                   {voiceSupported && (
                     <button
                       className={`mic-btn ${isListening ? 'mic-btn--active' : ''}`}
                       onClick={isListening ? stopListening : startListening}
-                      disabled={isLoading || isGeneratingScorecard}
+                      disabled={isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
                       aria-label={isListening ? 'Stop recording' : 'Start voice input'}
                       title={isListening ? 'Stop recording' : 'Speak your answer'}
                     >
@@ -594,7 +736,7 @@ export default function Interview() {
                   <button
                     className="send-btn"
                     onClick={handleSend}
-                    disabled={!input.trim() || isLoading || isGeneratingScorecard}
+                    disabled={!input.trim() || isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
                     style={{ background: config.color }}
                     aria-label="Send message"
                   >
