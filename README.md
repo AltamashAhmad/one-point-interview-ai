@@ -12,7 +12,7 @@
 
 Practice **DSA**, **System Design**, and **Low-Level Design** interviews with an AI interviewer that challenges you like a real FAANG engineer.
 
-![One Point Interview AI Demo](assets/demo.png)
+![One Point Interview AI Demo](assets/landing_hero.png)
 
 </div>
 
@@ -38,7 +38,7 @@ Start an interview directly from the interactive DSA roadmap. Defaults to **Llam
 
 ### 2. Auto-Resuming Interview Sessions
 Your active sessions are seamlessly resumed when you navigate back. Code, chat, and timers remain perfectly in sync.
-![Active Session](assets/session_started.png)
+![Active Session](assets/interview_chat.png)
 
 ### 3. "New Session" Fast Retry
 Start a clean, brand-new session for a roadmap question with a single click from the hamburger menu.
