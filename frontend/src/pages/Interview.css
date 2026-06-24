@@ -776,9 +776,14 @@
 /* ── ≤768 px: tablet / large phone ─────────────────────────────────────── */
 @media (max-width: 768px) {
   .interview-header {
-    padding: var(--space-2) var(--space-4);
+    padding: var(--space-2) var(--space-3);
     gap: var(--space-2);
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+  }
+
+  .interview-type-info {
+    margin-left: var(--space-1);
+    flex: 1;
   }
 
   .type-fullname { display: none; }
@@ -802,7 +807,10 @@
   }
 
   .header-right {
-    gap: var(--space-1);
+    width: 100%;
+    justify-content: center;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
   }
 
   .new-session-btn {
