@@ -406,8 +406,8 @@ ${transcript}`;
 
     const aiMessages = [{ role: 'user', content: 'Generate my personalized revision notes in Markdown.' }];
     
-    // We can use any available model, falling back to gemini
-    const modelUsed = req.body?.model || data.modelUsed || 'gemini-3.1-pro-preview';
+    // We can use any available model, falling back to llama-3.1-8b-instant
+    const modelUsed = req.body?.model || data.modelUsed || 'llama-3.1-8b-instant';
     let responseText = '';
     
     if (isGroqModel(modelUsed)) {
