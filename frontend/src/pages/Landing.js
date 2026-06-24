@@ -423,7 +423,40 @@ export default function Landing({ adminPromptMode }) {
       
       {/* Footer */}
       <footer className="landing-footer">
-        <p>Made with ❤️ by <a href="https://altamashportfolio-inky.vercel.app/" target="_blank" rel="noopener noreferrer">Altamash Ahmad</a></p>
+        <div className="footer-content">
+          <div className="footer-brand-col">
+            <div className="footer-brand">
+              <span className="brand-icon">🎯</span>
+              <span className="brand-name">OnePoint<span className="brand-ai"> AI</span></span>
+            </div>
+            <p className="footer-description">
+              The ultimate AI-powered platform for FAANG-level engineering interview preparation. Master DSA, System Design, and Low-Level Design.
+            </p>
+          </div>
+          
+          <div className="footer-links-col">
+            <h4>Product</h4>
+            <a href="/">Dashboard</a>
+            <a href="/roadmap">NeetCode 150 Roadmap</a>
+            <a href="/history">Interview History</a>
+          </div>
+
+          <div className="footer-links-col">
+            <h4>Resources</h4>
+            <a href="https://github.com/AltamashAhmad/one-point-interview-ai" target="_blank" rel="noopener noreferrer">GitHub Repository</a>
+            <a href="https://altamashportfolio-inky.vercel.app/" target="_blank" rel="noopener noreferrer">Creator Portfolio</a>
+          </div>
+
+          <div className="footer-links-col">
+            <h4>Connect</h4>
+            <a href="https://www.linkedin.com/in/altamash9648/?skipRedirect=true" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a href="https://github.com/AltamashAhmad" target="_blank" rel="noopener noreferrer">GitHub Profile</a>
+          </div>
+        </div>
+        
+        <div className="footer-bottom">
+          <p>Made with ❤️ by <a href="https://altamashportfolio-inky.vercel.app/" target="_blank" rel="noopener noreferrer">Altamash Ahmad</a>. © {new Date().getFullYear()} All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );
