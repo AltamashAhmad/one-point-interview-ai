@@ -210,9 +210,14 @@ export default function Landing({ adminPromptMode }) {
               </div>
               <div className="dropdown-body">
                 {isAdmin && (
-                  <button className="dropdown-item" onClick={() => navigate('/admin/prompts')} style={{ color: '#3b82f6' }}>
-                    🛠 Admin Prompt Generator
-                  </button>
+                  <>
+                    <button className="dropdown-item" onClick={() => navigate('/admin')} style={{ color: '#8b5cf6' }}>
+                      👑 Admin Panel
+                    </button>
+                    <button className="dropdown-item" onClick={() => navigate('/admin/prompts')} style={{ color: '#3b82f6' }}>
+                      🛠 Admin Prompt Generator
+                    </button>
+                  </>
                 )}
                 <button className="dropdown-item" onClick={() => navigate('/history')}>
                   History
