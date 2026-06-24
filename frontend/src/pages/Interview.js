@@ -136,7 +136,7 @@ export default function Interview() {
     setMessages([]);
     setSessionConfig(cfg);
     setSelectedModel(cfg.model);
-    setScorecardModel(cfg.scorecardModel || 'gemini-3.1-pro-preview');
+    setScorecardModel(cfg.scorecardModel || DEFAULT_MODEL.id);
 
     const newSessionId = crypto.randomUUID();
     setSessionId(newSessionId);
@@ -282,7 +282,7 @@ export default function Interview() {
         } else if (location.state?.autoStart && seed) {
           const cfg = {
             model: location.state.model || DEFAULT_MODEL.id,
-            scorecardModel: isTutor ? null : 'gemini-3.1-pro-preview',
+            scorecardModel: isTutor ? null : DEFAULT_MODEL.id,
             difficulty: 'ANY',
             language: location.state.language || 'Java',
             company: '',
