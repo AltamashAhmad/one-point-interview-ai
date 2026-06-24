@@ -248,13 +248,13 @@ export default function History() {
 
       <main className="history-main">
         {loading ? (
-          <div className="history-list">
-            {[1,2,3].map(i => (
-              <div key={i} className="history-card history-card--skeleton">
-                <div className="skeleton-line skeleton-line--short" />
-                <div className="skeleton-line" />
-                <div className="skeleton-line skeleton-line--med" />
-              </div>
+          <div className="history-grouped">
+            {[1, 2, 3, 4, 5].map(i => (
+              <section key={i} className="history-group">
+                <h2 className="history-group-label" style={{ cursor: 'default', pointerEvents: 'none' }}>
+                  <div className="skeleton-line" style={{ width: i % 2 === 0 ? '220px' : '280px', height: '18px', margin: 0, opacity: 0.7 }} />
+                </h2>
+              </section>
             ))}
           </div>
         ) : error ? (
