@@ -172,27 +172,29 @@ export default function Roadmap({ adminPromptMode }) {
                           <span className={`difficulty-badge diff-${q.difficulty}`}>
                             {q.difficulty}
                           </span>
-                          {hasHistory && (
-                            <button
-                              className={`roadmap-action-btn ${isUnchecked ? 'unchecked' : ''}`}
-                              title={isUnchecked ? "Mark as solved" : "Mark as unsolved"}
-                              onClick={(e) => handleToggleUncheck(e, q.title, !isUnchecked)}
-                            >
-                              {isUnchecked ? '👁️' : '🚫'}
-                            </button>
-                          )}
-                          {hasHistory && (
-                            <button
-                              className="roadmap-history-btn roadmap-action-btn"
-                              title="View history for this question"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedHistoryQuestion(prev => prev === q.title ? null : q.title);
-                              }}
-                            >
-                              📜
-                            </button>
-                          )}
+                          <div className="roadmap-actions-container" style={{ display: 'flex', gap: '8px', width: '64px', justifyContent: 'flex-end' }}>
+                            {hasHistory && (
+                              <button
+                                className={`roadmap-action-btn ${isUnchecked ? 'unchecked' : ''}`}
+                                title={isUnchecked ? "Mark as solved" : "Mark as unsolved"}
+                                onClick={(e) => handleToggleUncheck(e, q.title, !isUnchecked)}
+                              >
+                                {isUnchecked ? '👁️' : '🚫'}
+                              </button>
+                            )}
+                            {hasHistory && (
+                              <button
+                                className="roadmap-history-btn roadmap-action-btn"
+                                title="View history for this question"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedHistoryQuestion(prev => prev === q.title ? null : q.title);
+                                }}
+                              >
+                                📜
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                       

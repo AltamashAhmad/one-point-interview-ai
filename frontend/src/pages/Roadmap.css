@@ -12,6 +12,29 @@
   margin-bottom: 40px;
 }
 
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm, 8px);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-height: 36px;
+}
+
+.back-btn:hover {
+  background: var(--bg-card-hover, rgba(255, 255, 255, 0.1));
+  color: var(--text-primary);
+  border-color: var(--border-light, rgba(255, 255, 255, 0.2));
+}
+
 .roadmap-header h1 {
   font-size: 28px;
   font-weight: 700;

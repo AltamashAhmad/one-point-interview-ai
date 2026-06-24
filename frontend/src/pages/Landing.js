@@ -191,7 +191,9 @@ export default function Landing({ adminPromptMode }) {
             )}
             <span className="user-name">{user?.displayName || user?.email?.split('@')[0]}</span>
           </div>
-          <ThemeToggle />
+          <div className="theme-toggle-container">
+            <ThemeToggle />
+          </div>
           {isAdmin && (
             <button className="btn btn-ghost" onClick={() => navigate('/admin/prompts')} style={{ color: '#3b82f6' }}>
               🛠 Admin Prompt Generator

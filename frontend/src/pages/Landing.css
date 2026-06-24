@@ -2,6 +2,7 @@
 .landing {
   min-height: 100dvh;
   background: var(--bg-primary);
+  overflow-x: hidden;
 }
 
 /* ── Navbar ────────────────────────────────────────────────────────────────── */
@@ -740,10 +741,11 @@
     display: none;
     flex-direction: column;
     width: 100%;
-    align-items: flex-start;
-    gap: var(--space-4);
+    align-items: stretch;
+    gap: var(--space-3);
     margin-top: var(--space-3);
-    padding-top: var(--space-3);
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-2);
     border-top: 1px solid var(--border);
   }
 
@@ -751,12 +753,24 @@
     display: flex;
   }
 
+  .navbar-right .btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 12px var(--space-3);
+  }
+
   .mobile-menu-btn {
     display: block;
   }
 
-  .user-name {
-    display: none;
+  .user-info {
+    padding: 0 var(--space-2);
+    margin-bottom: var(--space-1);
+  }
+
+  .theme-toggle-container {
+    padding: 0 var(--space-2);
+    margin-bottom: var(--space-1);
   }
 
   .hero {

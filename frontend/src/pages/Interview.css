@@ -18,6 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   padding: var(--space-3) var(--space-5);
   background: var(--nav-bg);
   backdrop-filter: blur(var(--glass-blur));
@@ -102,6 +103,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-wrap: wrap;
   flex-shrink: 0;
 }
 
@@ -257,6 +259,7 @@
   color: var(--red);
   font-size: 14px;
   gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .retry-btn {
