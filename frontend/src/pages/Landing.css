@@ -958,3 +958,25 @@
   }
 }
 
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.landing-footer {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  margin-top: var(--space-8);
+  border-top: 1px solid var(--glass-border);
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+}
+
+.landing-footer a {
+  color: var(--blue);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--t-fast);
+}
+
+.landing-footer a:hover {
+  color: var(--purple-light);
+}
+

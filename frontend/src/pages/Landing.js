@@ -420,6 +420,11 @@ export default function Landing({ adminPromptMode }) {
           </div>
         </div>
       )}
+      
+      {/* Footer */}
+      <footer className="landing-footer">
+        <p>Made with ❤️ by <a href="https://altamashportfolio-inky.vercel.app/" target="_blank" rel="noopener noreferrer">Altamash Ahmad</a></p>
+      </footer>
     </div>
   );
 }
