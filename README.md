@@ -8,6 +8,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev)
 [![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
 [![Firebase](https://img.shields.io/badge/Firebase-Auth-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
+[![Llama](https://img.shields.io/badge/Llama_3.1_8B-Default-10b981?style=for-the-badge&logo=meta&logoColor=white)](https://ai.meta.com/llama/)
 
 Practice **DSA**, **System Design**, and **Low-Level Design** interviews with an AI interviewer that challenges you like a real FAANG engineer.
 
@@ -17,15 +18,31 @@ Practice **DSA**, **System Design**, and **Low-Level Design** interviews with an
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-- 🧠 **AI Mock Interviewer** — Simulates real FAANG interview scenarios across three domains
-- 📐 **System Design Practice** — Design scalable systems (URL shorteners, chat apps, ride-sharing)
-- 🔢 **DSA Problem Solving** — Guided algorithmic problem-solving with hints and follow-ups
-- 🏗️ **Low-Level Design** — OOP, design patterns, class diagrams, and component design
-- 💬 **Real-Time Chat Interface** — Conversational interview flow with natural back-and-forth
-- 🔐 **Firebase Authentication** — Secure login with Google/email sign-in
-- 📱 **Fully Responsive** — Works on desktop and mobile
+- 🧠 **AI Mock Interviewer** — Simulates real FAANG interview scenarios across three domains.
+- ⚡ **Powered by Groq & Llama 3.1 8B** — Lightning-fast responses with the highest token quotas using Groq's LPU. (Gemini 3.5 Flash / 3.1 Pro also available).
+- 🗺️ **NeetCode 150 Roadmap Integration** — Pick questions directly from the interactive roadmap and jump right into a Tutor Session.
+- 🔄 **Global Session Persistence** — Your active sessions are automatically saved and restored when you return, just like ChatGPT. You can jump between the Roadmap, Home, and History pages without losing your interview progress.
+- 📝 **Automated Scorecards & Feedback** — At the end of a timed interview, a detailed scorecard is generated highlighting your strengths, weaknesses, and a suggested optimized solution.
+- 💬 **Real-Time Chat Interface** — Conversational interview flow with natural back-and-forth, Markdown support, and code syntax highlighting.
+- 🔐 **Firebase Authentication** — Secure login with Google/Email sign-in and user data isolation.
+
+---
+
+## 📸 Screenshots
+
+### 1. Seamless Roadmap Integration
+Start an interview directly from the interactive DSA roadmap. Defaults to **Llama 3.1 8B** for instant responses.
+![Roadmap Model Selection](assets/default_model_screenshot.png)
+
+### 2. Auto-Resuming Interview Sessions
+Your active sessions are seamlessly resumed when you navigate back. Code, chat, and timers remain perfectly in sync.
+![Active Session](assets/session_started.png)
+
+### 3. "New Session" Fast Retry
+Start a clean, brand-new session for a roadmap question with a single click from the hamburger menu.
+![New Session](assets/new_session_started.png)
 
 ---
 
@@ -35,9 +52,9 @@ Practice **DSA**, **System Design**, and **Low-Level Design** interviews with an
 |-------|-----------|
 | **Frontend** | React 19, Create React App |
 | **Backend** | Node.js, Express 5 |
-| **Authentication** | Firebase Auth |
+| **Authentication & Database** | Firebase Auth, Cloud Firestore |
+| **LLM Inference** | Groq API (Llama 3.1 8B), Gemini API |
 | **Deployment** | Vercel (frontend), Railway/Render (backend) |
-| **Language** | JavaScript (ES6+) |
 
 ---
 
@@ -48,7 +65,7 @@ Practice **DSA**, **System Design**, and **Low-Level Design** interviews with an
 │         Frontend (React 19)             │
 │  ┌──────────┐  ┌──────────────────────┐ │
 │  │  Auth    │  │   Chat Interface     │ │
-│  │ Firebase │  │  (Interview Session) │ │
+│  │ Firebase │  │  (Session Manager)   │ │
 │  └──────────┘  └──────────────────────┘ │
 └──────────────────────┬──────────────────┘
                        │ HTTP / REST
@@ -72,7 +89,8 @@ Practice **DSA**, **System Design**, and **Low-Level Design** interviews with an
 
 ### Prerequisites
 - Node.js 18+
-- Firebase project (for authentication)
+- Firebase project (Authentication & Firestore enabled)
+- Groq API Key & Gemini API Key
 
 ### 1. Clone the repo
 ```bash
@@ -92,17 +110,19 @@ cp .env.example .env
 
 ### 3. Setup Backend
 ```bash
-cd backend
+cd ../backend
 npm install
 
 # Create .env file
 echo "PORT=8080" > .env
+echo "GEMINI_API_KEY=your_key_here" >> .env
+echo "GROQ_API_KEY=your_key_here" >> .env
 ```
 
 ### 4. Run Locally
 ```bash
 # Terminal 1 — Backend
-cd backend && node index.js
+cd backend && npm start
 
 # Terminal 2 — Frontend
 cd frontend && npm start
@@ -124,24 +144,6 @@ REACT_APP_BACKEND_URL=http://localhost:8080
 
 ---
 
-## 📂 Project Structure
-
-```
-one-point-interview-ai/
-├── frontend/
-│   ├── src/
-│   │   ├── App.js              # Root component & routing
-│   │   ├── index.js            # Entry point
-│   │   └── ...components
-│   └── package.json
-├── backend/
-│   ├── index.js                # Express server entry point
-│   └── package.json
-└── README.md
-```
-
----
-
 ## 🎯 Interview Domains
 
 | Domain | What You Practice |
@@ -149,16 +151,6 @@ one-point-interview-ai/
 | **DSA** | Arrays, Trees, Graphs, DP, Two Pointers, Sliding Window |
 | **System Design** | HLD, Scalability, Databases, Caching, Load Balancing |
 | **Low-Level Design** | OOP, SOLID principles, Design Patterns, Class Diagrams |
-
----
-
-## 🔮 Roadmap
-
-- [ ] Add voice-based interview mode
-- [ ] Interview performance scoring & feedback report
-- [ ] Company-specific interview tracks (Google, Meta, Amazon)
-- [ ] Code editor integration for live coding rounds
-- [ ] Peer interview matching
 
 ---
 
