@@ -58,6 +58,7 @@ export default function Interview() {
   const [isGeneratingScorecard, setIsGeneratingScorecard] = useState(false);
   const [hasAutoSubmitFailed, setHasAutoSubmitFailed] = useState(false);
   const [hasCheckedAutoResume, setHasCheckedAutoResume] = useState(false);
+  const [isCheckingHistory, setIsCheckingHistory] = useState(true);
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
   const pendingCodeSubmitRef = useRef(null);
 
@@ -108,105 +109,6 @@ export default function Interview() {
 
   // ── Guards ────────────────────────────────────────────────────────────
   useEffect(() => { if (!config) navigate('/'); }, [config, navigate]);
-
-  // ── Zombie LocalStorage Bug Fix ───────────────────────────────────────
-  // If the app crashed during session start, the user is left on a blank interview page.
-  useEffect(() => {
-    if (setupPhase === false && messages.length === 0 && !isLoading && !error) {
-      clear();
-      setSetupPhase(true);
-    }
-  }, [setupPhase, messages.length, isLoading, error, clear]);
-
-  // ── Auto-resume from URL or Navigation State ──────────────────────────
-  useEffect(() => {
-    const sId = location.state?.resumeSessionId || sessionIdFromUrl;
-    if (setupPhase && sId && messages.length === 0 && !error) {
-      if (location.state?.resumeSessionId) {
-        window.history.replaceState({}, document.title, `${location.pathname}?session=${sId}`);
-      }
-
-      setIsLoading(true);
-      getHistoryById(sId).then(data => {
-        setMessages(data.messages || []);
-        setSessionId(sId);
-        setSessionConfig({
-          model: data.modelUsed,
-          company: data.company,
-          difficulty: data.difficulty,
-          language: data.language,
-          questionSeed: data.questionTitle
-        });
-        setSelectedModel(data.modelUsed);
-        if (data.questionTitle) {
-          setQuestionMeta({
-            title: data.questionTitle,
-            link: data.questionLink,
-            companyName: data.company
-          });
-        }
-        setSetupPhase(false);
-      }).catch(err => {
-        console.error('Failed to restore session from DB:', err);
-        window.history.replaceState({}, document.title, location.pathname);
-      }).finally(() => {
-        setIsLoading(false);
-      });
-    } else if (setupPhase && !sId && !hasCheckedAutoResume) {
-      setHasCheckedAutoResume(true);
-      // Global auto-resume from history
-      getHistory().then(historyRecords => {
-        let activeSession;
-        if (isTutor) {
-          activeSession = historyRecords.find(h => h.interviewType === type);
-        } else {
-          activeSession = historyRecords.find(h => {
-            if (h.interviewType !== type || h.scorecard) return false;
-            // Check if within 45 mins (or relevant timer duration)
-            const duration = (type === 'lld' || type === 'systemDesign') ? 60 * 60 * 1000 : 45 * 60 * 1000;
-            const ts = h.startedAt || h.updatedAt;
-            const startedMs = ts ? (ts._seconds ? ts._seconds * 1000 : new Date(ts).getTime()) : Date.now();
-            return (Date.now() - startedMs) < duration;
-          });
-        }
-        
-        if (activeSession) {
-          window.history.replaceState({}, document.title, `${location.pathname}?session=${activeSession.id}`);
-          setIsLoading(true);
-          getHistoryById(activeSession.id).then(data => {
-            setMessages(data.messages || []);
-            setSessionId(activeSession.id);
-            setSessionConfig({
-              model: data.modelUsed,
-              company: data.company,
-              difficulty: data.difficulty,
-              language: data.language,
-              questionSeed: data.questionTitle
-            });
-            setSelectedModel(data.modelUsed);
-            if (data.questionTitle) {
-              setQuestionMeta({
-                title: data.questionTitle,
-                link: data.questionLink,
-                companyName: data.company
-              });
-            }
-            setSetupPhase(false);
-          }).catch(console.error).finally(() => setIsLoading(false));
-        }
-      }).catch(console.error);
-    }
-  }, [setupPhase, location.pathname, sessionIdFromUrl, location.state, messages.length, error, hasCheckedAutoResume, isTutor, type]);
-
-  // ── Persist to localStorage whenever important state changes ─────────
-  useEffect(() => {
-    persist({ setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel });
-  }, [setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel, persist]);
-
-  // ── Auto-scroll ───────────────────────────────────────────────────────
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isLoading]);
 
   // ── Build initial message from session config ─────────────────────────
   const buildInitialMessage = useCallback((cfg) => ({
@@ -283,33 +185,144 @@ export default function Interview() {
     }
   }, [type, userName, buildInitialMessage, location.pathname]);
 
+  // ── Zombie LocalStorage Bug Fix ───────────────────────────────────────
+  // If the app crashed during session start, the user is left on a blank interview page.
+  useEffect(() => {
+    if (setupPhase === false && messages.length === 0 && !isLoading && !error) {
+      clear();
+      setSetupPhase(true);
+    }
+  }, [setupPhase, messages.length, isLoading, error, clear]);
+
+  // ── Auto-resume from URL or Navigation State ──────────────────────────
+  useEffect(() => {
+    const sId = location.state?.resumeSessionId || sessionIdFromUrl;
+    if (setupPhase && sId && messages.length === 0 && !error) {
+      if (location.state?.resumeSessionId) {
+        window.history.replaceState({}, document.title, `${location.pathname}?session=${sId}`);
+      }
+
+      setIsLoading(true);
+      getHistoryById(sId).then(data => {
+        setMessages(data.messages || []);
+        setSessionId(sId);
+        setSessionConfig({
+          model: data.modelUsed,
+          company: data.company,
+          difficulty: data.difficulty,
+          language: data.language,
+          questionSeed: data.questionTitle
+        });
+        setSelectedModel(data.modelUsed);
+        if (data.questionTitle) {
+          setQuestionMeta({
+            title: data.questionTitle,
+            link: data.questionLink,
+            companyName: data.company
+          });
+        }
+        setSetupPhase(false);
+      }).catch(err => {
+        console.error('Failed to restore session from DB:', err);
+        window.history.replaceState({}, document.title, location.pathname);
+      }).finally(() => {
+        setIsLoading(false);
+        setIsCheckingHistory(false);
+      });
+    } else if (setupPhase && !sId && !hasCheckedAutoResume) {
+      setHasCheckedAutoResume(true);
+      setIsCheckingHistory(true);
+      // Global auto-resume from history
+      getHistory().then(historyRecords => {
+        let activeSession;
+        const seed = location.state?.questionSeed;
+        
+        if (isTutor) {
+          activeSession = historyRecords.find(h => 
+            h.interviewType === type && (!seed || h.questionTitle === seed)
+          );
+        } else {
+          activeSession = historyRecords.find(h => {
+            if (h.interviewType !== type || h.scorecard) return false;
+            if (seed && h.questionTitle !== seed) return false;
+            // Check if within 45 mins (or relevant timer duration)
+            const duration = (type === 'lld' || type === 'systemDesign') ? 60 * 60 * 1000 : 45 * 60 * 1000;
+            const ts = h.startedAt || h.updatedAt;
+            const startedMs = ts ? (ts._seconds ? ts._seconds * 1000 : new Date(ts).getTime()) : Date.now();
+            return (Date.now() - startedMs) < duration;
+          });
+        }
+        
+        if (activeSession) {
+          window.history.replaceState({}, document.title, `${location.pathname}?session=${activeSession.id}`);
+          setIsLoading(true);
+          getHistoryById(activeSession.id).then(data => {
+            setMessages(data.messages || []);
+            setSessionId(activeSession.id);
+            setSessionConfig({
+              model: data.modelUsed,
+              company: data.company,
+              difficulty: data.difficulty,
+              language: data.language,
+              questionSeed: data.questionTitle
+            });
+            setSelectedModel(data.modelUsed);
+            if (data.questionTitle) {
+              setQuestionMeta({
+                title: data.questionTitle,
+                link: data.questionLink,
+                companyName: data.company
+              });
+            }
+            setSetupPhase(false);
+          }).catch(console.error).finally(() => {
+            setIsLoading(false);
+            setIsCheckingHistory(false);
+          });
+        } else if (location.state?.autoStart && seed) {
+          const cfg = {
+            model: location.state.model || DEFAULT_MODEL.id,
+            scorecardModel: isTutor ? null : 'gemini-3.1-pro-preview',
+            difficulty: 'ANY',
+            language: location.state.language || 'Java',
+            company: '',
+            questionSeed: seed
+          };
+          window.history.replaceState({}, document.title, location.pathname);
+          clearSessionArtifacts(sessionId);
+          clear();
+          setSetupPhase(false);
+          startInterview(cfg);
+          setIsCheckingHistory(false);
+        } else {
+          setIsCheckingHistory(false);
+        }
+      }).catch(err => {
+        console.error(err);
+        setIsCheckingHistory(false);
+      });
+    }
+  }, [setupPhase, location.pathname, sessionIdFromUrl, location.state, messages.length, error, hasCheckedAutoResume, isTutor, type, startInterview, clear, clearSessionArtifacts, sessionId]);
+
+  // ── Persist to localStorage whenever important state changes ─────────
+  useEffect(() => {
+    persist({ setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel });
+  }, [setupPhase, sessionConfig, messages, sessionId, questionMeta, selectedModel, scorecardModel, persist]);
+
+  // ── Auto-scroll ───────────────────────────────────────────────────────
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
+
+
+
   // ── Handle "Begin Interview" from setup screen ────────────────────────
   const handleBegin = useCallback((cfg) => {
     setSetupPhase(false);
     startInterview(cfg);
   }, [startInterview]);
 
-  // ── Auto-start from Roadmap ───────────────────────────────────────────
-  useEffect(() => {
-    if (setupPhase && location.state?.autoStart && location.state?.questionSeed) {
-      // Clear autoStart from history state to prevent infinite loops on refresh
-      window.history.replaceState({}, document.title, location.pathname);
-      
-      const cfg = {
-        model: location.state.model || DEFAULT_MODEL.id,
-        scorecardModel: isTutor ? null : 'gemini-3.1-pro-preview',
-        difficulty: 'ANY',
-        language: location.state.language || 'Java',
-        company: '',
-        questionSeed: location.state.questionSeed
-      };
-      
-      clearSessionArtifacts(sessionId);
-      clear();
-      setSetupPhase(false);
-      startInterview(cfg);
-    }
-  }, [setupPhase, location.state, isTutor, startInterview, clear, clearSessionArtifacts, sessionId, location.pathname]);
+
 
   // ── Session Deadlock Fix ──────────────────────────────────────────────
   useEffect(() => {
@@ -521,7 +534,14 @@ export default function Interview() {
             )}
           </div>
         </header>
-        <InterviewSetup interviewType={type} typeConfig={config} onBegin={handleBegin} />
+        {isCheckingHistory ? (
+          <div className="interview-loading" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="spinner" style={{ width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTopColor: 'var(--type-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+            <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading session...</p>
+          </div>
+        ) : (
+          <InterviewSetup interviewType={type} typeConfig={config} onBegin={handleBegin} />
+        )}
       </div>
     );
   }
