@@ -6,7 +6,7 @@
 /* ── Root Layout ─────────────────────────────────────────────────────────── */
 .admin-root {
   display: flex;
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-primary);
   font-family: 'Inter', system-ui, sans-serif;
   color: var(--text-primary);
@@ -23,7 +23,7 @@
   padding: 0;
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
 }
 
 .admin-logo {

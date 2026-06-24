@@ -5,7 +5,7 @@
 }
 
 .loop-dashboard-container {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-primary);
   padding: var(--space-8) var(--space-5);
   display: flex;

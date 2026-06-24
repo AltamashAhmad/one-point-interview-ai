@@ -1,6 +1,6 @@
 /* ── Page shell ─────────────────────────────────────────────────────────────── */
 .history-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   display: flex;

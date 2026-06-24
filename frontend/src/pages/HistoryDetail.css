@@ -1,6 +1,6 @@
 /* ── Page shell ──────────────────────────────────────────────────────────────── */
 .history-detail-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--bg-secondary);
   color: var(--text-primary);
   display: flex;
@@ -12,7 +12,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  min-height: 100dvh;
   color: var(--text-secondary);
   font-size: 16px;
   background: var(--bg-secondary);
