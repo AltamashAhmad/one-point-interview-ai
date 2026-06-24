@@ -511,8 +511,9 @@ export default function Interview() {
         </div>
         <div className="header-right">
           {!isEditorOpen && (
-            <button className="btn btn-outline" onClick={() => setIsEditorOpen(true)} disabled={isLoading} title="Open Code Editor">
-              &lt;/&gt; Code
+            <button className="btn btn-outline code-btn" onClick={() => setIsEditorOpen(true)} disabled={isLoading} title="Open Code Editor">
+              <span className="code-icon">&lt;/&gt;</span>
+              <span className="code-text desktop-only" style={{ marginLeft: '6px' }}>Code</span>
             </button>
           )}
           {!isTutor && (

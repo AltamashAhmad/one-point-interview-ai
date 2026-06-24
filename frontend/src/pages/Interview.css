@@ -776,16 +776,17 @@
 /* ── ≤768 px: tablet / large phone ─────────────────────────────────────── */
 @media (max-width: 768px) {
   .interview-header {
-    padding: var(--space-2) var(--space-3);
-    gap: var(--space-2);
-    flex-wrap: wrap;
+    padding: var(--space-2);
+    gap: var(--space-1);
+    flex-wrap: nowrap;
   }
 
   .interview-type-info {
-    margin-left: var(--space-1);
-    flex: 1;
+    margin-left: 0;
+    flex: 0 0 auto;
   }
 
+  .type-text-container { display: none; }
   .type-fullname { display: none; }
   .session-badge { display: none; }
 
@@ -807,10 +808,32 @@
   }
 
   .header-right {
-    width: 100%;
-    justify-content: space-between;
-    gap: var(--space-2);
-    margin-top: var(--space-1);
+    width: auto;
+    flex: 1;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 0;
+  }
+
+  .code-btn {
+    padding: 6px 8px !important;
+  }
+  
+  .interview-timer {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+
+  /* Compact Model Selector */
+  .model-selector .model-trigger-name,
+  .model-selector .model-trigger-rpm,
+  .model-selector .model-chevron {
+    display: none;
+  }
+
+  .model-selector .model-trigger {
+    padding: 6px 8px;
+    gap: 0;
   }
 
   .desktop-only {
