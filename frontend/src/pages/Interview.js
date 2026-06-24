@@ -164,7 +164,9 @@ export default function Interview() {
             if (h.interviewType !== type || h.scorecard) return false;
             // Check if within 45 mins (or relevant timer duration)
             const duration = (type === 'lld' || type === 'systemDesign') ? 60 * 60 * 1000 : 45 * 60 * 1000;
-            return (Date.now() - new Date(h.startedAt).getTime()) < duration;
+            const ts = h.startedAt || h.updatedAt;
+            const startedMs = ts ? (ts._seconds ? ts._seconds * 1000 : new Date(ts).getTime()) : Date.now();
+            return (Date.now() - startedMs) < duration;
           });
         }
         
