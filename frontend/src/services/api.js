@@ -54,7 +54,7 @@ async function getHeaders() {
  * @param {Array<{role: string, content: string}>} messages
  * @param {string} interviewType - 'dsa' | 'systemDesign' | 'lld'
  * @param {string} userName - Candidate's first name
- * @param {string} model - Gemini model ID to use
+ * @param {string} model - OPI model ID to use
  * @param {Object} config - { company, difficulty, language }
  */
 export async function sendMessage(messages, interviewType, userName = 'there', model, config = {}, signal) {
@@ -73,6 +73,21 @@ export async function sendMessage(messages, interviewType, userName = 'there', m
     },
     { headers, ...(signal && { signal }) }
   );
+  return data;
+}
+
+/**
+ * Submit raw candidate code to the OpenAI-powered code auditor.
+ *
+ * @param {Object} payload
+ * @param {string} payload.code
+ * @param {string} payload.language
+ * @param {string} payload.problemTitle
+ * @param {string} payload.promptContext
+ */
+export async function auditCode(payload, signal) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.post('/api/code-audit', payload, { headers, ...(signal && { signal }) });
   return data;
 }
 
@@ -98,22 +113,46 @@ export async function getInterviewTypes() {
   return data;
 }
 
+const buildHistoryQuery = (options = {}) => {
+  const params = new URLSearchParams();
+  if (options.isLoop) params.append('isLoop', 'true');
+  if (options.isRoadmap) params.append('isRoadmap', 'true');
+  if (options.isTutor) params.append('isTutor', 'true');
+  const str = params.toString();
+  return str ? `?${str}` : '';
+};
+
 /**
  * Fetch all past interview sessions for the current user.
  */
-export async function getHistory() {
+export async function getHistory(options = {}) {
   const headers = await getHeaders();
-  const { data } = await apiClient.get('/api/history', { headers });
+  const { data } = await apiClient.get(`/api/history${buildHistoryQuery(options)}`, { headers });
   return data.interviews;
+}
+
+/**
+ * Archive active sessions for a specific interview type.
+ * @param {string} interviewType
+ * @param {Object} options - { isLoop, isRoadmap, isTutor }
+ */
+export async function archiveSession(interviewType, options = {}) {
+  const headers = await getHeaders();
+  const payload = { interviewType };
+  if (options.questionTitle) {
+    payload.questionTitle = options.questionTitle;
+  }
+  const { data } = await apiClient.post(`/api/history/archive${buildHistoryQuery(options)}`, payload, { headers });
+  return data;
 }
 
 /**
  * Fetch a specific interview session by ID.
  * @param {string} id
  */
-export async function getHistoryById(id) {
+export async function getHistoryById(id, options = {}) {
   const headers = await getHeaders();
-  const { data } = await apiClient.get(`/api/history/${id}`, { headers });
+  const { data } = await apiClient.get(`/api/history/${id}${buildHistoryQuery(options)}`, { headers });
   return data.interview;
 }
 
@@ -125,11 +164,26 @@ export async function getHistoryById(id) {
  * @param {Array}  messages
  * @param {Object} [meta] - { company, difficulty, language, questionTitle, questionLink }
  */
-export async function saveSession(sessionId, interviewType, modelUsed, messages, meta = {}) {
+export async function saveSession(sessionId, interviewType, modelUsed, messages, meta = {}, options = {}) {
   const headers = await getHeaders();
   const { data } = await apiClient.post(
-    '/api/history',
+    `/api/history${buildHistoryQuery(options)}`,
     { sessionId, interviewType, modelUsed, messages, ...meta },
+    { headers }
+  );
+  return data;
+}
+
+/**
+ * Archive old active sessions of a given type.
+ * @param {string} interviewType 
+ * @param {Object} options 
+ */
+export async function archiveOldSessions(interviewType, options = {}) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.post(
+    `/api/history/archive${buildHistoryQuery(options)}`,
+    { interviewType },
     { headers }
   );
   return data;
@@ -139,45 +193,45 @@ export async function saveSession(sessionId, interviewType, modelUsed, messages,
  * Delete a specific interview session by ID.
  * @param {string} id
  */
-export async function deleteSession(id) {
+export async function deleteSession(id, options = {}) {
   const headers = await getHeaders();
-  const { data } = await apiClient.delete(`/api/history/${id}`, { headers });
+  const { data } = await apiClient.delete(`/api/history/${id}${buildHistoryQuery(options)}`, { headers });
   return data;
 }
 
 /**
  * Toggle pin status for an interview session (max 3 pins).
  */
-export async function pinSession(id) {
+export async function pinSession(id, options = {}) {
   const headers = await getHeaders();
-  const { data } = await apiClient.put(`/api/history/${id}/pin`, {}, { headers });
+  const { data } = await apiClient.put(`/api/history/${id}/pin${buildHistoryQuery(options)}`, {}, { headers });
   return data; // { success: true, isPinned: boolean }
 }
 
 /**
  * Generate and fetch the scorecard for an interview session.
  */
-export async function generateScorecard(sessionId, model) {
+export async function generateScorecard(sessionId, model, options = {}) {
   const headers = await getHeaders();
-  const { data } = await apiClient.post(`/api/history/${sessionId}/scorecard`, { model }, { headers });
+  const { data } = await apiClient.post(`/api/history/${sessionId}/scorecard${buildHistoryQuery(options)}`, { model }, { headers });
   return data.scorecard;
 }
 
 /**
  * Generate AI revision notes for an interview session.
  */
-export async function generateNotes(sessionId, model) {
+export async function generateNotes(sessionId, model, options = {}) {
   const headers = await getAuthHeader();
-  const { data } = await axios.post(`${API_BASE}/api/history/${sessionId}/notes`, { model }, { headers });
+  const { data } = await axios.post(`${API_BASE}/api/history/${sessionId}/notes${buildHistoryQuery(options)}`, { model }, { headers });
   return data.notes;
 }
 
 /**
  * Update user-edited revision notes.
  */
-export async function updateNotes(sessionId, notes) {
+export async function updateNotes(sessionId, notes, options = {}) {
   const headers = await getAuthHeader();
-  const { data } = await axios.put(`${API_BASE}/api/history/${sessionId}/notes`, { notes }, { headers });
+  const { data } = await axios.put(`${API_BASE}/api/history/${sessionId}/notes${buildHistoryQuery(options)}`, { notes }, { headers });
   return data.notes;
 }
 
@@ -259,6 +313,15 @@ export async function getMyProfile() {
 export async function toggleUncheckQuestion(questionTitle, unchecked) {
   const headers = await getHeaders();
   const { data } = await apiClient.put('/api/users/me/uncheck', { questionTitle, unchecked }, { headers });
+  return data;
+}
+
+/**
+ * Toggle the manually completed status of a question.
+ */
+export async function toggleManualComplete(questionTitle, isCompleted) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.put('/api/users/me/manual-complete', { questionTitle, isCompleted }, { headers });
   return data;
 }
 

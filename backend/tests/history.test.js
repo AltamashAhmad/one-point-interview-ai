@@ -4,7 +4,7 @@ const request = require('supertest');
 const express = require('express');
 const historyRouter = require('../routes/history');
 const admin = require('../config/firebase');
-const groqService = require('../services/groq');
+const primaryService = require('../services/primaryAi');
 
 // Mock dependencies
 jest.mock('../middleware/auth', () => ({
@@ -30,9 +30,9 @@ jest.mock('../config/firebase', () => {
   return { firestore: firestoreMock };
 });
 
-jest.mock('../services/groq', () => ({
-  generateGroqResponse: jest.fn(),
-  isGroqModel: jest.fn().mockReturnValue(true)
+jest.mock('../services/primaryAi', () => ({
+  generatePrimaryResponse: jest.fn(),
+  isPrimaryModel: jest.fn().mockReturnValue(true)
 }));
 
 const app = express();
@@ -108,7 +108,7 @@ describe('POST /api/history/:id/scorecard', () => {
       communication: 'Okay'
     };
 
-    groqService.generateGroqResponse.mockResolvedValueOnce(JSON.stringify(fakeScorecard));
+    primaryService.generatePrimaryResponse.mockResolvedValueOnce(JSON.stringify(fakeScorecard));
 
     const res = await request(app).post('/api/history/1/scorecard');
     if (res.statusCode === 500) console.log(res.body);
@@ -121,7 +121,7 @@ describe('POST /api/history/:id/scorecard', () => {
 
   it('handles JSON parsing failure gracefully', async () => {
     mockDocData.messages = [{ role: 'user', content: 'Answer' }];
-    groqService.generateGroqResponse.mockResolvedValueOnce('invalid json from AI');
+    primaryService.generatePrimaryResponse.mockResolvedValueOnce('invalid json from AI');
 
     const res = await request(app).post('/api/history/1/scorecard');
     expect(res.statusCode).toBe(500);

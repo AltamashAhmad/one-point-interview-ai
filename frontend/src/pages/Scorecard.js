@@ -26,6 +26,9 @@ export default function Scorecard() {
   const searchParams = new URLSearchParams(location.search);
   const loopId = searchParams.get('loopId');
   const roundIndex = parseInt(searchParams.get('roundIndex'), 10);
+  const isRoadmap = searchParams.get('isRoadmap') === 'true';
+  const isTutor = searchParams.get('isTutor') === 'true';
+  const apiOptions = { isLoop: !!loopId, isRoadmap, isTutor };
   const { updateLoopRound } = useLoopPersist();
 
   const [session, setSession] = useState(null);
@@ -35,7 +38,7 @@ export default function Scorecard() {
   useEffect(() => {
     async function fetchScorecard() {
       try {
-        const interview = await getHistoryById(sessionId);
+        const interview = await getHistoryById(sessionId, apiOptions);
         if (!interview) {
           throw new Error('Interview not found');
         }

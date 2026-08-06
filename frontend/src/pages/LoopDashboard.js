@@ -89,9 +89,9 @@ export default function LoopDashboard() {
                   {isCurrent && (
                     <button 
                       className="btn btn-primary"
-                      onClick={() => navigate(`/interview/${round.type}?loopId=${loop.id}&roundIndex=${index}`)}
+                      onClick={() => navigate(`/interview/${round.type}?loopId=${loop.id}&roundIndex=${index}${round.sessionId ? `&session=${round.sessionId}` : ''}`)}
                     >
-                      Start Round →
+                      {round.sessionId ? 'Resume Round →' : 'Start Round →'}
                     </button>
                   )}
                   {round.sessionId && (

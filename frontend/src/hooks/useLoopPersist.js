@@ -28,7 +28,7 @@ export function useLoopPersist() {
   }, []);
 
   const updateLoopRound = useCallback((loopId, roundIndex, status, score, sessionId) => {
-    const payload = { roundIndex };
+    const payload = { roundIndex: Number(roundIndex) };
     if (status !== undefined) payload.status = status;
     if (score !== undefined) payload.score = score;
     if (sessionId !== undefined) payload.sessionId = sessionId;

@@ -1,19 +1,19 @@
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
-function isOpenRouterModel(model) {
+function isRouterModel(model) {
   // We primarily identify via the frontend, but we can also use a string check.
   // We'll trust the provider passed from the frontend via the `chat.js` logic.
-  return model && (model.includes('/') || model.includes('openrouter'));
+  return model && (model.includes('/') || model.includes('routerAi'));
 }
 
-async function generateOpenRouterResponse(model, systemInstruction, history) {
+async function generateRouterResponse(model, systemInstruction, history) {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY is not configured on the server.');
   }
 
   const url = 'https://openrouter.ai/api/v1/chat/completions';
   
-  // Format history for OpenRouter (OpenAI-compatible format)
+  // Format history for Router AI (OpenAI-compatible format)
   const messages = [
     { role: 'system', content: systemInstruction },
     ...history.map(msg => ({
@@ -41,8 +41,8 @@ async function generateOpenRouterResponse(model, systemInstruction, history) {
 
   if (!response.ok) {
     const errorData = await response.text();
-    console.error(`[OpenRouter API Error] ${response.status}:`, errorData);
-    let errorMessage = 'Failed to generate response from OpenRouter.';
+    console.error(`[Router AI API Error] ${response.status}:`, errorData);
+    let errorMessage = 'Failed to generate response from Router AI.';
     try {
       const parsed = JSON.parse(errorData);
       if (parsed.error && parsed.error.message) {
@@ -64,13 +64,13 @@ async function generateOpenRouterResponse(model, systemInstruction, history) {
   const data = await response.json();
   
   if (!data.choices || data.choices.length === 0) {
-    throw new Error('No response choices returned from OpenRouter.');
+    throw new Error('No response choices returned from Router AI.');
   }
 
   return data.choices[0].message.content;
 }
 
 module.exports = {
-  isOpenRouterModel,
-  generateOpenRouterResponse
+  isRouterModel,
+  generateRouterResponse
 };

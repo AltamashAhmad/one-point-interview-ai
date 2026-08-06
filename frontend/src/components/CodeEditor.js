@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 
-export default function CodeEditor({ sessionId, language = 'javascript', onSubmitCode }) {
+export default function CodeEditor({ sessionId, language = 'javascript', onSubmitCode, isSubmitting = false }) {
   const [code, setCode] = useState('// Write your code here...');
   const [langKey, setLangKey] = useState(language.toLowerCase());
 
@@ -45,8 +45,9 @@ export default function CodeEditor({ sessionId, language = 'javascript', onSubmi
         <button 
           className="editor-btn editor-btn-primary" 
           onClick={handleSubmit}
+          disabled={isSubmitting || !code.trim()}
         >
-          Submit for Review
+          {isSubmitting ? 'Auditing...' : 'Audit with OpenAI'}
         </button>
       </div>
       

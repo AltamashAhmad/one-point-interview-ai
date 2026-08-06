@@ -1,15 +1,15 @@
-const Groq = require('groq-sdk');
+const PrimaryAI = require('groq-sdk');
 
 if (!process.env.GROQ_API_KEY) {
-  console.warn('⚠️  GROQ_API_KEY not set — Groq models will be unavailable');
+  console.warn('⚠️  GROQ_API_KEY not set — Primary AI models will be unavailable');
 }
 
-const groq = process.env.GROQ_API_KEY
-  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
+const primaryService = process.env.GROQ_API_KEY
+  ? new PrimaryAI({ apiKey: process.env.GROQ_API_KEY })
   : null;
 
 /**
- * Groq model IDs available on the free tier.
+ * Primary AI model IDs available on the free tier.
  * Ordered by quality for interview use.
  *
  * Free-tier limits (approximate):
@@ -20,7 +20,7 @@ const groq = process.env.GROQ_API_KEY
  *   llama-3.1-8b-instant      → 30 RPM, 14.4K RPD         ← highest RPD
  *   qwen/qwen3-32b            → 60 RPM, 1K RPD
  */
-const GROQ_MODELS = [
+const PRIMARY_MODELS = [
   'llama-3.3-70b-versatile',
   'meta-llama/llama-4-scout-17b-16e-instruct',
   'llama-3.1-8b-instant',
@@ -30,16 +30,16 @@ const GROQ_MODELS = [
 ];
 
 /**
- * Returns true if the given model ID is a Groq model.
+ * Returns true if the given model ID is a Primary AI model.
  */
-function isGroqModel(modelId) {
-  return GROQ_MODELS.includes(modelId);
+function isPrimaryModel(modelId) {
+  return PRIMARY_MODELS.includes(modelId);
 }
 
 /**
  * Returns true if the error is a quota / rate-limit error (HTTP 429).
  */
-function isGroqQuotaError(err) {
+function isPrimaryQuotaError(err) {
   const msg  = err?.message || '';
   const code = err?.status || err?.statusCode;
   return (
@@ -55,23 +55,23 @@ function isGroqQuotaError(err) {
 }
 
 /**
- * Generate an AI interviewer response using Groq.
+ * Generate an AI interviewer response using Primary AI.
  *
- * Groq uses an OpenAI-compatible chat completions API.
+ * Primary AI uses an OpenAI-compatible chat completions API.
  * The system prompt is passed as a system role message.
  *
  * @param {Array<{role: 'user'|'assistant', content: string}>} messages
  * @param {string} systemPrompt
- * @param {string} modelId - A valid Groq model ID
+ * @param {string} modelId - A valid Primary AI model ID
  * @returns {Promise<string>} - The AI response text
  */
-async function generateGroqResponse(messages, systemPrompt, modelId) {
-  if (!groq) {
-    throw new Error('Groq client not initialised — GROQ_API_KEY missing');
+async function generatePrimaryResponse(messages, systemPrompt, modelId) {
+  if (!primaryService) {
+    throw new Error('Primary AI client not initialised — GROQ_API_KEY missing');
   }
 
-  // Build Groq message format: system first, then conversation history
-  const groqMessages = [
+  // Build Primary AI message format: system first, then conversation history
+  const primaryAiMessages = [
     { role: 'system', content: systemPrompt },
     ...messages.map(msg => ({
       role:    msg.role === 'assistant' ? 'assistant' : 'user',
@@ -82,24 +82,24 @@ async function generateGroqResponse(messages, systemPrompt, modelId) {
   // Add timeout to prevent indefinite hangs
   const timeoutMs = 90_000;
   const completion = await Promise.race([
-    groq.chat.completions.create({
+    primaryService.chat.completions.create({
       model:              modelId,
-      messages:           groqMessages,
+      messages:           primaryAiMessages,
       temperature:        0.7,
       max_tokens:         2048,
       top_p:              0.9,
       stream:             false,
     }),
     new Promise((_, reject) =>
-      setTimeout(() => reject(new Error(`Groq request timed out after ${timeoutMs / 1000}s`)), timeoutMs)
+      setTimeout(() => reject(new Error(`Primary AI request timed out after ${timeoutMs / 1000}s`)), timeoutMs)
     ),
   ]);
 
   const text = completion.choices?.[0]?.message?.content;
-  if (!text) throw new Error('Groq returned an empty response');
+  if (!text) throw new Error('Primary AI returned an empty response');
 
-  console.info(`✅ Groq model: ${modelId}`);
+  console.info(`✅ Primary AI model: ${modelId}`);
   return text;
 }
 
-module.exports = { generateGroqResponse, isGroqModel, isGroqQuotaError, GROQ_MODELS };
+module.exports = { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError, PRIMARY_MODELS };

@@ -150,7 +150,39 @@ router.put('/me/uncheck', verifyToken, async (req, res, next) => {
       });
     }
 
-    res.json({ success: true, questionTitle, unchecked });
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PUT /api/users/me/manual-complete
+ * Toggles the manually completed status of a question (for questions without AI history).
+ * Body: { questionTitle: string, isCompleted: boolean }
+ */
+router.put('/me/manual-complete', verifyToken, async (req, res, next) => {
+  try {
+    const uid = req.user.uid;
+    const { questionTitle, isCompleted } = req.body;
+
+    if (!questionTitle || typeof isCompleted !== 'boolean') {
+      return res.status(400).json({ error: 'Missing questionTitle or isCompleted status' });
+    }
+
+    const docRef = db.collection('users').doc(uid);
+    
+    if (isCompleted) {
+      await docRef.update({
+        manuallyCompletedQuestions: admin.firestore.FieldValue.arrayUnion(questionTitle)
+      });
+    } else {
+      await docRef.update({
+        manuallyCompletedQuestions: admin.firestore.FieldValue.arrayRemove(questionTitle)
+      });
+    }
+    
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }

@@ -4,170 +4,170 @@ import './ModelSelector.css';
 /**
  * All available models with metadata.
  * Ordered: Best choice first per provider. Updated June 2026.
- * provider: 'gemini' | 'groq' | 'openrouter'
- * tier: 1 (Flagship), 2 (Fast Backup), 3 (Heavy Backup)
+ * The IDs remain identical so the backend API routing works flawlessly,
+ * but the display names are masked to look like internal proprietary models.
  */
 export const AVAILABLE_MODELS = [
   // ── TIER 1: The Flagships ───────────────────
   {
     id: 'llama-3.1-8b-instant',
-    name: 'Llama 3.1 8B',
-    provider: 'groq',
+    name: 'OPI Fast',
+    provider: 'internal',
     tier: 1,
     badge: 'Highest Quota',
     badgeColor: '#10b981',
     rpm: 30,
     rpd: 14400,
     contextWindow: '128K',
-    description: 'Groq · Ultra fast · highest quota',
+    description: 'Ultra fast · highest quota',
     icon: '⚡',
   },
   {
     id: 'gemini-3.5-flash',
-    name: 'Gemini 3.5 Flash',
-    provider: 'gemini',
+    name: 'OPI Coder',
+    provider: 'internal',
     tier: 1,
     badge: 'Best for Coding',
     badgeColor: '#8b5cf6',
     rpm: 15,
     rpd: 1500,
     contextWindow: '1M tokens',
-    description: 'Google · Fastest new 2026 generation for coding tasks',
+    description: 'Fastest generation for coding tasks',
     icon: '🚀',
   },
   {
     id: 'gemini-3.1-pro-preview',
-    name: 'Gemini 3.1 Pro',
-    provider: 'gemini',
+    name: 'OPI Pro',
+    provider: 'internal',
     tier: 1,
     badge: 'Best for System Design',
     badgeColor: '#ec4899',
     rpm: 10,
     rpd: 50,
     contextWindow: '2M tokens',
-    description: 'Google · Absolute best reasoning for complex architectures',
+    description: 'Absolute best reasoning for complex architectures',
     icon: '🔬',
   },
   {
     id: 'llama-3.3-70b-versatile',
-    name: 'Llama 3.3 70B',
-    provider: 'groq',
+    name: 'OPI Versatile',
+    provider: 'internal',
     tier: 1,
     badge: 'Most Human-Like',
     badgeColor: '#f97316',
     rpm: 30,
     rpd: 1000,
     contextWindow: '100K',
-    description: 'Groq · Massive open-weights model, lightning fast',
+    description: 'Massive open-weights model, lightning fast',
     icon: '🔥',
   },
   {
     id: 'qwen-2.5-coder-32b',
-    name: 'Qwen 2.5 Coder',
-    provider: 'groq',
+    name: 'OPI Algorithmic',
+    provider: 'internal',
     badge: 'New Coder',
     badgeColor: '#10b981',
     rpm: 30,
     rpd: 1000,
     contextWindow: '128K',
-    description: 'Groq · Trained exclusively on code and algorithms',
+    description: 'Trained exclusively on code and algorithms',
     icon: '💻',
   },
 
   // ── TIER 2: Fast Backups ──────────────────
   {
     id: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    name: 'Llama 4 Scout',
-    provider: 'groq',
+    name: 'OPI Scout',
+    provider: 'internal',
     tier: 2,
     badge: 'Newest Gen',
     badgeColor: '#f97316',
     rpm: 30,
     rpd: 1000,
     contextWindow: '500K',
-    description: 'Groq · Meta\'s newest lightweight Llama 4',
+    description: 'Newest lightweight model variant',
     icon: '🦙',
   },
   {
     id: 'qwen/qwen3.6-27b',
-    name: 'Qwen 3.6 27B',
-    provider: 'groq',
+    name: 'OPI Standard',
+    provider: 'internal',
     tier: 2,
     badge: 'Code Backup',
     badgeColor: '#10b981',
     rpm: 30,
     rpd: 1000,
     contextWindow: '128K',
-    description: 'Groq · Solid alternative for DSA',
+    description: 'Solid alternative for DSA',
     icon: '⌨️',
   },
   {
     id: 'gemini-2.5-flash',
-    name: 'Gemini 2.5 Flash',
-    provider: 'gemini',
+    name: 'OPI Flash',
+    provider: 'internal',
     tier: 2,
     badge: 'Stable Backup',
     badgeColor: '#8b5cf6',
     rpm: 10,
     rpd: 1500,
     contextWindow: '1M tokens',
-    description: 'Google · Extremely stable older generation',
+    description: 'Extremely stable older generation',
     icon: '✨',
   },
 
   // ── TIER 3: Heavyweight Backups ──────────────────────────────────────────────
   {
     id: 'openai/gpt-oss-120b',
-    name: 'GPT OSS 120B',
-    provider: 'groq',
+    name: 'OPI Heavyweight',
+    provider: 'internal',
     tier: 3,
     badge: 'Massive Size',
     badgeColor: '#2563eb',
     rpm: 'Unlimited',
     rpd: 'Unlimited',
     contextWindow: '131K',
-    description: 'Groq · 120 Billion parameters for deep reasoning',
+    description: '120 Billion parameters for deep reasoning',
     icon: '🏋️',
   },
   {
     id: 'gemma-4-31b-it',
-    name: 'Gemma 4 31B',
-    provider: 'gemini',
+    name: 'OPI Open',
+    provider: 'internal',
     tier: 3,
     badge: 'Open Weight',
     badgeColor: '#10b981',
     rpm: 15,
     rpd: 1500,
     contextWindow: '128K',
-    description: 'Google · OSS Gemma 4 architecture',
+    description: 'OSS architecture',
     icon: '🌍',
   },
   {
     id: 'gemini-2.5-pro',
-    name: 'Gemini 2.5 Pro',
-    provider: 'gemini',
+    name: 'OPI Legacy Pro',
+    provider: 'internal',
     tier: 3,
     badge: 'Pro Backup',
     badgeColor: '#3b82f6',
     rpm: 15,
     rpd: 50,
     contextWindow: '2M tokens',
-    description: 'Google · Older reasoning generation',
+    description: 'Older reasoning generation',
     icon: '🧠',
   },
   {
     id: 'gemini-3.1-flash-lite',
-    name: 'Gemini 3.1 Flash Lite',
-    provider: 'gemini',
+    name: 'OPI Lite',
+    provider: 'internal',
+    tier: 3,
     badge: 'Newest',
     badgeColor: '#3b82f6',
     rpm: 15,
     rpd: 1500,
     contextWindow: '1M tokens',
-    description: 'Google · Latest generation',
+    description: 'Latest generation',
     icon: '🔬',
   },
-
 ];
 
 export const DEFAULT_MODEL = AVAILABLE_MODELS[0];
@@ -365,54 +365,6 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
                     <div className="model-stat">
                       <span className="stat-val">{model.rpd}</span>
                       <span className="stat-label">RPD</span>
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <svg className="model-check" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* OpenRouter section */}
-          <div className="model-provider-group">
-            <div className="model-provider-label">
-              <span className="provider-dot" style={{ background: '#3b82f6' }} />
-              OpenRouter
-            </div>
-            {AVAILABLE_MODELS.filter(m => m.provider === 'openrouter').map((model) => {
-              const isSelected = model.id === selectedModel;
-              return (
-                <button
-                  key={model.id}
-                  className={`model-option ${isSelected ? 'model-option--selected' : ''}`}
-                  onClick={() => handleSelect(model.id)}
-                  role="option"
-                  aria-selected={isSelected}
-                >
-                  <div className="model-option-left">
-                    <span className="model-option-icon">{model.icon}</span>
-                    <div className="model-option-info">
-                      <div className="model-option-name">
-                        {model.name}
-                        <span
-                          className="model-badge"
-                          style={{ background: `${model.badgeColor}22`, color: model.badgeColor, border: `1px solid ${model.badgeColor}44` }}
-                        >
-                          {model.badge}
-                        </span>
-                      </div>
-                      <div className="model-option-desc">{model.description}</div>
-                    </div>
-                  </div>
-                  <div className="model-option-stats">
-                    <div className="model-stat">
-                      <span className="stat-val">{model.rpm}</span>
-                      <span className="stat-label">RPM</span>
                     </div>
                   </div>
                   {isSelected && (

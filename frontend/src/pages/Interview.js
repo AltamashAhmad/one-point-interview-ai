@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { sendMessage, saveSession, generateScorecard, getHistoryById, getHistory } from '../services/api';
+import { 
+  sendMessage, 
+  saveSession, 
+  generateScorecard, 
+  getHistoryById, 
+  getHistory, 
+  auditCode, 
+  archiveSession 
+} from '../services/api';
 import MessageBubble from '../components/MessageBubble';
 import TypingIndicator from '../components/TypingIndicator';
 import ModelSelector, { AVAILABLE_MODELS, DEFAULT_MODEL } from '../components/ModelSelector';
@@ -9,6 +17,7 @@ import InterviewSetup  from '../components/InterviewSetup';
 import { useVoiceToText }     from '../hooks/useVoiceToText';
 import { useSessionPersist }  from '../hooks/useSessionPersist';
 import { useInterviewTimer }  from '../hooks/useInterviewTimer';
+import { useLoopPersist }     from '../hooks/useLoopPersist';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import CodeEditor from '../components/CodeEditor';
 import { TYPE_CONFIG } from '../utils/constants';
@@ -24,14 +33,22 @@ export default function Interview() {
   const roundIndex   = searchParams.get('roundIndex');
   const sessionIdFromUrl = searchParams.get('session');
   
+  const isRoadmap    = searchParams.get('isRoadmap') === 'true';
+  
   const { user, refreshUserProfile, setWallDismissed } = useAuth();
   const config       = TYPE_CONFIG[type];
   const isTutor      = config?.isTutor || false;
 
+  const apiOptions   = { isLoop: !!loopId, isRoadmap, isTutor };
+
   const userName = user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || 'there';
+  
+  const { updateLoopRound } = useLoopPersist();
 
   // ── Session persistence (survives page refresh) ─────────────────────
-  const { persist, restore, clear } = useSessionPersist(sessionIdFromUrl || type);
+  const baseType = isRoadmap ? `roadmap_${type}` : (isTutor ? `tutor_${type}` : type);
+  const persistenceId = sessionIdFromUrl || (loopId ? `loop_${loopId}_${roundIndex}` : baseType);
+  const { persist, restore, clear } = useSessionPersist(persistenceId);
 
   // Restore from localStorage on first render ONLY (lazy state initializer)
   const [setupPhase,    setSetupPhaseRaw]    = useState(() => { const s = restore(); return s ? s.setupPhase    : true; });
@@ -55,12 +72,15 @@ export default function Interview() {
   const [error,       setError]       = useState(null);
   const [modelNotice, setModelNotice] = useState(null);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isAuditingCode, setIsAuditingCode] = useState(false);
   const [isGeneratingScorecard, setIsGeneratingScorecard] = useState(false);
   const [hasAutoSubmitFailed, setHasAutoSubmitFailed] = useState(false);
   const [hasCheckedAutoResume, setHasCheckedAutoResume] = useState(false);
   const [isCheckingHistory, setIsCheckingHistory] = useState(true);
   const [showConfirmEnd, setShowConfirmEnd] = useState(false);
-  const pendingCodeSubmitRef = useRef(null);
+  const [showResumeModal, setShowResumeModal] = useState(false);
+  const [pendingSession, setPendingSession] = useState(null);
+  const [pendingAutoStartCfg, setPendingAutoStartCfg] = useState(null);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -142,7 +162,9 @@ export default function Interview() {
     setSessionId(newSessionId);
     
     // Update URL to reflect the active session
-    window.history.replaceState({}, document.title, `${location.pathname}?session=${newSessionId}`);
+    const p = new URLSearchParams(window.location.search);
+    p.set('session', newSessionId);
+    window.history.replaceState({}, document.title, `${location.pathname}?${p.toString()}`);
 
     const initialMessage  = buildInitialMessage(cfg);
     const initialMessages = [initialMessage];
@@ -176,14 +198,18 @@ export default function Interview() {
         questionTitle: response.questionTitle || null,
         questionLink:  response.questionLink  || null,
       };
-      saveSession(newSessionId, type, cfg.model, updatedMessages, meta).catch(console.error);
+      saveSession(newSessionId, type, cfg.model, updatedMessages, meta, apiOptions).catch(console.error);
+
+      if (loopId) {
+        updateLoopRound(loopId, roundIndex, 'in-progress', null, newSessionId).catch(console.error);
+      }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to connect to the AI interviewer. Please check your connection.');
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [type, userName, buildInitialMessage, location.pathname]);
+  }, [type, userName, buildInitialMessage, location.pathname, loopId, roundIndex, updateLoopRound]);
 
   // ── Zombie LocalStorage Bug Fix ───────────────────────────────────────
   // If the app crashed during session start, the user is left on a blank interview page.
@@ -199,11 +225,13 @@ export default function Interview() {
     const sId = location.state?.resumeSessionId || sessionIdFromUrl;
     if (setupPhase && sId && messages.length === 0 && !error) {
       if (location.state?.resumeSessionId) {
-        window.history.replaceState({}, document.title, `${location.pathname}?session=${sId}`);
+        const p = new URLSearchParams(window.location.search);
+        p.set('session', sId);
+        window.history.replaceState({}, document.title, `${location.pathname}?${p.toString()}`);
       }
 
       setIsLoading(true);
-      getHistoryById(sId).then(data => {
+      getHistoryById(sId, apiOptions).then(data => {
         setMessages(data.messages || []);
         setSessionId(sId);
         setSessionConfig({
@@ -224,7 +252,9 @@ export default function Interview() {
         setSetupPhase(false);
       }).catch(err => {
         console.error('Failed to restore session from DB:', err);
-        window.history.replaceState({}, document.title, location.pathname);
+        const p = new URLSearchParams(window.location.search);
+        p.delete('session');
+        window.history.replaceState({}, document.title, `${location.pathname}?${p.toString()}`);
       }).finally(() => {
         setIsLoading(false);
         setIsCheckingHistory(false);
@@ -232,54 +262,33 @@ export default function Interview() {
     } else if (setupPhase && !sId && !hasCheckedAutoResume) {
       setHasCheckedAutoResume(true);
       setIsCheckingHistory(true);
-      // Global auto-resume from history
-      getHistory().then(historyRecords => {
-        let activeSession;
-        const seed = location.state?.questionSeed;
-        
-        if (isTutor) {
-          activeSession = historyRecords.find(h => 
-            h.interviewType === type && (!seed || h.questionTitle === seed)
-          );
-        } else {
-          activeSession = historyRecords.find(h => {
-            if (h.interviewType !== type || h.scorecard) return false;
-            if (seed && h.questionTitle !== seed) return false;
-            // Check if within 45 mins (or relevant timer duration)
-            const duration = (type === 'lld' || type === 'systemDesign') ? 60 * 60 * 1000 : 45 * 60 * 1000;
-            const ts = h.startedAt || h.updatedAt;
-            const startedMs = ts ? (ts._seconds ? ts._seconds * 1000 : new Date(ts).getTime()) : Date.now();
-            return (Date.now() - startedMs) < duration;
-          });
-        }
-        
+      
+      const seed = location.state?.questionSeed;
+      const isAutoStart = location.state?.autoStart && seed;
+      
+      getHistory({ isRoadmap, isTutor }).then(historyRecords => {
+        const activeSession = historyRecords.find(h => 
+          h.interviewType === type && 
+          (!seed || h.questionTitle === seed) && 
+          !h.isArchived && 
+          !h.scorecard
+        );
+
         if (activeSession) {
-          window.history.replaceState({}, document.title, `${location.pathname}?session=${activeSession.id}`);
-          setIsLoading(true);
-          getHistoryById(activeSession.id).then(data => {
-            setMessages(data.messages || []);
-            setSessionId(activeSession.id);
-            setSessionConfig({
-              model: data.modelUsed,
-              company: data.company,
-              difficulty: data.difficulty,
-              language: data.language,
-              questionSeed: data.questionTitle
+          setPendingSession(activeSession);
+          if (isAutoStart) {
+            setPendingAutoStartCfg({
+              model: location.state.model || DEFAULT_MODEL.id,
+              scorecardModel: isTutor ? null : DEFAULT_MODEL.id,
+              difficulty: 'ANY',
+              language: location.state.language || 'Java',
+              company: '',
+              questionSeed: seed
             });
-            setSelectedModel(data.modelUsed);
-            if (data.questionTitle) {
-              setQuestionMeta({
-                title: data.questionTitle,
-                link: data.questionLink,
-                companyName: data.company
-              });
-            }
-            setSetupPhase(false);
-          }).catch(console.error).finally(() => {
-            setIsLoading(false);
-            setIsCheckingHistory(false);
-          });
-        } else if (location.state?.autoStart && seed) {
+          }
+          setShowResumeModal(true);
+          setIsCheckingHistory(false);
+        } else if (isAutoStart) {
           const cfg = {
             model: location.state.model || DEFAULT_MODEL.id,
             scorecardModel: isTutor ? null : DEFAULT_MODEL.id,
@@ -288,12 +297,13 @@ export default function Interview() {
             company: '',
             questionSeed: seed
           };
-          window.history.replaceState({}, document.title, location.pathname);
-          clearSessionArtifacts(sessionId);
-          clear();
+          const p = new URLSearchParams(window.location.search);
+          p.delete('session');
+          window.history.replaceState({}, document.title, `${location.pathname}?${p.toString()}`);
+          
+          setIsCheckingHistory(false);
           setSetupPhase(false);
           startInterview(cfg);
-          setIsCheckingHistory(false);
         } else {
           setIsCheckingHistory(false);
         }
@@ -333,11 +343,49 @@ export default function Interview() {
   }, [setupPhase, messages.length, isLoading, error]);
 
   // ── Handle Submitting Code from Editor ────────────────────────────────
-  const handleCodeSubmit = useCallback((code, lang) => {
-    const formattedCode = `Here is my implementation in ${lang}:\n\n\`\`\`${lang}\n${code}\n\`\`\`\n\nPlease review my code and provide feedback.`;
-    pendingCodeSubmitRef.current = formattedCode;
-    setInput(formattedCode);
-  }, []);
+  const handleCodeSubmit = useCallback(async (code, lang) => {
+    if (!code?.trim() || isAuditingCode || isLoading) return;
+
+    const formattedCode = `Here is my implementation in ${lang}:\n\n\`\`\`${lang}\n${code}\n\`\`\`\n\nPlease audit my code.`;
+    const userMessage = { role: 'user', content: formattedCode };
+    const newMessages = [...messages, userMessage];
+
+    setMessages(newMessages);
+    setInput('');
+    setIsAuditingCode(true);
+    setError(null);
+
+    try {
+      const response = await auditCode({
+        code,
+        language: lang,
+        problemTitle: questionMeta?.title || sessionConfig?.questionSeed || '',
+        promptContext: [
+          sessionConfig?.difficulty ? `Difficulty: ${sessionConfig.difficulty}` : '',
+          sessionConfig?.company ? `Target company: ${sessionConfig.company}` : '',
+          questionMeta?.title ? `Current question: ${questionMeta.title}` : '',
+        ].filter(Boolean).join('. '),
+      });
+
+      const finalMessages = [
+        ...newMessages,
+        {
+          role: 'assistant',
+          content: response.content || response.audit?.summary || 'Code audit complete.',
+          audit: response.audit,
+        },
+      ];
+
+      setMessages(finalMessages);
+      saveSession(sessionId, type, selectedModel, finalMessages, {}, apiOptions).catch(console.error);
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Failed to audit code. Please try again.';
+      setError(msg);
+      setMessages(messages);
+    } finally {
+      setIsAuditingCode(false);
+    }
+  }, [isAuditingCode, isLoading, messages, questionMeta, sessionConfig, sessionId, type, selectedModel]);
 
   // ── Send a chat message ───────────────────────────────────────────────
   const handleSend = useCallback(async () => {
@@ -366,7 +414,7 @@ export default function Interview() {
 
       const finalMessages = [...newMessages, { role: 'assistant', content: response.content }];
       setMessages(finalMessages);
-      saveSession(sessionId, type, selectedModel, finalMessages).catch(console.error);
+      saveSession(sessionId, type, selectedModel, finalMessages, {}, apiOptions).catch(console.error);
     } catch (err) {
       // If we hit a quota limit, tell the AuthContext to re-fetch the profile immediately
       // This will instantly trigger the AccessWall full-screen overlay from App.js!
@@ -376,7 +424,7 @@ export default function Interview() {
         setWallDismissed(false);
       }
 
-      // Handle both axios response errors (Gemini) and direct SDK errors (Groq)
+      // Handle both axios response errors and direct SDK errors
       const msg = err.response?.data?.error || err.message || 'Failed to get a response. Please try again.';
       setError(msg);
       setMessages(prev => prev.slice(0, -1)); // revert optimistic add using functional update
@@ -386,14 +434,6 @@ export default function Interview() {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [input, isLoading, messages, type, userName, selectedModel, sessionId, sessionConfig, buildInitialMessage, refreshUserProfile, setWallDismissed]);
-
-  // ── Auto-send when code is submitted from editor ──────────────────────
-  useEffect(() => {
-    if (pendingCodeSubmitRef.current && input === pendingCodeSubmitRef.current) {
-      pendingCodeSubmitRef.current = null;
-      handleSend();
-    }
-  }, [input, handleSend]);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -412,12 +452,23 @@ export default function Interview() {
 
 
   // ── New session ───────────────────────────────────────────────────────
-  const handleNewSession = () => {
+  const handleNewSession = async () => {
+    try {
+      await archiveSession(type, { 
+        isRoadmap, 
+        isTutor,
+        questionTitle: sessionConfig?.questionSeed || questionMeta?.title 
+      });
+    } catch (e) {
+      console.error("Failed to archive session", e);
+    }
     const configToRestart = sessionConfig?.questionSeed ? { ...sessionConfig } : null;
 
     clearSessionArtifacts(sessionId); // remove old timer + code before resetting
     clear();                     // wipe localStorage
-    window.history.replaceState({}, document.title, location.pathname); // clear session from URL
+    const p = new URLSearchParams(window.location.search);
+    p.delete('session');
+    window.history.replaceState({}, document.title, `${location.pathname}?${p.toString()}`); // clear session from URL
     setHasCheckedAutoResume(true); // Don't auto-resume after manually requesting a new session
     setMessages([]);
     setInput('');
@@ -468,10 +519,17 @@ export default function Interview() {
 
     setIsGeneratingScorecard(true);
     try {
-      await generateScorecard(sessionId, scorecardModel);
+      await generateScorecard(sessionId, scorecardModel, apiOptions);
       clearSessionArtifacts(sessionId); // remove timer + editor code for this session
       clear(); // Wipe local storage session data upon successful completion
-      const queryParams = loopId ? `?loopId=${loopId}&roundIndex=${roundIndex}` : '';
+      const params = new URLSearchParams();
+      if (loopId) {
+        params.append('loopId', loopId);
+        params.append('roundIndex', roundIndex);
+      }
+      if (isRoadmap) params.append('isRoadmap', 'true');
+      if (isTutor) params.append('isTutor', 'true');
+      const queryParams = params.toString() ? `?${params.toString()}` : '';
       navigate(`/scorecard/${sessionId}${queryParams}`, { replace: true });
     } catch (err) {
       console.error(err);
@@ -539,6 +597,63 @@ export default function Interview() {
             <div className="spinner" style={{ width: '40px', height: '40px', border: '3px solid var(--border-color)', borderTopColor: 'var(--type-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
             <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading session...</p>
           </div>
+        ) : showResumeModal && pendingSession ? (
+          <div style={{ flex: 1, position: 'relative' }}>
+            <div className="modal-overlay">
+              <div className="modal-card resume-modal">
+                <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Resume Session?</h3>
+                <p>You have an incomplete session for <strong>{pendingSession.questionTitle || TYPE_CONFIG[type]?.label || type}</strong>.</p>
+                <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                  Would you like to resume where you left off, or archive it and start a new session?
+                </p>
+                <div className="modal-actions" style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                  <button 
+                    className="btn btn-primary" 
+                    style={{ flex: 1 }}
+                    onClick={() => {
+                      const p = new URLSearchParams(window.location.search);
+                      p.set('session', pendingSession.id);
+                      window.history.replaceState({}, document.title, `${location.pathname}?${p.toString()}`);
+                      setShowResumeModal(false);
+                      setPendingSession(null);
+                      window.location.reload();
+                    }}
+                  >
+                    Resume
+                  </button>
+                  <button 
+                    className="btn btn-outline" 
+                    style={{ flex: 1 }}
+                    onClick={async () => {
+                      try {
+                        await archiveSession(type, { 
+                          isRoadmap, 
+                          isTutor,
+                          questionTitle: pendingSession?.questionTitle
+                        });
+                      } catch (e) {
+                        console.error("Failed to archive session", e);
+                      }
+                      setShowResumeModal(false);
+                      setPendingSession(null);
+                      if (pendingAutoStartCfg) {
+                        const p = new URLSearchParams(window.location.search);
+                        p.delete('session');
+                        window.history.replaceState({}, document.title, `${location.pathname}?${p.toString()}`);
+                        setIsCheckingHistory(false);
+                        setSetupPhase(false);
+                        startInterview(pendingAutoStartCfg);
+                      } else {
+                        setIsCheckingHistory(false);
+                      }
+                    }}
+                  >
+                    Start Fresh
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         ) : (
           <InterviewSetup interviewType={type} typeConfig={config} onBegin={handleBegin} />
         )}
@@ -599,14 +714,14 @@ export default function Interview() {
           <ModelSelector
             selectedModel={selectedModel}
             onModelChange={handleModelChange}
-            disabled={isLoading}
+            disabled={isLoading || isAuditingCode}
           />
           <div className="session-badge desktop-only">
             <span className="session-dot" />
             Live
           </div>
           <button className="btn btn-primary desktop-only" onClick={() => handleEndInterview(false)} 
-            disabled={isLoading || isGeneratingScorecard || messages.length === 0}
+            disabled={isLoading || isAuditingCode || isGeneratingScorecard || messages.length === 0}
             aria-busy={isGeneratingScorecard}
           >
             {isGeneratingScorecard ? 'Generating...' : (isTutor ? 'End Lesson' : 'End Interview')}
@@ -685,7 +800,7 @@ export default function Interview() {
                     <div className="model-notice">{modelNotice}</div>
                   )}
 
-                  {isLoading && <TypingIndicator />}
+                  {(isLoading || isAuditingCode) && <TypingIndicator />}
 
                   {error && (
                     <div className="error-banner" role="alert">
@@ -708,14 +823,14 @@ export default function Interview() {
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
                     rows={1}
-                    disabled={isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
+                    disabled={isLoading || isAuditingCode || isGeneratingScorecard || (isExpired && !isTutor)}
                     style={{ '--focus-color': config.color }}
                   />
                   {voiceSupported && (
                     <button
                       className={`mic-btn ${isListening ? 'mic-btn--active' : ''}`}
                       onClick={isListening ? stopListening : startListening}
-                      disabled={isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
+                      disabled={isLoading || isAuditingCode || isGeneratingScorecard || (isExpired && !isTutor)}
                       aria-label={isListening ? 'Stop recording' : 'Start voice input'}
                       title={isListening ? 'Stop recording' : 'Speak your answer'}
                     >
@@ -736,7 +851,7 @@ export default function Interview() {
                   <button
                     className="send-btn"
                     onClick={handleSend}
-                    disabled={!input.trim() || isLoading || isGeneratingScorecard || (isExpired && !isTutor)}
+                    disabled={!input.trim() || isLoading || isAuditingCode || isGeneratingScorecard || (isExpired && !isTutor)}
                     style={{ background: config.color }}
                     aria-label="Send message"
                   >
@@ -754,7 +869,7 @@ export default function Interview() {
                 {isListening && <p className="voice-listening">🎤 Listening… speak your answer, then click the stop button</p>}
                 <p className="input-hint">
                   {isTutor ? 'Tutor' : 'Interviewer'}: <strong style={{ color: config.color }}>{config.label} Mode</strong> ·
-                  {isTutor ? 'Tip: Ask questions and learn at your own pace' : 'Tip: Think out loud and communicate your reasoning'}
+                  {isAuditingCode ? 'OpenAI is auditing your code for complexity, bugs, and edge cases' : (isTutor ? 'Tip: Ask questions and learn at your own pace' : 'Tip: Think out loud and communicate your reasoning')}
                 </p>
               </footer>
             </div>
@@ -773,6 +888,7 @@ export default function Interview() {
                     sessionId={sessionId} 
                     language={sessionConfig?.language || 'javascript'} 
                     onSubmitCode={handleCodeSubmit}
+                    isSubmitting={isAuditingCode}
                     problemTitle={questionMeta?.title}
                     model={sessionConfig?.model}
                   />
