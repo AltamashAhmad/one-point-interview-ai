@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { generateGroqResponse } = require('../services/groq');
+const { generatePrimaryResponse } = require('../services/primaryAi');
 
 const MODEL = 'llama-3.1-8b-instant';
 
@@ -156,7 +156,7 @@ ${transcript}`;
   ];
 
   try {
-    const responseText = await generateGroqResponse(aiMessages, systemPrompt, MODEL);
+    const responseText = await generatePrimaryResponse(aiMessages, systemPrompt, MODEL);
     
     // Parse
     let cleanedText = responseText;

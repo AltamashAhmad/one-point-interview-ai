@@ -110,12 +110,12 @@ export function friendlyModelName(modelId) {
 }
 
 /**
- * Get the accent color for a model's provider (Gemini = purple, Groq = orange).
+ * Get the accent color for a model's provider.
  * @param {string} modelId
  * @returns {string} CSS color
  */
 export function modelProviderColor(modelId) {
   const found = AVAILABLE_MODELS.find(m => m.id === modelId);
   if (!found) return '#64748b';
-  return found.provider === 'groq' ? '#f97316' : '#8b5cf6';
+  return found.provider === 'internal' ? '#10b981' : '#8b5cf6';
 }

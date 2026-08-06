@@ -3,11 +3,18 @@ const router = express.Router();
 const { verifyToken } = require('../middleware/auth');
 const { checkUserAccess, enforceGlobalStatus } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
-const { generateInterviewResponse } = require('../services/gemini');
-const { generateGroqResponse, isGroqModel, isGroqQuotaError } = require('../services/groq');
-const { generateOpenRouterResponse, isOpenRouterModel } = require('../services/openrouter');
+const { generateBackupResponse } = require('../services/backupAi');
+const { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError } = require('../services/primaryAi');
+const { generateRouterResponse, isRouterModel } = require('../services/routerAi');
 
 const db = admin.firestore();
+
+const getCollectionName = (req) => {
+  if (req.query.isLoop === 'true') return 'loop_interviews';
+  if (req.query.isRoadmap === 'true') return 'roadmap_interviews';
+  if (req.query.isTutor === 'true') return 'tutor_interviews';
+  return 'interviews';
+};
 
 // Validates Firestore document IDs to prevent path traversal / malformed IDs
 function isValidDocId(id) {
@@ -29,7 +36,7 @@ router.use(verifyToken, enforceGlobalStatus);
 router.get('/', async (req, res, next) => {
   try {
     const userId = req.user.uid;
-    const snapshot = await db.collection('interviews')
+    const snapshot = await db.collection(getCollectionName(req))
       .where('userId', '==', userId)
       .get();
 
@@ -38,13 +45,84 @@ router.get('/', async (req, res, next) => {
       interviews.push({ id: doc.id, ...doc.data() });
     });
 
+    const getTime = (ts) => {
+      if (!ts) return 0;
+      if (typeof ts.toMillis === 'function') return ts.toMillis();
+      if (ts._seconds) return ts._seconds * 1000;
+      return new Date(ts).getTime() || 0;
+    };
+
     interviews.sort((a, b) => {
-      const tA = a.updatedAt?.toMillis?.() || 0;
-      const tB = b.updatedAt?.toMillis?.() || 0;
-      return tB - tA; // desc
+      const tsA = a.updatedAt || a.startedAt;
+      const tsB = b.updatedAt || b.startedAt;
+      return getTime(tsB) - getTime(tsA); // desc
     });
 
     res.json({ interviews });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/history/archive
+ * Archive any active (non-scorecard, non-archived) sessions for a specific interview type.
+ * This ensures we only have one active session at a time.
+ */
+router.post('/archive', async (req, res, next) => {
+  try {
+    const userId = req.user.uid;
+    const { interviewType, questionTitle } = req.body;
+    const collectionName = getCollectionName(req);
+    
+    let query = db.collection(collectionName)
+      .where('userId', '==', userId)
+      .where('interviewType', '==', interviewType);
+      
+    if (questionTitle) {
+      query = query.where('questionTitle', '==', questionTitle);
+    }
+    
+    const snapshot = await query.get();
+      
+    const activeSessions = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (!data.scorecard && !data.isArchived) {
+        activeSessions.push({ doc, data });
+      }
+    });
+
+    const getTime = (ts) => {
+      if (!ts) return 0;
+      if (typeof ts.toMillis === 'function') return ts.toMillis();
+      if (ts._seconds) return ts._seconds * 1000;
+      return new Date(ts).getTime() || 0;
+    };
+
+    activeSessions.sort((a, b) => {
+      const tsA = a.data.updatedAt || a.data.startedAt;
+      const tsB = b.data.updatedAt || b.data.startedAt;
+      return getTime(tsB) - getTime(tsA);
+    });
+
+    const batch = db.batch();
+    let archiveCount = 0;
+    
+    // Keep the most recent active session (index 0), archive the rest
+    for (let i = 1; i < activeSessions.length; i++) {
+      batch.update(activeSessions[i].doc.ref, { 
+        isArchived: true, 
+        updatedAt: admin.firestore.FieldValue.serverTimestamp() 
+      });
+      archiveCount++;
+    }
+    
+    if (archiveCount > 0) {
+      await batch.commit();
+    }
+    
+    res.json({ success: true, archived: archiveCount });
   } catch (error) {
     next(error);
   }
@@ -60,7 +138,7 @@ router.get('/:id', async (req, res, next) => {
     if (!isValidDocId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid session ID.' });
     }
-    const docRef = db.collection('interviews').doc(req.params.id);
+    const docRef = db.collection(getCollectionName(req)).doc(req.params.id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -96,7 +174,7 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid session ID.' });
     }
 
-    const docRef = db.collection('interviews').doc(sessionId);
+    const docRef = db.collection(getCollectionName(req)).doc(sessionId);
     const doc = await docRef.get();
 
     const timestamp = admin.firestore.FieldValue.serverTimestamp();
@@ -150,7 +228,7 @@ router.put('/:id/pin', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid session ID.' });
     }
 
-    const docRef = db.collection('interviews').doc(req.params.id);
+    const docRef = db.collection(getCollectionName(req)).doc(req.params.id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -165,7 +243,7 @@ router.put('/:id/pin', async (req, res, next) => {
 
     // If we are pinning it, check if they already have 3 pinned
     if (!currentPinStatus) {
-      const pinnedSnapshot = await db.collection('interviews')
+      const pinnedSnapshot = await db.collection(getCollectionName(req))
         .where('userId', '==', userId)
         .where('isPinned', '==', true)
         .get();
@@ -196,7 +274,7 @@ router.delete('/:id', async (req, res, next) => {
     if (!isValidDocId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid session ID.' });
     }
-    const docRef = db.collection('interviews').doc(req.params.id);
+    const docRef = db.collection(getCollectionName(req)).doc(req.params.id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -224,7 +302,7 @@ router.post('/:id/scorecard', checkUserAccess, async (req, res, next) => {
     if (!isValidDocId(req.params.id)) {
       return res.status(400).json({ error: 'Invalid session ID.' });
     }
-    const docRef = db.collection('interviews').doc(req.params.id);
+    const docRef = db.collection(getCollectionName(req)).doc(req.params.id);
     const doc = await docRef.get();
 
     if (!doc.exists) {
@@ -301,32 +379,32 @@ ${transcript}`;
     // Check if user is admin for VIP API key routing
     const isAdmin = req.userProfile?.role === 'admin';
 
-    if (modelUsed && isGroqModel(modelUsed)) {
+    if (modelUsed && isPrimaryModel(modelUsed)) {
       try {
-        responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);
+        responseText = await generatePrimaryResponse(aiMessages, systemPrompt, modelUsed);
         if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
-      } catch (groqErr) {
-        if (isGroqQuotaError(groqErr) || groqErr.message === 'EMPTY_RESPONSE') {
-          console.warn(`⚠️  Groq failed on scorecard generation with "${modelUsed}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null, isAdmin);
+      } catch (primaryErr) {
+        if (isPrimaryQuotaError(primaryErr) || primaryErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OPI Router failed on scorecard generation with "${modelUsed}" — falling back to OPI Backup`);
+          responseText = await generateBackupResponse(aiMessages, systemPrompt, null, isAdmin);
         } else {
-          throw groqErr;
+          throw primaryErr;
         }
       }
-    } else if (modelUsed && isOpenRouterModel(modelUsed)) {
+    } else if (modelUsed && isRouterModel(modelUsed)) {
       try {
-        responseText = await generateOpenRouterResponse(modelUsed, systemPrompt, aiMessages);
+        responseText = await generateRouterResponse(modelUsed, systemPrompt, aiMessages);
         if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
-      } catch (orErr) {
-        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
-          console.warn(`⚠️  OpenRouter failed on scorecard generation with "${modelUsed}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(aiMessages, systemPrompt, null, isAdmin);
+      } catch (routerErr) {
+        if (routerErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || routerErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OPI Router failed on scorecard generation with "${modelUsed}" — falling back to OPI Backup`);
+          responseText = await generateBackupResponse(aiMessages, systemPrompt, null, isAdmin);
         } else {
-          throw orErr;
+          throw routerErr;
         }
       }
     } else {
-      responseText = await generateInterviewResponse(aiMessages, systemPrompt, modelUsed, isAdmin);
+      responseText = await generateBackupResponse(aiMessages, systemPrompt, modelUsed, isAdmin);
     }
 
     // Robust JSON extraction
@@ -364,7 +442,7 @@ router.post('/:id/notes', verifyToken, async (req, res, next) => {
   try {
     const userId = req.user.uid;
     if (!isValidDocId(req.params.id)) return res.status(400).json({ error: 'Invalid session ID.' });
-    const docRef = db.collection('interviews').doc(req.params.id);
+    const docRef = db.collection(getCollectionName(req)).doc(req.params.id);
     const doc = await docRef.get();
 
     if (!doc.exists) return res.status(404).json({ error: 'Interview not found' });
@@ -385,6 +463,9 @@ router.post('/:id/notes', verifyToken, async (req, res, next) => {
 
     const systemPrompt = `You are an expert Computer Science tutor.
 Your task is to analyze the following interview transcript and generate comprehensive, personalized revision notes for the candidate in Markdown format.
+These notes should be highly detailed and tailored specifically based on the candidate's conversation, reasoning, and mistakes.
+
+${data.language ? `IMPORTANT: The user selected the programming language: **${data.language}**. All code examples, optimal solutions, and syntax must be written in **${data.language}**.` : ''}
 
 The notes MUST include the following sections exactly:
 ### 1. Intuition & Approach
@@ -397,7 +478,7 @@ The notes MUST include the following sections exactly:
 (Explain the thought process to move from brute force to optimal)
 
 ### 4. Optimal Solution
-(Provide the final code and its complexity)
+(Provide the final code and its complexity. Provide well-commented, complete code)
 
 Format the output strictly as a Markdown document. Do not wrap the whole response in a JSON object.
 
@@ -410,10 +491,10 @@ ${transcript}`;
     const modelUsed = req.body?.model || data.modelUsed || 'llama-3.1-8b-instant';
     let responseText = '';
     
-    if (isGroqModel(modelUsed)) {
-      responseText = await generateGroqResponse(aiMessages, systemPrompt, modelUsed);
+    if (isPrimaryModel(modelUsed)) {
+      responseText = await generatePrimaryResponse(aiMessages, systemPrompt, modelUsed);
     } else {
-      responseText = await generateInterviewResponse(aiMessages, systemPrompt, modelUsed);
+      responseText = await generateBackupResponse(aiMessages, systemPrompt, modelUsed);
     }
 
     const notes = responseText.trim();
@@ -441,7 +522,7 @@ router.put('/:id/notes', verifyToken, async (req, res, next) => {
     if (typeof notes !== 'string') return res.status(400).json({ error: 'Notes must be a string' });
     if (!isValidDocId(req.params.id)) return res.status(400).json({ error: 'Invalid session ID.' });
     
-    const docRef = db.collection('interviews').doc(req.params.id);
+    const docRef = db.collection(getCollectionName(req)).doc(req.params.id);
     const doc = await docRef.get();
 
     if (!doc.exists) return res.status(404).json({ error: 'Interview not found' });

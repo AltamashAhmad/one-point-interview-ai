@@ -15,11 +15,11 @@ const vipKeys = process.env.VIP_GEMINI_API_KEYS
  * Updated May 2026 — 2.0-flash* deprecated June 1, 2026.
  *
  * Free-tier limits (approximate):
- *   gemini-2.5-flash       → 10 RPM,  1500 RPD
- *   gemini-2.5-flash-lite  → 30 RPM,  1500 RPD  ← highest RPM
- *   gemini-3.1-flash-lite  → 15 RPM,  1500 RPD
- *   gemini-3-flash-preview → 10 RPM,   500 RPD
- *   gemini-flash-latest    → 15 RPM,  1500 RPD  ← stable alias
+ *   backupAi-2.5-flash       → 10 RPM,  1500 RPD
+ *   backupAi-2.5-flash-lite  → 30 RPM,  1500 RPD  ← highest RPM
+ *   backupAi-3.1-flash-lite  → 15 RPM,  1500 RPD
+ *   backupAi-3-flash-preview → 10 RPM,   500 RPD
+ *   backupAi-flash-latest    → 15 RPM,  1500 RPD  ← stable alias
  */
 const MODEL_FALLBACK_CHAIN = [
   'gemini-2.5-flash',
@@ -49,7 +49,7 @@ function isQuotaError(err) {
 }
 
 /**
- * Generate an AI interviewer response using Gemini.
+ * Generate an AI interviewer response using Backup AI.
  *
  * If `preferredModel` is provided (user's UI selection), it goes first.
  * On a 429 / quota error we silently try the next model in the chain.
@@ -60,7 +60,7 @@ function isQuotaError(err) {
  * @param {boolean} [isAdmin] - If true, selects an API key from the VIP pool
  * @returns {Promise<string>} - The AI response text
  */
-async function generateInterviewResponse(messages, systemPrompt, preferredModel, isAdmin = false) {
+async function generateBackupResponse(messages, systemPrompt, preferredModel, isAdmin = false) {
   // Select API key logic
   let apiKeyToUse = defaultKey;
   if (isAdmin && vipKeys.length > 0) {
@@ -76,7 +76,7 @@ async function generateInterviewResponse(messages, systemPrompt, preferredModel,
     ? [preferredModel, ...MODEL_FALLBACK_CHAIN.filter((m) => m !== preferredModel)]
     : MODEL_FALLBACK_CHAIN;
 
-  // Convert message history to Gemini chat format (all except the last message)
+  // Convert message history to Backup AI chat format (all except the last message)
   const history = messages.slice(0, -1).map((msg) => ({
     role: msg.role === 'user' ? 'user' : 'model',
     parts: [{ text: msg.content }],
@@ -104,7 +104,7 @@ async function generateInterviewResponse(messages, systemPrompt, preferredModel,
       const result = await Promise.race([
         chat.sendMessage(lastMessage.content),
         new Promise((_, reject) =>
-          setTimeout(() => reject(new Error(`Gemini request timed out after ${timeoutMs / 1000}s`)), timeoutMs)
+          setTimeout(() => reject(new Error(`Backup AI request timed out after ${timeoutMs / 1000}s`)), timeoutMs)
         ),
       ]);
       const text = result.response.text();
@@ -139,4 +139,4 @@ async function generateInterviewResponse(messages, systemPrompt, preferredModel,
   );
 }
 
-module.exports = { generateInterviewResponse, MODEL_FALLBACK_CHAIN };
+module.exports = { generateBackupResponse, MODEL_FALLBACK_CHAIN };

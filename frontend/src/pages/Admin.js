@@ -167,11 +167,8 @@ export default function Admin() {
                 </button>
                 <button 
                   onClick={() => {
-                    if (window.history.length > 2) {
-                      navigate(-1);
-                    } else {
-                      navigate('/');
-                    }
+                    navigate('/');
+                    setShowFooterMenu(false);
                   }}
                   className="admin-footer-menu-item"
                 >

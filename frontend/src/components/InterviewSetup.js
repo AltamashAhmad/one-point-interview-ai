@@ -238,7 +238,7 @@ export default function InterviewSetup({ interviewType, typeConfig, onBegin }) {
               <span className="setup-card-icon">📊</span>
               <div>
                 <div className="setup-card-title">Scorecard Evaluator Model</div>
-                <div className="setup-card-desc">Choose the AI that will grade your performance at the end. Recommended: Gemini 3.1 Pro.</div>
+                <div className="setup-card-desc">Choose the AI that will grade your performance at the end. Recommended: OPI Pro.</div>
               </div>
             </div>
             <div className="model-grid">

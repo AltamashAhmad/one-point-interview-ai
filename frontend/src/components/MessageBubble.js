@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import MermaidDiagram from './MermaidDiagram';
+import CodeAuditCard from './CodeAuditCard';
 import './MessageBubble.css';
 
 /* ── Copy-to-clipboard button for code blocks ─────────────────────────── */
@@ -156,12 +157,16 @@ function MessageBubble({ message, typeColor }) {
         style={!isAI ? { background: typeColor } : {}}
       >
         {isAI ? (
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            components={markdownComponents}
-          >
-            {message.content}
-          </ReactMarkdown>
+          message.audit ? (
+            <CodeAuditCard audit={message.audit} />
+          ) : (
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={markdownComponents}
+            >
+              {message.content}
+            </ReactMarkdown>
+          )
         ) : (
           <p className="user-text">{message.content}</p>
         )}

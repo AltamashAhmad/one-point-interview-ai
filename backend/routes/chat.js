@@ -2,9 +2,9 @@ const express = require('express');
 const router  = express.Router();
 const { verifyToken }               = require('../middleware/auth');
 const { checkUserAccess }           = require('../middleware/checkUserAccess');
-const { generateInterviewResponse } = require('../services/gemini');
-const { generateGroqResponse, isGroqModel, isGroqQuotaError } = require('../services/groq');
-const { generateOpenRouterResponse, isOpenRouterModel } = require('../services/openrouter');
+const { generateBackupResponse } = require('../services/backupAi');
+const { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError } = require('../services/primaryAi');
+const { generateRouterResponse, isRouterModel } = require('../services/routerAi');
 const { getSystemPrompt }           = require('../services/prompts');
 const { getQuestion }               = require('../services/questionBank');
 const admin                         = require('../config/firebase');
@@ -31,8 +31,8 @@ const chatLimiter = rateLimit({
 const VALID_INTERVIEW_TYPES = ['dsa', 'systemDesign', 'lld', 'tutorDsa', 'tutorLld', 'tutorSystemDesign', 'managerial'];
 const VALID_DIFFICULTIES    = ['EASY', 'MEDIUM', 'HARD', 'ANY'];
 
-// Whitelist of allowed Gemini model IDs — prevents arbitrary model strings
-const VALID_GEMINI_MODELS = [
+// Whitelist of allowed Backup AI model IDs — prevents arbitrary model strings
+const VALID_BACKUP_MODELS = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
   'gemini-2.5-pro',
@@ -51,7 +51,7 @@ const VALID_GEMINI_MODELS = [
  *   messages:       Array<{ role: 'user' | 'assistant', content: string }>
  *   interviewType:  'dsa' | 'systemDesign' | 'lld'
  *   userName:       string  (candidate first name)
- *   model:          string  (Gemini model id)
+ *   model:          string  (Backup AI model id)
  *   company:        string  (optional — target company)
  *   difficulty:     string  (optional — 'EASY' | 'MEDIUM' | 'HARD' | 'ANY')
  *   language:       string  (optional — preferred coding language)
@@ -97,8 +97,8 @@ router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, nex
         error: `interviewType must be one of: ${VALID_INTERVIEW_TYPES.join(', ')}`,
       });
     }
-    // Validate model: must be a whitelisted Gemini model or a known Groq/OpenRouter model
-    if (model && !VALID_GEMINI_MODELS.includes(model) && !isGroqModel(model) && !isOpenRouterModel(model)) {
+    // Validate model: must be a whitelisted Backup AI model or a known Primary AI/Router AI model
+    if (model && !VALID_BACKUP_MODELS.includes(model) && !isPrimaryModel(model) && !isRouterModel(model)) {
       return res.status(400).json({ error: 'Invalid model specified.' });
     }
     if (messages[0].role !== 'user') {
@@ -158,34 +158,34 @@ router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, nex
     // This allows any promoted admin to get VIP keys, not just the single .env UID.
     const isAdmin = req.userProfile?.role === 'admin';
 
-    // ── Generate Response (route to Groq, OpenRouter, or Gemini) ─────────────
+    // ── Generate Response (route to Primary AI, Router AI, or Backup AI) ─────────────
     let responseText;
-    if (model && isGroqModel(model)) {
+    if (model && isPrimaryModel(model)) {
       try {
-        responseText = await generateGroqResponse(messages, systemPrompt, model);
+        responseText = await generatePrimaryResponse(messages, systemPrompt, model);
         if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
-      } catch (groqErr) {
-        if (isGroqQuotaError(groqErr) || groqErr.message === 'EMPTY_RESPONSE') {
-          console.warn(`⚠️  Groq failed on "${model}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(messages, systemPrompt, null, isAdmin);
+      } catch (primaryErr) {
+        if (isPrimaryQuotaError(primaryErr) || primaryErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OPI Router failed on "${model}" — falling back to OPI Standard`);
+          responseText = await generateBackupResponse(messages, systemPrompt, null, isAdmin);
         } else {
-          throw groqErr;
+          throw primaryErr;
         }
       }
-    } else if (model && isOpenRouterModel(model)) {
+    } else if (model && isRouterModel(model)) {
       try {
-        responseText = await generateOpenRouterResponse(model, systemPrompt, messages);
+        responseText = await generateRouterResponse(model, systemPrompt, messages);
         if (!responseText || responseText.trim() === '') throw new Error('EMPTY_RESPONSE');
-      } catch (orErr) {
-        if (orErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || orErr.message === 'EMPTY_RESPONSE') {
-          console.warn(`⚠️  OpenRouter failed on "${model}" — falling back to Gemini`);
-          responseText = await generateInterviewResponse(messages, systemPrompt, null, isAdmin);
+      } catch (routerErr) {
+        if (routerErr.code === 'OPENROUTER_QUOTA_EXCEEDED' || routerErr.message === 'EMPTY_RESPONSE') {
+          console.warn(`⚠️  OPI Router failed on "${model}" — falling back to OPI Standard`);
+          responseText = await generateBackupResponse(messages, systemPrompt, null, isAdmin);
         } else {
-          throw orErr;
+          throw routerErr;
         }
       }
     } else {
-      responseText = await generateInterviewResponse(messages, systemPrompt, model, isAdmin);
+      responseText = await generateBackupResponse(messages, systemPrompt, model, isAdmin);
     }
 
     // Final safety check after all fallbacks
@@ -207,9 +207,9 @@ router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, nex
     res.json(responseBody);
 
   } catch (error) {
-    if (isGroqQuotaError(error)) {
+    if (isPrimaryQuotaError(error)) {
       return res.status(429).json({
-        error: '⏳ Groq API rate limit reached. The app will automatically retry with Gemini. Please try again in a moment.',
+        error: '⏳ OPI API rate limit reached. The app will automatically retry with the backup OPI model. Please try again in a moment.',
         retryAfter: 30,
       });
     }

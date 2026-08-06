@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { NEETCODE_150 } from '../services/neetcode150';
-import { getHistory, pinSession, getMyProfile, toggleUncheckQuestion } from '../services/api';
+import { getHistory, pinSession, getMyProfile, toggleUncheckQuestion, toggleManualComplete } from '../services/api';
 import { TYPE_CONFIG, formatDate, friendlyModelName, modelProviderColor } from '../utils/constants';
 import ThemeToggle from '../components/ThemeToggle';
 import ModelSelector, { AVAILABLE_MODELS } from '../components/ModelSelector';
@@ -20,6 +20,7 @@ export default function Roadmap({ adminPromptMode }) {
   const [selectedLanguage, setSelectedLanguage] = useState('Java');
   const [historyRecords, setHistoryRecords] = useState([]);
   const [uncheckedTitles, setUncheckedTitles] = useState(new Set());
+  const [manuallyCompletedTitles, setManuallyCompletedTitles] = useState(new Set());
   const [expandedHistoryQuestion, setExpandedHistoryQuestion] = useState(null);
   const [promptData, setPromptData] = useState(null);
   const [generatingPrompt, setGeneratingPrompt] = useState(false);
@@ -37,11 +38,20 @@ export default function Roadmap({ adminPromptMode }) {
   useEffect(() => {
     async function fetchCompleted() {
       try {
-        const [history, profile] = await Promise.all([getHistory(), getMyProfile()]);
-        setHistoryRecords(history);
-        const titles = new Set(history.map(h => h.questionTitle).filter(Boolean));
+        const [historyGeneral, historyRoadmap, profile] = await Promise.all([
+          getHistory(), 
+          getHistory({ isRoadmap: true }), 
+          getMyProfile()
+        ]);
+        
+        // Merge histories so past DSA progress shows up in the Roadmap too
+        const mergedHistory = [...historyRoadmap, ...historyGeneral];
+        setHistoryRecords(mergedHistory);
+        
+        const titles = new Set(mergedHistory.map(h => h.questionTitle).filter(Boolean));
         setCompletedTitles(titles);
         setUncheckedTitles(new Set(profile.uncheckedQuestions || []));
+        setManuallyCompletedTitles(new Set(profile.manuallyCompletedQuestions || []));
       } catch (err) {
         console.error("Failed to load history for roadmap", err);
       } finally {
@@ -78,6 +88,21 @@ export default function Roadmap({ adminPromptMode }) {
     }
   };
 
+  const handleToggleManual = async (e, title, isCompleted) => {
+    e.stopPropagation();
+    try {
+      await toggleManualComplete(title, isCompleted);
+      setManuallyCompletedTitles(prev => {
+        const next = new Set(prev);
+        if (isCompleted) next.add(title);
+        else next.delete(title);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to update manual complete status:', err);
+    }
+  };
+
   const handleStart = async (type) => {
     if (!selectedQuestion) return;
 
@@ -100,13 +125,14 @@ export default function Roadmap({ adminPromptMode }) {
     }
 
     // Pass state to the Interview page via router state so it can prepopulate
-    navigate(`/interview/${type}`, {
+    navigate(`/interview/${type}?isRoadmap=true`, {
       state: {
         autoStart: true,
         interviewType: type,
         questionSeed: selectedQuestion.title,
         model: selectedModel.id,
-        language: selectedLanguage
+        language: selectedLanguage,
+        isRoadmap: true
       }
     });
   };
@@ -124,7 +150,9 @@ export default function Roadmap({ adminPromptMode }) {
       ) : (
         <div className="roadmap-content">
           {NEETCODE_150.map((topicBlock) => {
-            const topicCompleted = topicBlock.questions.filter(q => completedTitles.has(q.title) && !uncheckedTitles.has(q.title)).length;
+            const topicCompleted = topicBlock.questions.filter(q => 
+              (completedTitles.has(q.title) && !uncheckedTitles.has(q.title)) || manuallyCompletedTitles.has(q.title)
+            ).length;
             const total = topicBlock.questions.length;
             
             return (
@@ -142,7 +170,8 @@ export default function Roadmap({ adminPromptMode }) {
                     {topicBlock.questions.map((q) => {
                     const hasHistory = completedTitles.has(q.title);
                     const isUnchecked = uncheckedTitles.has(q.title);
-                    const isCompleted = hasHistory && !isUnchecked;
+                    const isManuallyCompleted = manuallyCompletedTitles.has(q.title);
+                    const isCompleted = (hasHistory && !isUnchecked) || isManuallyCompleted;
                     
                     return (
                       <React.Fragment key={q.id}>
@@ -161,15 +190,20 @@ export default function Roadmap({ adminPromptMode }) {
                             {q.difficulty}
                           </span>
                           <div className="roadmap-actions-container" style={{ display: 'flex', gap: '8px', width: '64px', justifyContent: 'flex-end' }}>
-                            {hasHistory && (
                               <button
-                                className={`roadmap-action-btn ${isUnchecked ? 'unchecked' : ''}`}
-                                title={isUnchecked ? "Mark as solved" : "Mark as unsolved"}
-                                onClick={(e) => handleToggleUncheck(e, q.title, !isUnchecked)}
+                                className={`roadmap-action-btn ${!isCompleted ? 'unchecked' : ''}`}
+                                title={isCompleted ? "Mark as unsolved" : "Mark as solved"}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (hasHistory) {
+                                    handleToggleUncheck(e, q.title, !isUnchecked);
+                                  } else {
+                                    handleToggleManual(e, q.title, !isManuallyCompleted);
+                                  }
+                                }}
                               >
-                                {isUnchecked ? '👁️' : '🚫'}
+                                {!isCompleted ? '👁️' : '🚫'}
                               </button>
-                            )}
                             {hasHistory && (
                               <button
                                 className="roadmap-history-btn roadmap-action-btn"

@@ -15,6 +15,7 @@ const accessRouter    = require('./routes/access');
 const adminRouter     = require('./routes/admin');
 const promptsRouter   = require('./routes/prompts');
 const publicRouter    = require('./routes/public');
+const codeAuditRouter = require('./routes/codeAudit');
 
 const { verifyAppCheck } = require('./middleware/appCheck');
 
@@ -26,8 +27,8 @@ const PORT = process.env.PORT || 8080;
 app.use(helmet());
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:3000'];
+  ? process.env.ALLOWED_ORIGINS.split(',').concat(['https://main.d3qqncmpm1ahwz.amplifyapp.com'])
+  : ['http://localhost:3000', 'https://main.d3qqncmpm1ahwz.amplifyapp.com'];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -65,6 +66,7 @@ app.use('/api/', (req, res, next) => {
 
 // ── Routes ─────────────────────────────────────────────────────
 app.use('/api/chat',      chatRouter);
+app.use('/api/code-audit', codeAuditRouter);
 // Public routes (no auth needed)
 app.use('/api/public', publicRouter);
 

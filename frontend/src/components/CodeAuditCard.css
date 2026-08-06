@@ -1,0 +1,168 @@
+.code-audit-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  color: var(--text-primary);
+}
+
+.audit-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.audit-eyebrow {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+.audit-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.audit-verdict {
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: var(--space-1) var(--space-2);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--bg-card-hover);
+}
+
+.audit-verdict-strong {
+  color: var(--green);
+  border-color: color-mix(in srgb, var(--green) 35%, transparent);
+  background: color-mix(in srgb, var(--green) 10%, transparent);
+}
+
+.audit-verdict-incorrect,
+.audit-verdict-partially_correct {
+  color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 35%, transparent);
+  background: color-mix(in srgb, var(--red) 10%, transparent);
+}
+
+.audit-summary {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.complexity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.complexity-tile {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  background: var(--bg-card);
+}
+
+.complexity-tile span,
+.audit-follow-up span {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-1);
+}
+
+.complexity-tile strong {
+  display: block;
+  font-family: 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  font-size: 22px;
+  margin-bottom: var(--space-1);
+}
+
+.complexity-tile p,
+.audit-follow-up p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.audit-section h4 {
+  margin: 0 0 var(--space-2);
+  font-size: 13px;
+}
+
+.audit-section ul,
+.audit-details ul {
+  margin: 0;
+  padding-left: var(--space-4);
+}
+
+.audit-section li,
+.audit-details li {
+  margin-bottom: var(--space-2);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.audit-section li strong,
+.audit-section li span,
+.audit-section li small,
+.audit-details li strong,
+.audit-details li span,
+.audit-details li small {
+  display: block;
+}
+
+.audit-section li strong,
+.audit-details li strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.audit-section li small,
+.audit-details li small {
+  color: var(--text-muted);
+}
+
+.audit-details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  background: var(--bg-card);
+}
+
+.audit-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.audit-follow-up {
+  border-left: 3px solid var(--purple);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--purple) 8%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 560px) {
+  .audit-card-header,
+  .complexity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-card-header {
+    flex-direction: column;
+  }
+}
