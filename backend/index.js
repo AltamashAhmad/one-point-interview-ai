@@ -27,8 +27,8 @@ const PORT = process.env.PORT || 8080;
 app.use(helmet());
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').concat(['https://main.d3qqncmpm1ahwz.amplifyapp.com'])
-  : ['http://localhost:3000', 'https://main.d3qqncmpm1ahwz.amplifyapp.com'];
+  ? process.env.ALLOWED_ORIGINS.split(',').concat(['https://main.d298ess3vvx0bm.amplifyapp.com', 'https://main.d3qqncmpm1ahwz.amplifyapp.com'])
+  : ['http://localhost:3000', 'https://main.d298ess3vvx0bm.amplifyapp.com', 'https://main.d3qqncmpm1ahwz.amplifyapp.com'];
 
 app.use(cors({
   origin: (origin, callback) => {
