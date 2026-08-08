@@ -97,6 +97,16 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+// Health Check endpoint
+app.get('/api/public/status', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'API is running' });
+});
+
+// Version Check endpoint for debugging
+app.get('/api/public/version', (req, res) => {
+  res.status(200).json({ version: 'v2-debug', allowedOrigins });
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
