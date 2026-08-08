@@ -23,6 +23,9 @@ jobs:
             # Navigate to the backend directory
             cd ~/one-point-interview-ai/backend
             
+            # Fix the remote URL just in case it's pointing to the old repo
+            git remote set-url origin https://github.com/AltamashAhmad/one-point-interview-ai.git
+            
             # Discard any local changes just in case, then pull the latest code
             git reset --hard
             git pull origin main
