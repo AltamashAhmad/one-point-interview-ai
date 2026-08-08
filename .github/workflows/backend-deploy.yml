@@ -30,6 +30,6 @@ jobs:
             # Install dependencies (only updates if package.json changed)
             npm install
             
-            # Restart the PM2 process for the backend
-            # Make sure your PM2 process was originally started with: pm2 start index.js --name "backend-main" --port 8080
-            pm2 restart backend-main || pm2 start index.js --name "backend-main"
+            # Restart all PM2 processes to ensure the backend picks up the new code
+            # We use 'all' in case the process wasn't named 'backend-main' initially
+            pm2 restart all || pm2 start index.js --name "backend-main"
