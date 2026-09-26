@@ -12,31 +12,42 @@ const vipKeys = process.env.VIP_GEMINI_API_KEYS
 
 /**
  * Default fallback chain when user hasn't picked a model.
- * Updated May 2026 — 2.0-flash* deprecated June 1, 2026.
- *
- * Free-tier limits (approximate):
- *   backupAi-2.5-flash       → 10 RPM,  1500 RPD
- *   backupAi-2.5-flash-lite  → 30 RPM,  1500 RPD  ← highest RPM
- *   backupAi-3.1-flash-lite  → 15 RPM,  1500 RPD
- *   backupAi-3-flash-preview → 10 RPM,   500 RPD
- *   backupAi-flash-latest    → 15 RPM,  1500 RPD  ← stable alias
+ * Active verified models in 2026:
+ *   gemini-2.5-flash       → 10 RPM, 1500 RPD, 1M context
+ *   gemini-2.5-flash-lite  → 30 RPM, 1500 RPD, high throughput
+ *   gemini-flash-latest    → Stable alias
+ *   gemini-flash-lite-latest
  */
 const MODEL_FALLBACK_CHAIN = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-3.1-flash-lite',
   'gemini-flash-latest',
   'gemini-flash-lite-latest',
 ];
 
+const BACKUP_MODEL_ALIASES = {
+  'gemini-1.5-flash': 'gemini-2.5-flash',
+  'gemini-1.5-pro': 'gemini-2.5-flash',
+  'gemini-2.0-flash': 'gemini-2.5-flash',
+  'gemini-2.0-flash-exp': 'gemini-2.5-flash',
+  'gemini-2.5-pro': 'gemini-2.5-flash',
+  'gemini-3.1-pro-preview': 'gemini-2.5-flash',
+};
+
 /**
- * Returns true if the error is a quota / rate-limit error (HTTP 429)
- * or a temporary 503 Service Unavailable / Overloaded error.
+ * Returns true if the error is a quota / rate-limit error (HTTP 429),
+ * 404 (deprecated model), or temporary service unavailable / overloaded error.
  */
 function isQuotaError(err) {
   const msg = err?.message || '';
+  const status = err?.status || err?.statusCode;
   return (
+    status === 429 ||
+    status === 404 ||
+    status === 503 ||
+    status >= 500 ||
     msg.includes('429') ||
+    msg.includes('404') ||
     msg.includes('503') ||
     msg.includes('500') ||
     msg.includes('quota') ||
@@ -44,7 +55,9 @@ function isQuotaError(err) {
     msg.includes('Too Many Requests') ||
     msg.includes('Service Unavailable') ||
     msg.includes('high demand') ||
-    msg.includes('overloaded')
+    msg.includes('overloaded') ||
+    msg.includes('not found') ||
+    msg.includes('unsupported')
   );
 }
 
@@ -71,9 +84,11 @@ async function generateBackupResponse(messages, systemPrompt, preferredModel, is
   
   const genAI = new GoogleGenerativeAI(apiKeyToUse);
 
+  const resolvedPreferredModel = preferredModel ? (BACKUP_MODEL_ALIASES[preferredModel] || preferredModel) : null;
+
   // Build the chain: user's pick first, then every other fallback
-  const chain = preferredModel
-    ? [preferredModel, ...MODEL_FALLBACK_CHAIN.filter((m) => m !== preferredModel)]
+  const chain = resolvedPreferredModel
+    ? [resolvedPreferredModel, ...MODEL_FALLBACK_CHAIN.filter((m) => m !== resolvedPreferredModel)]
     : MODEL_FALLBACK_CHAIN;
 
   // Convert message history to Backup AI chat format (all except the last message)
@@ -113,13 +128,13 @@ async function generateBackupResponse(messages, systemPrompt, preferredModel, is
       if (modelName !== chain[0]) {
         console.info(`ℹ️  Quota fallback used: ${chain[0]} → ${modelName}`);
       } else {
-        console.info(`✅ Model: ${modelName}`);
+        console.info(`✅ Backup AI Model: ${modelName}`);
       }
 
       return text;
     } catch (err) {
       if (isQuotaError(err)) {
-        console.warn(`⚠️  "${modelName}" quota exceeded — trying next...`);
+        console.warn(`⚠️  "${modelName}" quota exceeded or unavailable — trying next fallback in chain...`);
         lastError = err;
         continue;
       }
@@ -139,4 +154,4 @@ async function generateBackupResponse(messages, systemPrompt, preferredModel, is
   );
 }
 
-module.exports = { generateBackupResponse, MODEL_FALLBACK_CHAIN };
+module.exports = { generateBackupResponse, MODEL_FALLBACK_CHAIN, BACKUP_MODEL_ALIASES, isQuotaError };

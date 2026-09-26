@@ -1,9 +1,17 @@
+const { isPrimaryModel } = require('./primaryAi');
+
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 function isRouterModel(model) {
-  // We primarily identify via the frontend, but we can also use a string check.
-  // We'll trust the provider passed from the frontend via the `chat.js` logic.
-  return model && (model.includes('/') || model.includes('routerAi'));
+  if (!model || typeof model !== 'string') return false;
+  // Never intercept Primary AI models (Groq)
+  if (isPrimaryModel(model)) return false;
+  return (
+    model.startsWith('openrouter/') ||
+    model.endsWith(':free') ||
+    model.includes('routerAi') ||
+    model === 'openrouter/free'
+  );
 }
 
 async function generateRouterResponse(model, systemInstruction, history) {
@@ -22,22 +30,38 @@ async function generateRouterResponse(model, systemInstruction, history) {
     }))
   ];
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-      'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:3000',
-      'X-Title': 'One Point Interview AI',
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: model,
-      messages: messages,
-      temperature: 0.7,
-      max_tokens: 2000,
-      stream: false
-    })
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 90_000);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': process.env.FRONTEND_URL || 'http://localhost:3000',
+        'X-Title': 'One Point Interview AI',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 2000,
+        stream: false
+      }),
+      signal: controller.signal
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      const timeoutErr = new Error('Router AI request timed out after 90s');
+      timeoutErr.code = 'OPENROUTER_QUOTA_EXCEEDED';
+      throw timeoutErr;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const errorData = await response.text();
@@ -67,7 +91,11 @@ async function generateRouterResponse(model, systemInstruction, history) {
     throw new Error('No response choices returned from Router AI.');
   }
 
-  return data.choices[0].message.content;
+  let content = data.choices[0].message?.content || '';
+  // Strip reasoning blocks if returned by thinking models (e.g. DeepSeek-R1 / Qwen reasoning models)
+  content = content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+  return content;
 }
 
 module.exports = {

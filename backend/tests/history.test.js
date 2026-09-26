@@ -14,6 +14,11 @@ jest.mock('../middleware/auth', () => ({
   }
 }));
 
+jest.mock('../middleware/checkUserAccess', () => ({
+  checkUserAccess: (req, res, next) => next(),
+  enforceGlobalStatus: (req, res, next) => next()
+}));
+
 const mockDocGet = jest.fn();
 const mockDocUpdate = jest.fn();
 

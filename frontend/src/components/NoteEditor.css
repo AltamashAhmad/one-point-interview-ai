@@ -1,0 +1,93 @@
+.note-editor {
+  margin: 8px 0 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-light);
+  border-radius: var(--radius-sm);
+  animation: noteFadeIn 0.15s ease-out;
+}
+
+@keyframes noteFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.note-editor-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.note-editor-textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  box-sizing: border-box;
+}
+
+.note-editor-textarea:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px var(--purple-glow);
+}
+
+.note-editor-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.note-editor-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.note-editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.note-btn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.note-btn:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.note-btn--primary {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+}
+
+.note-btn--primary:hover:not(:disabled) {
+  background: var(--purple-dark);
+  color: #fff;
+}
+
+.note-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

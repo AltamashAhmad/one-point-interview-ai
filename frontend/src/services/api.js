@@ -316,6 +316,41 @@ export async function toggleUncheckQuestion(questionTitle, unchecked) {
   return data;
 }
 
+// ── Study Tracker (Striver A2Z sheet, prep plan) ─────────────────
+
+/**
+ * Fetch all tracked items for a sheet.
+ * @param {'dsa-master'|'prep-plan'} sheetId
+ * @returns {Promise<Object<string, {done?, important?, note?, startDate?, log?}>>}
+ */
+export async function getTrackerItems(sheetId) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.get(`/api/tracker/${sheetId}`, { headers });
+  return data.items || {};
+}
+
+/**
+ * Upsert one tracked item. patch: { done?, important?, note?, startDate?, log? }
+ */
+export async function updateTrackerItem(sheetId, itemKey, patch) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.put(
+    `/api/tracker/${sheetId}/items/${encodeURIComponent(itemKey)}`,
+    patch,
+    { headers }
+  );
+  return data;
+}
+
+export async function deleteTrackerItem(sheetId, itemKey) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.delete(
+    `/api/tracker/${sheetId}/items/${encodeURIComponent(itemKey)}`,
+    { headers }
+  );
+  return data;
+}
+
 /**
  * Toggle the manually completed status of a question.
  */

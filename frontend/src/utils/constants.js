@@ -117,5 +117,5 @@ export function friendlyModelName(modelId) {
 export function modelProviderColor(modelId) {
   const found = AVAILABLE_MODELS.find(m => m.id === modelId);
   if (!found) return '#64748b';
-  return found.provider === 'internal' ? '#10b981' : '#8b5cf6';
+  return found.badgeColor || '#10b981';
 }

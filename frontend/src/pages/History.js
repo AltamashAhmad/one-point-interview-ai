@@ -265,8 +265,8 @@ export default function History() {
             <div className="empty-icon">{questionFilter ? '🔍' : '📝'}</div>
             <h2>{questionFilter ? `No sessions for "${questionFilter}"` : 'No interviews yet'}</h2>
             <p>{questionFilter ? "You haven't practiced this question yet." : 'Start a new interview session to see your history here.'}</p>
-            <button className="btn btn-primary mt-4" onClick={() => navigate(questionFilter ? '/roadmap' : '/')}>
-              {questionFilter ? 'Back to Roadmap' : 'Go to Home'}
+            <button className="btn btn-primary mt-4" onClick={() => navigate(questionFilter ? '/dsa-sheet' : '/')}>
+              {questionFilter ? 'Back to DSA Sheet' : 'Go to Home'}
             </button>
           </div>
         ) : (

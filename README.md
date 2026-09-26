@@ -109,8 +109,8 @@ This project is a full-stack JavaScript monolith designed for speed and state re
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/AltamashAhmad/one-point-interview.git
-cd one-point-interview
+git clone https://github.com/AltamashAhmad/one-point-interview-ai.git
+cd one-point-interview-ai
 ```
 
 ### 2. Setup Frontend

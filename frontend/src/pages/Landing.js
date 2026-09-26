@@ -300,16 +300,29 @@ export default function Landing({ adminPromptMode }) {
           </button>
         </div>
 
-        {/* Roadmap Banner */}
-        <div className="loop-banner" style={{ background: 'linear-gradient(135deg, var(--green-glow) 0%, rgba(16, 185, 129, 0.05) 100%)', borderColor: 'var(--green)', marginTop: '16px' }} onClick={() => navigate(adminPromptMode ? '/admin/prompts/roadmap' : '/roadmap')}>
-          <div className="loop-banner-content">
-            <h2>🗺️ NeetCode 150 Roadmap</h2>
-            <p>Master Data Structures & Algorithms step-by-step. Track your progress and practice with guided AI Tutor dry runs or Mock Interviews.</p>
-          </div>
-          <button className="btn btn-outline" style={{ borderColor: 'var(--green)', color: 'var(--green)' }}>
-            View Roadmap →
-          </button>
-        </div>
+        {!adminPromptMode && (
+          <>
+            <div className="loop-banner" style={{ background: 'linear-gradient(135deg, var(--purple-glow) 0%, rgba(139, 92, 246, 0.05) 100%)', borderColor: 'var(--purple)', marginTop: '16px' }} onClick={() => navigate('/dsa-sheet')}>
+              <div className="loop-banner-content">
+                <h2>🧠 DSA Master Sheet</h2>
+                <p>Must-solve LeetCode problems, pattern by pattern, with anchor problems. Track progress, mark important, write notes per problem and per pattern, and practice any problem with the AI.</p>
+              </div>
+              <button className="btn btn-outline" style={{ borderColor: 'var(--purple)', color: 'var(--purple)' }}>
+                Open Sheet →
+              </button>
+            </div>
+
+            <div className="loop-banner" style={{ background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', marginTop: '16px' }} onClick={() => navigate('/prep-plan')}>
+              <div className="loop-banner-content">
+                <h2>🎯 SDE-2 Prep Plan & Daily Tracker</h2>
+                <p>Java → DSA → LLD → System Design → Company practice. Day-by-day checklist, exit tests, slippage tracking and a daily log.</p>
+              </div>
+              <button className="btn btn-outline" style={{ borderColor: 'white', color: 'white' }}>
+                Open Plan →
+              </button>
+            </div>
+          </>
+        )}
 
         {/* My Loops — resume any saved loop from any device */}
         {!loadingLoops && myLoops.length > 0 && (
@@ -472,7 +485,8 @@ export default function Landing({ adminPromptMode }) {
           <div className="footer-links-col">
             <h4>Product</h4>
             <a href="/">Dashboard</a>
-            <a href="/roadmap">NeetCode 150 Roadmap</a>
+            <a href="/dsa-sheet">DSA Master Sheet</a>
+            <a href="/prep-plan">SDE-2 Prep Plan</a>
             <a href="/history">Interview History</a>
           </div>
 

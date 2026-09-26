@@ -1,7 +1,7 @@
 require('dotenv').config();
 const { generatePrimaryResponse } = require('../services/primaryAi');
 
-const MODEL = 'llama-3.1-8b-instant';
+const MODEL = 'qwen/qwen3.8-27b';
 
 // The AI's initial question to the candidate
 const INITIAL_SYSTEM_MESSAGES = [

@@ -10,47 +10,57 @@ const primaryService = process.env.GROQ_API_KEY
 
 /**
  * Primary AI model IDs available on the free tier.
- * Ordered by quality for interview use.
- *
- * Free-tier limits (approximate):
- *   openai/gpt-oss-120b       → 30 RPM, 1K RPD, 200K TPD  ← best reasoning
- *   openai/gpt-oss-20b        → 30 RPM, 1K RPD, 200K TPD  ← fast reasoning
- *   llama-3.3-70b-versatile   → 30 RPM, 1K RPD, 100K TPD
- *   meta-llama/llama-4-scout  → 30 RPM, 1K RPD, 500K TPD
- *   llama-3.1-8b-instant      → 30 RPM, 14.4K RPD         ← highest RPD
- *   qwen/qwen3-32b            → 60 RPM, 1K RPD
+ * Verified active in 2026:
+ *   qwen/qwen3.8-27b          → ~300ms ultra-low latency, optimal for real-time interview chat
+ *   openai/gpt-oss-20b        → ~370ms fast reasoning
+ *   openai/gpt-oss-120b       → 120B reasoning, deep technical evaluation / scorecard
  */
 const PRIMARY_MODELS = [
-  'llama-3.3-70b-versatile',
-  'meta-llama/llama-4-scout-17b-16e-instruct',
-  'llama-3.1-8b-instant',
-  'qwen-2.5-coder-32b',
-  'qwen/qwen3-32b',
-  'qwen/qwen3.6-27b',
+  'qwen/qwen3.8-27b',
+  'openai/gpt-oss-20b',
+  'openai/gpt-oss-120b',
 ];
 
 /**
- * Returns true if the given model ID is a Primary AI model.
+ * Legacy model ID alias map for seamless backwards compatibility.
+ */
+const PRIMARY_MODEL_ALIASES = {
+  'llama-3.1-8b-instant': 'qwen/qwen3.8-27b',
+  'llama-3.3-70b-versatile': 'openai/gpt-oss-120b',
+  'meta-llama/llama-4-scout-17b-16e-instruct': 'qwen/qwen3.8-27b',
+  'qwen-2.5-coder-32b': 'qwen/qwen3.8-27b',
+  'qwen/qwen3-32b': 'qwen/qwen3.8-27b',
+  'qwen/qwen3.6-27b': 'qwen/qwen3.8-27b',
+};
+
+/**
+ * Returns true if the given model ID is a Primary AI model or known legacy alias.
  */
 function isPrimaryModel(modelId) {
-  return PRIMARY_MODELS.includes(modelId);
+  if (!modelId || typeof modelId !== 'string') return false;
+  return PRIMARY_MODELS.includes(modelId) || Boolean(PRIMARY_MODEL_ALIASES[modelId]);
 }
 
 /**
- * Returns true if the error is a quota / rate-limit error (HTTP 429).
+ * Returns true if the error is a quota / rate-limit error (HTTP 429),
+ * service outage (503/500), or deprecated model error (404).
  */
 function isPrimaryQuotaError(err) {
   const msg  = err?.message || '';
   const code = err?.status || err?.statusCode;
   return (
     code === 429 ||
+    code === 404 ||
     code >= 500 ||
     msg.includes('429') ||
+    msg.includes('404') ||
     msg.includes('503') ||
     msg.includes('rate_limit') ||
     msg.includes('Rate limit') ||
     msg.includes('RATE_LIMIT_EXCEEDED') ||
-    msg.includes('Service Unavailable')
+    msg.includes('Service Unavailable') ||
+    msg.includes('decommissioned') ||
+    msg.includes('not found')
   );
 }
 
@@ -79,11 +89,13 @@ async function generatePrimaryResponse(messages, systemPrompt, modelId) {
     })),
   ];
 
+  const resolvedModel = PRIMARY_MODEL_ALIASES[modelId] || modelId;
+
   // Add timeout to prevent indefinite hangs
   const timeoutMs = 90_000;
   const completion = await Promise.race([
     primaryService.chat.completions.create({
-      model:              modelId,
+      model:              resolvedModel,
       messages:           primaryAiMessages,
       temperature:        0.7,
       max_tokens:         2048,
@@ -98,8 +110,8 @@ async function generatePrimaryResponse(messages, systemPrompt, modelId) {
   const text = completion.choices?.[0]?.message?.content;
   if (!text) throw new Error('Primary AI returned an empty response');
 
-  console.info(`✅ Primary AI model: ${modelId}`);
+  console.info(`✅ Primary AI model: ${resolvedModel} (requested: ${modelId})`);
   return text;
 }
 
-module.exports = { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError, PRIMARY_MODELS };
+module.exports = { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError, PRIMARY_MODELS, PRIMARY_MODEL_ALIASES };

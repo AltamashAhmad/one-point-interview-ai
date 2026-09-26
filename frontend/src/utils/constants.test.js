@@ -18,8 +18,9 @@ describe('Constants Utilities', () => {
 
   describe('friendlyModelName', () => {
     it('should map known models correctly', () => {
-      expect(friendlyModelName('llama-3.1-8b-instant')).toBe('Llama 3.1 8B');
-      expect(friendlyModelName('gemini-3.1-flash-lite')).toBe('Gemini 3.1 Flash Lite');
+      expect(friendlyModelName('qwen/qwen3.8-27b')).toBe('Qwen 3.8 27B');
+      expect(friendlyModelName('gemini-2.5-flash')).toBe('Gemini 2.5 Flash');
+      expect(friendlyModelName('openrouter/free')).toBe('OpenRouter Free');
     });
 
     it('should fallback to the raw model ID if unknown', () => {
@@ -28,12 +29,9 @@ describe('Constants Utilities', () => {
   });
 
   describe('modelProviderColor', () => {
-    it('should return orange for llama models (Groq provider)', () => {
-      expect(modelProviderColor('llama-3.1-8b-instant')).toBe('#f97316');
-    });
-
-    it('should return blue for gemini models', () => {
-      expect(modelProviderColor('gemini-3.1-flash-lite')).toBe('#8b5cf6');
+    it('should return correct badge color for configured models', () => {
+      expect(modelProviderColor('qwen/qwen3.8-27b')).toBe('#10b981');
+      expect(modelProviderColor('gemini-2.5-flash')).toBe('#8b5cf6');
     });
 
     it('should default to gray for unknown models', () => {

@@ -3,6 +3,7 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import Scorecard from './Scorecard';
 import * as api from '../services/api';
+import { ThemeProvider } from '../contexts/ThemeContext';
 
 jest.mock('../services/api');
 
@@ -15,6 +16,8 @@ jest.mock('react-router-dom', () => ({
   useLocation: () => ({ search: '' })
 }), { virtual: true });
 
+const renderWithTheme = (ui) => render(<ThemeProvider>{ui}</ThemeProvider>);
+
 describe('Scorecard Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -25,7 +28,7 @@ describe('Scorecard Component', () => {
     // Return a promise that never resolves so it stays in loading state
     api.getHistoryById.mockReturnValue(new Promise(() => {}));
     
-    render(<Scorecard />);
+    renderWithTheme(<Scorecard />);
 
     expect(screen.getByText(/Loading your AI Scorecard/i)).toBeInTheDocument();
   });
@@ -48,7 +51,7 @@ describe('Scorecard Component', () => {
 
     api.getHistoryById.mockResolvedValueOnce(mockInterview);
 
-    render(<Scorecard />);
+    renderWithTheme(<Scorecard />);
 
     await waitFor(() => {
       expect(screen.getByText('85')).toBeInTheDocument();
@@ -60,7 +63,7 @@ describe('Scorecard Component', () => {
   it('shows error if interview not found', async () => {
     api.getHistoryById.mockResolvedValueOnce(null);
 
-    render(<Scorecard />);
+    renderWithTheme(<Scorecard />);
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to load scorecard/i)).toBeInTheDocument();
@@ -76,7 +79,7 @@ describe('Scorecard Component', () => {
 
     api.getHistoryById.mockResolvedValueOnce(mockInterview);
 
-    render(<Scorecard />);
+    renderWithTheme(<Scorecard />);
 
     await waitFor(() => {
       expect(screen.getByText(/Scorecard is not available for this session/i)).toBeInTheDocument();
@@ -86,7 +89,7 @@ describe('Scorecard Component', () => {
   it('shows error if API throws an error', async () => {
     api.getHistoryById.mockRejectedValueOnce(new Error('Network error'));
 
-    render(<Scorecard />);
+    renderWithTheme(<Scorecard />);
 
     await waitFor(() => {
       expect(screen.getByText(/Failed to load scorecard/i)).toBeInTheDocument();

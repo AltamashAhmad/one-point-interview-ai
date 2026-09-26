@@ -2,176 +2,96 @@ import React, { useState, useRef, useEffect } from 'react';
 import './ModelSelector.css';
 
 /**
- * All available models with metadata.
- * Ordered: Best choice first per provider. Updated June 2026.
- * The IDs remain identical so the backend API routing works flawlessly,
- * but the display names are masked to look like internal proprietary models.
+ * All verified, active free models with accurate names and provider metadata.
+ * Only working models are included.
  */
 export const AVAILABLE_MODELS = [
-  // ── TIER 1: The Flagships ───────────────────
+  // ── Groq LPUs (Ultra-Low Latency) ───────────────────────────
   {
-    id: 'llama-3.1-8b-instant',
-    name: 'OPI Fast',
-    provider: 'internal',
-    tier: 1,
-    badge: 'Highest Quota',
+    id: 'qwen/qwen3.8-27b',
+    name: 'Qwen 3.8 27B',
+    provider: 'groq',
+    badge: '300ms Ultra Fast',
     badgeColor: '#10b981',
     rpm: 30,
     rpd: 14400,
-    contextWindow: '128K',
-    description: 'Ultra fast · highest quota',
+    contextWindow: '256K',
+    description: 'Blazing-fast inference on Groq LPUs · High accuracy DSA & coding',
     icon: '⚡',
   },
   {
-    id: 'gemini-3.5-flash',
-    name: 'OPI Coder',
-    provider: 'internal',
-    tier: 1,
-    badge: 'Best for Coding',
-    badgeColor: '#8b5cf6',
-    rpm: 15,
-    rpd: 1500,
-    contextWindow: '1M tokens',
-    description: 'Fastest generation for coding tasks',
-    icon: '🚀',
-  },
-  {
-    id: 'gemini-3.1-pro-preview',
-    name: 'OPI Pro',
-    provider: 'internal',
-    tier: 1,
-    badge: 'Best for System Design',
-    badgeColor: '#ec4899',
-    rpm: 10,
-    rpd: 50,
-    contextWindow: '2M tokens',
-    description: 'Absolute best reasoning for complex architectures',
-    icon: '🔬',
-  },
-  {
-    id: 'llama-3.3-70b-versatile',
-    name: 'OPI Versatile',
-    provider: 'internal',
-    tier: 1,
-    badge: 'Most Human-Like',
-    badgeColor: '#f97316',
-    rpm: 30,
-    rpd: 1000,
-    contextWindow: '100K',
-    description: 'Massive open-weights model, lightning fast',
-    icon: '🔥',
-  },
-  {
-    id: 'qwen-2.5-coder-32b',
-    name: 'OPI Algorithmic',
-    provider: 'internal',
-    badge: 'New Coder',
-    badgeColor: '#10b981',
-    rpm: 30,
-    rpd: 1000,
-    contextWindow: '128K',
-    description: 'Trained exclusively on code and algorithms',
-    icon: '💻',
-  },
-
-  // ── TIER 2: Fast Backups ──────────────────
-  {
-    id: 'meta-llama/llama-4-scout-17b-16e-instruct',
-    name: 'OPI Scout',
-    provider: 'internal',
-    tier: 2,
-    badge: 'Newest Gen',
-    badgeColor: '#f97316',
-    rpm: 30,
-    rpd: 1000,
-    contextWindow: '500K',
-    description: 'Newest lightweight model variant',
-    icon: '🦙',
-  },
-  {
-    id: 'qwen/qwen3.6-27b',
-    name: 'OPI Standard',
-    provider: 'internal',
-    tier: 2,
-    badge: 'Code Backup',
-    badgeColor: '#10b981',
-    rpm: 30,
-    rpd: 1000,
-    contextWindow: '128K',
-    description: 'Solid alternative for DSA',
-    icon: '⌨️',
-  },
-  {
-    id: 'gemini-2.5-flash',
-    name: 'OPI Flash',
-    provider: 'internal',
-    tier: 2,
-    badge: 'Stable Backup',
-    badgeColor: '#8b5cf6',
-    rpm: 10,
-    rpd: 1500,
-    contextWindow: '1M tokens',
-    description: 'Extremely stable older generation',
-    icon: '✨',
-  },
-
-  // ── TIER 3: Heavyweight Backups ──────────────────────────────────────────────
-  {
     id: 'openai/gpt-oss-120b',
-    name: 'OPI Heavyweight',
-    provider: 'internal',
-    tier: 3,
-    badge: 'Massive Size',
+    name: 'GPT-OSS 120B',
+    provider: 'groq',
+    badge: '120B Reasoning',
     badgeColor: '#2563eb',
-    rpm: 'Unlimited',
-    rpd: 'Unlimited',
+    rpm: 30,
+    rpd: 1000,
     contextWindow: '131K',
-    description: '120 Billion parameters for deep reasoning',
+    description: '120 Billion parameter model on Groq · In-depth architectural trade-offs & evaluation',
     icon: '🏋️',
   },
   {
-    id: 'gemma-4-31b-it',
-    name: 'OPI Open',
-    provider: 'internal',
-    tier: 3,
-    badge: 'Open Weight',
-    badgeColor: '#10b981',
-    rpm: 15,
-    rpd: 1500,
-    contextWindow: '128K',
-    description: 'OSS architecture',
-    icon: '🌍',
+    id: 'openai/gpt-oss-20b',
+    name: 'GPT-OSS 20B',
+    provider: 'groq',
+    badge: 'Fast Reasoning',
+    badgeColor: '#0ea5e9',
+    rpm: 30,
+    rpd: 1000,
+    contextWindow: '131K',
+    description: '20 Billion parameter lightweight reasoning model · Fast & analytical',
+    icon: '💡',
   },
+
+  // ── Google AI (Gemini Studio) ───────────────────────────────
   {
-    id: 'gemini-2.5-pro',
-    name: 'OPI Legacy Pro',
-    provider: 'internal',
-    tier: 3,
-    badge: 'Pro Backup',
-    badgeColor: '#3b82f6',
-    rpm: 15,
-    rpd: 50,
-    contextWindow: '2M tokens',
-    description: 'Older reasoning generation',
-    icon: '🧠',
-  },
-  {
-    id: 'gemini-3.1-flash-lite',
-    name: 'OPI Lite',
-    provider: 'internal',
-    tier: 3,
-    badge: 'Newest',
-    badgeColor: '#3b82f6',
+    id: 'gemini-2.5-flash',
+    name: 'Gemini 2.5 Flash',
+    provider: 'gemini',
+    badge: '1M Context',
+    badgeColor: '#8b5cf6',
     rpm: 15,
     rpd: 1500,
     contextWindow: '1M tokens',
-    description: 'Latest generation',
-    icon: '🔬',
+    description: 'Google DeepMind model with 1M token context · Exceptional architecture reasoning',
+    icon: '🚀',
+  },
+  {
+    id: 'gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash-Lite',
+    provider: 'gemini',
+    badge: 'High Speed',
+    badgeColor: '#06b6d4',
+    rpm: 30,
+    rpd: 1500,
+    contextWindow: '1M tokens',
+    description: 'Rapid response time by Google · Smooth conversational drills',
+    icon: '✨',
+  },
+
+  // ── OpenRouter (Multi-Provider Dynamic Failover) ─────────────
+  {
+    id: 'openrouter/free',
+    name: 'OpenRouter Free',
+    provider: 'openrouter',
+    badge: 'Auto-Failover',
+    badgeColor: '#f97316',
+    rpm: 20,
+    rpd: 1000,
+    contextWindow: '200K',
+    description: 'Dynamic auto-router that automatically balances across 18+ free models',
+    icon: '🛡️',
   },
 ];
 
 export const DEFAULT_MODEL = AVAILABLE_MODELS[0];
 
+const PROVIDER_GROUPS = [
+  { key: 'groq', label: '⚡ Groq LPUs (Ultra-Low Latency)', dotColor: '#10b981' },
+  { key: 'gemini', label: '✨ Google AI (1M Token Context)', dotColor: '#8b5cf6' },
+  { key: 'openrouter', label: '🛡️ OpenRouter (Dynamic Auto-Failover)', dotColor: '#f97316' },
+];
 
 export default function ModelSelector({ selectedModel, onModelChange, disabled }) {
   const [open, setOpen] = useState(false);
@@ -222,161 +142,78 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
         <div className="model-dropdown" role="listbox">
           <div className="model-dropdown-header">Choose AI Model</div>
 
-          {/* Tier 1 section */}
-          <div className="model-provider-group">
-            <div className="model-provider-label">
-              <span className="provider-dot" style={{background: '#ec4899'}} />
-              🌟 Tier 1: The Flagships (Try these first)
-            </div>
-            {AVAILABLE_MODELS.filter(m => m.tier === 1).map((model) => {
-              const isSelected = model.id === selectedModel;
-              return (
-                <button
-                  key={model.id}
-                  className={`model-option ${isSelected ? 'model-option--selected' : ''}`}
-                  onClick={() => handleSelect(model.id)}
-                  role="option"
-                  aria-selected={isSelected}
-                >
-                  <div className="model-option-left">
-                    <span className="model-option-icon">{model.icon}</span>
-                    <div className="model-option-info">
-                      <div className="model-option-name">
-                        {model.name}
-                        <span
-                          className="model-badge"
-                          style={{ background: `${model.badgeColor}22`, color: model.badgeColor, border: `1px solid ${model.badgeColor}44` }}
-                        >
-                          {model.badge}
-                        </span>
-                      </div>
-                      <div className="model-option-desc">{model.description}</div>
-                    </div>
-                  </div>
-                  <div className="model-option-stats">
-                    <div className="model-stat">
-                      <span className="stat-val">{model.rpm}</span>
-                      <span className="stat-label">RPM</span>
-                    </div>
-                    <div className="model-stat">
-                      <span className="stat-val">{model.rpd}</span>
-                      <span className="stat-label">RPD</span>
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <svg className="model-check" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          {PROVIDER_GROUPS.map((group) => {
+            const modelsInGroup = AVAILABLE_MODELS.filter((m) => m.provider === group.key);
+            if (modelsInGroup.length === 0) return null;
 
-          {/* Tier 2 section */}
-          <div className="model-provider-group">
-            <div className="model-provider-label">
-              <span className="provider-dot" style={{background: '#10b981'}} />
-              🟢 Tier 2: Fast Backups
-            </div>
-            {AVAILABLE_MODELS.filter(m => m.tier === 2).map((model) => {
-              const isSelected = model.id === selectedModel;
-              return (
-                <button
-                  key={model.id}
-                  className={`model-option ${isSelected ? 'model-option--selected' : ''}`}
-                  onClick={() => handleSelect(model.id)}
-                  role="option"
-                  aria-selected={isSelected}
-                >
-                  <div className="model-option-left">
-                    <span className="model-option-icon">{model.icon}</span>
-                    <div className="model-option-info">
-                      <div className="model-option-name">
-                        {model.name}
-                        <span
-                          className="model-badge"
-                          style={{ background: `${model.badgeColor}22`, color: model.badgeColor, border: `1px solid ${model.badgeColor}44` }}
-                        >
-                          {model.badge}
-                        </span>
+            return (
+              <div key={group.key} className="model-provider-group">
+                <div className="model-provider-label">
+                  <span className="provider-dot" style={{ background: group.dotColor }} />
+                  {group.label}
+                </div>
+                {modelsInGroup.map((model) => {
+                  const isSelected = model.id === selectedModel;
+                  return (
+                    <button
+                      key={model.id}
+                      className={`model-option ${isSelected ? 'model-option--selected' : ''}`}
+                      onClick={() => handleSelect(model.id)}
+                      role="option"
+                      aria-selected={isSelected}
+                    >
+                      <div className="model-option-left">
+                        <span className="model-option-icon">{model.icon}</span>
+                        <div className="model-option-info">
+                          <div className="model-option-name">
+                            {model.name}
+                            <span
+                              className="model-badge"
+                              style={{
+                                background: `${model.badgeColor}22`,
+                                color: model.badgeColor,
+                                border: `1px solid ${model.badgeColor}44`,
+                              }}
+                            >
+                              {model.badge}
+                            </span>
+                          </div>
+                          <div className="model-option-desc">{model.description}</div>
+                        </div>
                       </div>
-                      <div className="model-option-desc">{model.description}</div>
-                    </div>
-                  </div>
-                  <div className="model-option-stats">
-                    <div className="model-stat">
-                      <span className="stat-val">{model.rpm}</span>
-                      <span className="stat-label">RPM</span>
-                    </div>
-                    <div className="model-stat">
-                      <span className="stat-val">{typeof model.rpd === 'number' && model.rpd >= 1000 ? `${(model.rpd/1000).toFixed(1)}K` : model.rpd}</span>
-                      <span className="stat-label">RPD</span>
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <svg className="model-check" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Tier 3 section */}
-          <div className="model-provider-group">
-            <div className="model-provider-label">
-              <span className="provider-dot" style={{background: '#3b82f6'}} />
-              🔵 Tier 3: Heavyweight Backups
-            </div>
-            {AVAILABLE_MODELS.filter(m => m.tier === 3).map((model) => {
-              const isSelected = model.id === selectedModel;
-              return (
-                <button
-                  key={model.id}
-                  className={`model-option ${isSelected ? 'model-option--selected' : ''}`}
-                  onClick={() => handleSelect(model.id)}
-                  role="option"
-                  aria-selected={isSelected}
-                >
-                  <div className="model-option-left">
-                    <span className="model-option-icon">{model.icon}</span>
-                    <div className="model-option-info">
-                      <div className="model-option-name">
-                        {model.name}
-                        <span
-                          className="model-badge"
-                          style={{ background: `${model.badgeColor}22`, color: model.badgeColor, border: `1px solid ${model.badgeColor}44` }}
-                        >
-                          {model.badge}
-                        </span>
+                      <div className="model-option-stats">
+                        <div className="model-stat">
+                          <span className="stat-val">{model.rpm}</span>
+                          <span className="stat-label">RPM</span>
+                        </div>
+                        <div className="model-stat">
+                          <span className="stat-val">
+                            {typeof model.rpd === 'number' && model.rpd >= 1000
+                              ? `${(model.rpd / 1000).toFixed(1)}K`
+                              : model.rpd}
+                          </span>
+                          <span className="stat-label">RPD</span>
+                        </div>
                       </div>
-                      <div className="model-option-desc">{model.description}</div>
-                    </div>
-                  </div>
-                  <div className="model-option-stats">
-                    <div className="model-stat">
-                      <span className="stat-val">{model.rpm}</span>
-                      <span className="stat-label">RPM</span>
-                    </div>
-                    <div className="model-stat">
-                      <span className="stat-val">{model.rpd}</span>
-                      <span className="stat-label">RPD</span>
-                    </div>
-                  </div>
-                  {isSelected && (
-                    <svg className="model-check" width="14" height="14" viewBox="0 0 24 24"
-                      fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                      {isSelected && (
+                        <svg
+                          className="model-check"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
 
           <div className="model-dropdown-footer">
             RPM = requests/min · RPD = requests/day (free tier)

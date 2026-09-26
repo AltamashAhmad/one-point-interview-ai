@@ -14,7 +14,8 @@ const Scorecard     = React.lazy(() => import('./pages/Scorecard'));
 const LoopDashboard = React.lazy(() => import('./pages/LoopDashboard'));
 const AccessWall    = React.lazy(() => import('./pages/AccessWall'));
 const Admin         = React.lazy(() => import('./pages/Admin'));
-const Roadmap       = React.lazy(() => import('./pages/Roadmap'));
+const DsaSheet      = React.lazy(() => import('./pages/DsaSheet'));
+const PrepPlan      = React.lazy(() => import('./pages/PrepPlan'));
 
 // ── Loading fallback for Suspense ──────────────────────────────────────────
 function PageLoader() {
@@ -299,20 +300,24 @@ function AppRoutes() {
             </AdminRoute>
           }
         />
+        <Route path="/roadmap" element={<Navigate to="/dsa-sheet" replace />} />
+        <Route path="/striver-a2z" element={<Navigate to="/dsa-sheet" replace />} />
         <Route
-          path="/admin/prompts/roadmap"
-          element={
-            <AdminRoute>
-              <Roadmap adminPromptMode={true} />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/roadmap"
+          path="/dsa-sheet"
           element={
             <ProtectedRoute>
               <AccessGate>
-                <Roadmap />
+                <DsaSheet />
+              </AccessGate>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/prep-plan"
+          element={
+            <ProtectedRoute>
+              <AccessGate>
+                <PrepPlan />
               </AccessGate>
             </ProtectedRoute>
           }

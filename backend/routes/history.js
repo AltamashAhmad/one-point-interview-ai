@@ -3,9 +3,17 @@ const router = express.Router();
 const { verifyToken } = require('../middleware/auth');
 const { checkUserAccess, enforceGlobalStatus } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
-const { generateBackupResponse } = require('../services/backupAi');
-const { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError } = require('../services/primaryAi');
+const { generateBackupResponse, BACKUP_MODEL_ALIASES } = require('../services/backupAi');
+const { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError, PRIMARY_MODEL_ALIASES } = require('../services/primaryAi');
 const { generateRouterResponse, isRouterModel } = require('../services/routerAi');
+
+const ALL_MODEL_ALIASES = {
+  ...PRIMARY_MODEL_ALIASES,
+  ...BACKUP_MODEL_ALIASES,
+  'llama-3.1-8b': 'qwen/qwen3.8-27b',
+  'llama-3.3-70b': 'openai/gpt-oss-120b',
+  'gemini-flash': 'gemini-2.5-flash',
+};
 
 const db = admin.firestore();
 
@@ -372,9 +380,10 @@ ${transcript}`;
 
     let responseText = '';
     // Use the user's selected scorecard model. If the request arrives with no
-    // body (Express 5 leaves req.body undefined), fall back to the model the
-    // interview was conducted with.
-    let modelUsed = req.body?.model || data.modelUsed || 'openai/gpt-oss-120b:free';
+    let modelUsed = req.body?.model || data.modelUsed || 'openai/gpt-oss-120b';
+    if (modelUsed && ALL_MODEL_ALIASES[modelUsed]) {
+      modelUsed = ALL_MODEL_ALIASES[modelUsed];
+    }
     
     // Check if user is admin for VIP API key routing
     const isAdmin = req.userProfile?.role === 'admin';
@@ -487,8 +496,11 @@ ${transcript}`;
 
     const aiMessages = [{ role: 'user', content: 'Generate my personalized revision notes in Markdown.' }];
     
-    // We can use any available model, falling back to llama-3.1-8b-instant
-    const modelUsed = req.body?.model || data.modelUsed || 'llama-3.1-8b-instant';
+    // We can use any available model, falling back to qwen/qwen3.8-27b
+    let modelUsed = req.body?.model || data.modelUsed || 'qwen/qwen3.8-27b';
+    if (modelUsed && ALL_MODEL_ALIASES[modelUsed]) {
+      modelUsed = ALL_MODEL_ALIASES[modelUsed];
+    }
     let responseText = '';
     
     if (isPrimaryModel(modelUsed)) {

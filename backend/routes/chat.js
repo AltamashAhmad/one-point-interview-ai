@@ -2,8 +2,8 @@ const express = require('express');
 const router  = express.Router();
 const { verifyToken }               = require('../middleware/auth');
 const { checkUserAccess }           = require('../middleware/checkUserAccess');
-const { generateBackupResponse } = require('../services/backupAi');
-const { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError } = require('../services/primaryAi');
+const { generateBackupResponse, BACKUP_MODEL_ALIASES } = require('../services/backupAi');
+const { generatePrimaryResponse, isPrimaryModel, isPrimaryQuotaError, PRIMARY_MODEL_ALIASES } = require('../services/primaryAi');
 const { generateRouterResponse, isRouterModel } = require('../services/routerAi');
 const { getSystemPrompt }           = require('../services/prompts');
 const { getQuestion }               = require('../services/questionBank');
@@ -12,6 +12,15 @@ const rateLimit                     = require('express-rate-limit');
 const { ipKeyGenerator }            = require('express-rate-limit');
 
 const db = admin.firestore();
+
+const ALL_MODEL_ALIASES = {
+  ...PRIMARY_MODEL_ALIASES,
+  ...BACKUP_MODEL_ALIASES,
+  'llama-3.1-8b': 'qwen/qwen3.8-27b',
+  'llama-3.3-70b': 'openai/gpt-oss-120b',
+  'gemini-flash': 'gemini-2.5-flash',
+  'gemini-pro': 'gemini-2.5-flash',
+};
 
 // Per-user limiter on the expensive AI endpoint
 const chatLimiter = rateLimit({
@@ -35,11 +44,6 @@ const VALID_DIFFICULTIES    = ['EASY', 'MEDIUM', 'HARD', 'ANY'];
 const VALID_BACKUP_MODELS = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-2.5-pro',
-  'gemini-3.1-pro-preview',
-  'gemini-3.1-flash-lite',
-  'gemini-3.5-flash',
-  'gemma-4-31b-it',
   'gemini-flash-latest',
   'gemini-flash-lite-latest',
 ];
@@ -63,7 +67,7 @@ const VALID_BACKUP_MODELS = [
  */
 router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, next) => {
   try {
-    const {
+    let {
       messages,
       interviewType,
       userName    = 'there',
@@ -73,6 +77,14 @@ router.post('/', verifyToken, checkUserAccess, chatLimiter, async (req, res, nex
       language    = 'any language',
       questionSeed,          // title of the already-selected question (continuity)
     } = req.body;
+
+    // Resolve legacy aliases or assign default
+    if (model && ALL_MODEL_ALIASES[model]) {
+      model = ALL_MODEL_ALIASES[model];
+    }
+    if (!model) {
+      model = 'qwen/qwen3.8-27b';
+    }
 
     // ── Input Validation ────────────────────────────────────────
     if (!Array.isArray(messages) || messages.length === 0) {

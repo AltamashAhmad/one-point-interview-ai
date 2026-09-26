@@ -1,0 +1,311 @@
+.striver-page {
+  max-width: 1100px;
+}
+
+.striver-summary {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 20px;
+}
+
+.striver-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.striver-progress-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.striver-progress-meta {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.striver-bar {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-input);
+  overflow: hidden;
+}
+
+.striver-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #3b82f6);
+  transition: width 0.3s ease;
+}
+
+.striver-hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.striver-link-btn {
+  margin-left: 8px;
+  background: none;
+  border: none;
+  color: var(--purple-light);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+}
+
+.striver-link-btn:hover {
+  text-decoration: underline;
+}
+
+.striver-controls {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.striver-search {
+  flex: 1;
+  min-width: 220px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.striver-select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.striver-select.full {
+  width: 100%;
+}
+
+.striver-expand-btns {
+  display: flex;
+  gap: 8px;
+}
+
+.striver-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.striver-chip {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+
+.striver-chip:hover {
+  border-color: var(--border-light);
+  color: var(--text-primary);
+}
+
+.striver-chip.active {
+  background: var(--purple-glow);
+  border-color: var(--purple);
+  color: var(--text-primary);
+}
+
+.striver-error {
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: var(--red);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.striver-loading {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px 0;
+}
+
+.striver-step-header {
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 0;
+}
+
+.striver-step .striver-section:first-of-type {
+  margin-top: 16px;
+}
+
+.striver-caret {
+  display: inline-block;
+  width: 24px;
+  transition: transform 0.2s;
+}
+
+.striver-caret.small {
+  width: 18px;
+  font-size: 11px;
+}
+
+.striver-caret.open {
+  transform: rotate(90deg);
+}
+
+.striver-section {
+  border-top: 1px solid var(--border);
+  padding: 10px 0 4px;
+}
+
+.striver-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+  padding: 6px 0;
+}
+
+.striver-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.striver-section-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.striver-question-list {
+  margin: 8px 0 8px 18px;
+}
+
+.striver-row {
+  cursor: default;
+}
+
+.striver-row.important {
+  box-shadow: inset 0 0 0 1px rgba(245, 158, 11, 0.35);
+}
+
+.striver-check {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.striver-title {
+  text-decoration: none;
+}
+
+.striver-title:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.striver-ai-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--blue-glow);
+  color: var(--blue);
+  white-space: nowrap;
+}
+
+.striver-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.striver-anchor-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--purple-glow);
+  color: var(--purple-light);
+  white-space: nowrap;
+}
+
+.striver-icon-btn {
+  text-decoration: none;
+  min-width: 28px;
+  height: 26px;
+}
+
+.striver-icon-btn.active,
+.striver-icon-btn.has-note,
+.striver-icon-btn.lc {
+  opacity: 1;
+}
+
+.striver-icon-btn.has-note {
+  border-color: var(--purple);
+  background: var(--purple-glow);
+}
+
+.diff-Theory {
+  background: rgba(139, 92, 246, 0.12);
+  color: var(--purple-light);
+}
+
+.striver-note-preview {
+  margin: 4px 0 8px 18px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--purple);
+  background: var(--bg-input);
+  border-radius: 0 8px 8px 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  max-height: 96px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.striver-modal-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .striver-question-list,
+  .striver-note-preview {
+    margin-left: 0;
+  }
+
+  .striver-actions {
+    flex-wrap: wrap;
+  }
+}
