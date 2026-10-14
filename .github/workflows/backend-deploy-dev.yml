@@ -9,8 +9,25 @@ on:
       - '.github/workflows/backend-deploy-dev.yml'
 
 jobs:
+  test:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx jest --ci
+
   deploy-dev:
     name: Deploy to Development (dev)
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Execute SSH commands on EC2
@@ -37,7 +54,13 @@ jobs:
             cp ~/one-point-interview-ai/backend/.env ./
             
             # Install dependencies
-            npm install
+            npm ci --omit=dev
             
             # Restart the PM2 process for the dev backend on port 8081
             PORT=8081 pm2 restart backend-dev --update-env || PORT=8081 pm2 start index.js --name "backend-dev"
+
+            for i in 1 2 3 4 5 6; do
+              sleep 5
+              curl -fsS http://localhost:8081/api/health && exit 0
+            done
+            echo "Dev backend failed health check after deploy" && exit 1
