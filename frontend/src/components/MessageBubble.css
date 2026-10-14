@@ -11,12 +11,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Alias so TypingIndicator's fadeInUp resolves from this sheet */
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
 .message-ai   { flex-direction: row; }
 .message-user { flex-direction: row-reverse; }
 
@@ -59,17 +53,34 @@
 .bubble-user {
   background: var(--gradient-brand); /* fallback when typeColor prop is absent */
   border-top-right-radius: 4px;
-  color: #fff;
+  color: var(--on-accent);
   font-size: 14.5px;
   box-shadow: var(--shadow-sm);
 }
 
 /* ── User text ─────────────────────────────────────────────────────────────── */
-.user-text {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: #fff;
+/* User bubbles always sit on a colored/gradient background (in both themes),
+   so markdown text elements must stay white/light regardless of the
+   light-theme --text-primary override used inside AI bubbles. */
+.bubble-user .md-p,
+.bubble-user .md-strong,
+.bubble-user .md-em,
+.bubble-user .md-li,
+.bubble-user .md-h1,
+.bubble-user .md-h2,
+.bubble-user .md-h3,
+.bubble-user .md-h4 {
+  color: var(--on-accent);
+}
+
+.bubble-user .md-ul > .md-li::before {
+  color: var(--on-accent);
+}
+
+.bubble-user .inline-code {
+  color: var(--on-accent);
+  background: color-mix(in srgb, var(--on-accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--on-accent) 30%, transparent);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -187,8 +198,8 @@
 
 /* ── Inline Code ───────────────────────────────────────────────────────────── */
 .inline-code {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-  font-size: 0.875em;
+  font-family: var(--font-mono);
+  font-size: max(0.875em, var(--fs-xs));
   color: var(--purple-light);
   background: var(--purple-glow);
   padding: 1px 5px;
@@ -221,8 +232,8 @@
 }
 
 .code-lang-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.8px;
@@ -232,7 +243,7 @@
   background: transparent;
   border: 1px solid var(--border);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   padding: 3px 10px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -322,7 +333,8 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .code-block-wrapper .linenumber {
-  min-width: 2em !important;
+  /* Wide enough for 4-digit numbers plus the 16px padding, so lines 10+ don't shift the code sideways. */
+  min-width: 4em !important;
   text-align: right;
   user-select: none;
   opacity: 0.35;
@@ -332,7 +344,7 @@
    RESPONSIVE — Mobile-friendly bubbles and code blocks
    ═══════════════════════════════════════════════════════════════════════════ */
 
-@media (max-width: 768px) {
+@media (max-width: 899px) {
   .bubble {
     max-width: 88%;
     padding: var(--space-3) var(--space-4);
@@ -344,7 +356,7 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .bubble {
     max-width: 92%;
     padding: var(--space-3);

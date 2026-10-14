@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getTrackerItems, updateTrackerItem, deleteTrackerItem } from '../services/api';
+import { describeError } from '../utils/errors';
 
 /**
  * Loads and mutates per-user tracker items ({ done, important, note, log, startDate }) for one sheet.
@@ -9,6 +10,8 @@ export default function useTracker(sheetId) {
   const [items, setItems] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const itemsRef = useRef(items);
   itemsRef.current = items;
 
@@ -16,11 +19,22 @@ export default function useTracker(sheetId) {
     let cancelled = false;
     setLoading(true);
     getTrackerItems(sheetId)
-      .then((data) => { if (!cancelled) setItems(data); })
-      .catch((err) => { if (!cancelled) setError(err?.response?.data?.error || 'Failed to load your progress.'); })
+      .then((data) => {
+        if (cancelled) return;
+        setItems(data);
+        setLoadFailed(false);
+        setError(null);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setLoadFailed(true);
+        setError(describeError(err, 'Failed to load your progress.'));
+      })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [sheetId]);
+  }, [sheetId, attempt]);
+
+  const reload = useCallback(() => setAttempt((n) => n + 1), []);
 
   const update = useCallback(async (itemKey, patch) => {
     const previous = itemsRef.current[itemKey];
@@ -35,9 +49,9 @@ export default function useTracker(sheetId) {
         else delete next[itemKey];
         return next;
       });
-      const message = err?.response?.data?.error || 'Could not save. Please try again.';
+      const message = describeError(err, 'Could not save. Please try again.');
       setError(message);
-      throw new Error(message);
+      throw new Error(message, { cause: err });
     }
   }, [sheetId]);
 
@@ -52,9 +66,9 @@ export default function useTracker(sheetId) {
       await deleteTrackerItem(sheetId, itemKey);
     } catch (err) {
       if (previous) setItems((prev) => ({ ...prev, [itemKey]: previous }));
-      setError(err?.response?.data?.error || 'Could not delete. Please try again.');
+      setError(describeError(err, 'Could not delete. Please try again.'));
     }
   }, [sheetId]);
 
-  return { items, loading, error, update, remove, clearError: () => setError(null) };
+  return { items, loading, error, loadFailed, reload, update, remove, clearError: () => setError(null) };
 }

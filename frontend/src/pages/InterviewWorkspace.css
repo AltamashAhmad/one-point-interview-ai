@@ -1,0 +1,121 @@
+/* Interview workspace page: a focus-mode screen outside the app shell, with a slim top bar and a chat/editor body. */
+.interview-page {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.interview-page [hidden] { display: none !important; }
+
+.interview-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.interview-state .spinner { border-top-color: var(--type-color); }
+
+.interview-notice { padding: var(--space-4) var(--space-5) 0; }
+
+.interview-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.chat-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--bg-primary);
+}
+
+.editor-pane__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0 var(--space-2) 0 var(--space-4);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.editor-pane__title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.resize-handle {
+  position: relative;
+  flex-shrink: 0;
+  width: 9px;
+  cursor: col-resize;
+}
+
+.resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  background: var(--border);
+  transition: background var(--t-fast);
+}
+
+.resize-handle:hover::after,
+.resize-handle[data-resize-handle-state='drag']::after { background: var(--accent); }
+
+.resize-handle:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Phones: one pane at a time, chosen with the Chat | Code tabs. */
+.workspace-mobile {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workspace-mobile > .chat-pane,
+.workspace-mobile > .editor-slot {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+.editor-slot {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-slot > .editor-pane {
+  flex: 1;
+  height: auto;
+}
+
+.workspace-tabs {
+  flex-shrink: 0;
+  margin: var(--space-2) var(--space-3);
+}

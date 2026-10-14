@@ -1,0 +1,152 @@
+/* Chat input: one rounded field, text on top and the voice and send buttons along the bottom. */
+.composer {
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}
+
+.composer-box {
+  display: flex;
+  flex-direction: column;
+  max-width: 768px;
+  margin: 0 auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.composer-box:focus-within {
+  border-color: var(--border-light);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.composer-input {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  margin: 0;
+  padding: var(--space-2) var(--space-4) 0;
+  font: inherit;
+  font-size: var(--fs-base);
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
+}
+
+.composer-input::placeholder { color: var(--text-muted); }
+.composer-input:disabled { cursor: not-allowed; opacity: 0.6; }
+
+.composer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2) var(--space-2) var(--space-4);
+}
+
+.composer-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.composer-live-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: composer-blink 1.2s ease-in-out infinite;
+}
+
+.composer-interim {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+}
+
+.composer .composer-mic,
+.composer .composer-send {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.composer .composer-mic { color: var(--text-secondary); }
+
+.composer .composer-mic--active {
+  color: var(--on-accent);
+  background: var(--danger);
+  animation: composer-ring 1.6s ease-out infinite;
+}
+
+.composer .composer-mic--active:hover:not(:disabled) {
+  color: var(--on-accent);
+  background: var(--danger-strong);
+}
+
+.composer .composer-send {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: none;
+}
+
+.composer .composer-send:disabled {
+  background: var(--surface-3);
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.composer-note,
+.composer-hint {
+  max-width: 768px;
+  margin: var(--space-2) auto 0;
+  text-align: center;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.composer-note { color: var(--danger-text); }
+
+.composer-hint strong {
+  font-weight: 600;
+  color: color-mix(in srgb, var(--type-color) 65%, var(--text-primary));
+}
+
+@keyframes composer-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@keyframes composer-ring {
+  0% { box-shadow: 0 0 0 0 var(--danger-soft); }
+  100% { box-shadow: 0 0 0 8px transparent; }
+}
+
+@media (max-width: 640px) {
+  .composer { padding: var(--space-2) var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-live-dot,
+  .composer .composer-mic--active { animation: none; }
+}
