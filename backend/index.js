@@ -1,114 +1,35 @@
 require('dotenv').config({ path: require('path').join(__dirname, '.env') });
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { ipKeyGenerator } = require('express-rate-limit');
+require('./config/env').validateEnv();
 
-const chatRouter      = require('./routes/chat');
-const healthRouter    = require('./routes/health');
-const historyRouter   = require('./routes/history');
-const questionsRouter = require('./routes/questions');
-const loopsRouter     = require('./routes/loops');
-const usersRouter     = require('./routes/users');
-const accessRouter    = require('./routes/access');
-const adminRouter     = require('./routes/admin');
-const promptsRouter   = require('./routes/prompts');
-const publicRouter    = require('./routes/public');
-const codeAuditRouter = require('./routes/codeAudit');
-const trackerRouter   = require('./routes/tracker');
+const { createApp } = require('./app');
+const logger = require('./utils/logger');
+const lifecycle = require('./utils/lifecycle');
 
-const { verifyAppCheck } = require('./middleware/appCheck');
-
-const app = express();
-app.set('trust proxy', 1); // Trust the Caddy reverse proxy (one hop) for correct client IPs in rate limiting
 const PORT = process.env.PORT || 8080;
+// Long enough for an in-flight AI reply (SSE stream) to finish; PM2/ECS kill after their own timeout.
+const SHUTDOWN_GRACE_MS = 25_000;
 
-// ── Security Middleware ────────────────────────────────────────
-app.use(helmet());
-
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').concat(['https://main.d298ess3vvx0bm.amplifyapp.com', 'https://main.d3qqncmpm1ahwz.amplifyapp.com'])
-  : ['http://localhost:3000', 'https://main.d298ess3vvx0bm.amplifyapp.com', 'https://main.d3qqncmpm1ahwz.amplifyapp.com'];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-}));
-
-app.use(express.json({ limit: '2mb' }));
-
-// ── Rate Limiting ──────────────────────────────────────────────
-// Global IP-based limiter (wide net)
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 150, // Reduced back down to 150 to save AWS costs for production
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many requests. Please try again in 15 minutes.' },
-  skip: (req) => {
-    // Big Company Strategy 1: Bypass completely for local development loopback IPs
-    const isLocalhost = req.ip === '::1' || req.ip === '127.0.0.1' || req.ip === '::ffff:127.0.0.1';
-    return isLocalhost;
-  }
+const server = createApp().listen(PORT, () => {
+  logger.info('server started', { port: PORT, env: process.env.NODE_ENV || 'development' });
 });
 
-app.use('/api/', apiLimiter);
-
-// ── App Check — must come from the real frontend app ──────────
-// Skipped for the health check (monitoring tools need this unauthenticated)
-app.use('/api/', (req, res, next) => {
-  if (req.path === '/health' || req.path.startsWith('/health/')) return next();
-  verifyAppCheck(req, res, next);
-});
-
-// ── Routes ─────────────────────────────────────────────────────
-app.use('/api/chat',      chatRouter);
-app.use('/api/code-audit', codeAuditRouter);
-// Public routes (no auth needed)
-app.use('/api/public', publicRouter);
-
-app.use('/api/health',    healthRouter);
-app.use('/api/history',   historyRouter);
-app.use('/api/questions', questionsRouter);
-app.use('/api/loops',     loopsRouter);
-app.use('/api/users',     usersRouter);
-app.use('/api/access',    accessRouter);
-app.use('/api/admin',     adminRouter);
-app.use('/api/prompts',   promptsRouter);
-app.use('/api/tracker',   trackerRouter);
-
-app.get('/', (req, res) => {
-  res.json({ message: '🎯 One Point Interview AI', status: 'running', version: '1.0.0' });
-});
-
-// ── Global Error Handler ───────────────────────────────────────
-app.use((err, req, res, next) => {
-  console.error(`[ERROR] ${err.message}`);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-    code: err.code || undefined,
+function shutdown(signal) {
+  if (lifecycle.isShuttingDown()) return;
+  lifecycle.markShuttingDown();
+  logger.info('shutting down', { signal });
+  server.close(() => {
+    logger.info('all connections closed');
+    process.exit(0);
   });
-});
+  server.closeIdleConnections?.();
+  setTimeout(() => {
+    logger.warn('forcing exit after grace period');
+    process.exit(1);
+  }, SHUTDOWN_GRACE_MS).unref();
+}
 
-// ── 404 Handler ────────────────────────────────────────────────
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
-
-// Health Check endpoint
-app.get('/api/public/status', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'API is running' });
-});
-
-// Version Check endpoint for debugging
-app.get('/api/public/version', (req, res) => {
-  res.status(200).json({ version: 'v2-debug', allowedOrigins });
-});
-
-app.listen(PORT, () => {
-  console.log(`✅ Server running on http://localhost:${PORT}`);
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('unhandledRejection', (reason) => {
+  logger.error('unhandled promise rejection', { error: reason instanceof Error ? reason.stack : String(reason) });
 });

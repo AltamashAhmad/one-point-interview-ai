@@ -1,0 +1,62 @@
+/* Transcript column: session facts, status notices and the error banner. */
+.chat-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-6) var(--space-5);
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.chat-feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  max-width: 760px;
+  min-height: 100%;
+  margin: 0 auto;
+}
+
+.chat-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chat-meta .ui-badge {
+  gap: 6px;
+  font-weight: 500;
+}
+
+.chat-notice {
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  animation: fadeIn 0.3s ease;
+}
+
+.interview-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-md);
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.interview-error > span {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .chat-scroll { padding: var(--space-4) var(--space-3); }
+}

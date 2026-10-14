@@ -1,0 +1,59 @@
+/* Code editor pane: language, save state and submit above the Monaco editor. */
+.code-editor {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.code-editor__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-editor__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.code-editor__lang {
+  padding: 2px 8px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+}
+
+.code-editor__status {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.code-editor__body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.code-editor__hint {
+  position: absolute;
+  top: 16px;
+  left: 60px;
+  z-index: 1;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-muted);
+}

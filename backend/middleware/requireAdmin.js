@@ -1,4 +1,5 @@
 const admin = require('../config/firebase');
+const logger = require('../utils/logger');
 const db    = admin.firestore();
 
 /**
@@ -26,7 +27,7 @@ async function requireAdmin(req, res, next) {
     req.adminProfile = doc.data();
     next();
   } catch (err) {
-    console.error('[requireAdmin]', err.message);
+    logger.error('Admin check failed', { requestId: req.id, err: err.message });
     res.status(500).json({ error: 'Internal server error' });
   }
 }

@@ -27,14 +27,6 @@ export function useLoopPersist() {
     return api.createLoop({ company, level, rounds });
   }, []);
 
-  const updateLoopRound = useCallback((loopId, roundIndex, status, score, sessionId) => {
-    const payload = { roundIndex: Number(roundIndex) };
-    if (status !== undefined) payload.status = status;
-    if (score !== undefined) payload.score = score;
-    if (sessionId !== undefined) payload.sessionId = sessionId;
-    return api.updateLoopRound(loopId, payload);
-  }, []);
-
   const deleteLoop = useCallback((loopId) => api.deleteLoop(loopId), []);
 
   /**
@@ -44,7 +36,7 @@ export function useLoopPersist() {
   const migrateLocalLoops = useCallback(async () => {
     if (localStorage.getItem(MIGRATED_FLAG_KEY)) return;
 
-    let localLoops = [];
+    let localLoops;
     try {
       const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
       localLoops = raw ? JSON.parse(raw) : [];
@@ -80,7 +72,6 @@ export function useLoopPersist() {
     getLoops,
     getLoop,
     createLoop,
-    updateLoopRound,
     deleteLoop,
     migrateLocalLoops,
   };

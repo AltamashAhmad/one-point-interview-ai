@@ -4,6 +4,7 @@
 const LC_PREMIUM = new Set([
   'encode-and-decode-strings', 'meeting-rooms', 'meeting-rooms-ii', 'walls-and-gates',
   'graph-valid-tree', 'number-of-connected-components-in-an-undirected-graph', 'alien-dictionary',
+  'moving-average-from-data-stream',
 ]);
 
 const RAW = [
@@ -31,10 +32,10 @@ const RAW = [
       ['Next Permutation', 'M', 'next-permutation'],
       ['Merge Sorted Array', 'E', 'merge-sorted-array'],
       ["Pascal's Triangle", 'E', 'pascals-triangle'],
-      ['Set Mismatch (cyclic sort)', 'E', 'set-mismatch'],
+      ['Set Mismatch (cyclic sort)', 'E', 'set-mismatch', '*'],
       ['First Missing Positive (cyclic sort / index marking)', 'H', 'first-missing-positive'],
       ['Set Matrix Zeroes', 'M', 'set-matrix-zeroes'],
-      ['Rotate Image', 'M', 'rotate-image'],
+      ['Rotate Image', 'M', 'rotate-image', '*'],
       ['Spiral Matrix', 'M', 'spiral-matrix'],
       ['Game of Life', 'M', 'game-of-life'],
     ] },
@@ -120,12 +121,10 @@ const RAW = [
       ["Split Array Largest Sum (= Book Allocation / Painter's Partition)", 'H', 'split-array-largest-sum'],
     ] },
   ] },
-  { title: 'Part 3: Stack & Monotonic Stack', sections: [
+  { title: 'Part 3: Stack & Queue', sections: [
     { title: '3.1 Stack', problems: [
       ['Valid Parentheses', 'E', 'valid-parentheses', '*'],
       ['Min Stack', 'M', 'min-stack'],
-      ['Implement Queue using Stacks', 'E', 'implement-queue-using-stacks'],
-      ['Design Circular Queue', 'M', 'design-circular-queue'],
       ['Evaluate Reverse Polish Notation', 'M', 'evaluate-reverse-polish-notation'],
       ['Minimum Remove to Make Valid Parentheses', 'M', 'minimum-remove-to-make-valid-parentheses'],
       ['Decode String', 'M', 'decode-string'],
@@ -146,6 +145,15 @@ const RAW = [
       ['Largest Rectangle in Histogram', 'H', 'largest-rectangle-in-histogram'],
       ['Maximal Rectangle', 'H', 'maximal-rectangle'],
       ['Sliding Window Maximum (monotonic deque)', 'H', 'sliding-window-maximum'],
+    ] },
+    { title: '3.3 Queue (FIFO, circular buffer, BFS\'s underlying structure)', problems: [
+      ['Number of Recent Calls', 'E', 'number-of-recent-calls', '*'],
+      ['Implement Queue using Stacks', 'E', 'implement-queue-using-stacks'],
+      ['Moving Average from Data Stream', 'E', 'moving-average-from-data-stream'],
+      ['Design Circular Queue', 'M', 'design-circular-queue'],
+      ['Design Circular Deque', 'M', 'design-circular-deque'],
+      ['Dota2 Senate', 'M', 'dota2-senate'],
+      ['Reveal Cards In Increasing Order', 'M', 'reveal-cards-in-increasing-order'],
     ] },
   ] },
   { title: 'Part 4: Linked List', sections: [
@@ -175,10 +183,10 @@ const RAW = [
   ] },
   { title: 'Part 5: Recursion, Backtracking & Bits', sections: [
     { title: '5.1 Recursion & backtracking (pick / not-pick, for-loop choice)', problems: [
-      ['Pow(x, n)', 'M', 'powx-n', '*'],
+      ['Pow(x, n)', 'M', 'powx-n'],
       ['Subsets', 'M', 'subsets', '*'],
       ['Subsets II', 'M', 'subsets-ii'],
-      ['Combination Sum', 'M', 'combination-sum'],
+      ['Combination Sum', 'M', 'combination-sum', '*'],
       ['Combination Sum II', 'M', 'combination-sum-ii'],
       ['Combination Sum III', 'M', 'combination-sum-iii'],
       ['Permutations', 'M', 'permutations'],
@@ -216,7 +224,7 @@ const RAW = [
       ['Merge k Sorted Lists', 'H', 'merge-k-sorted-lists'],
       ['Find K Pairs with Smallest Sums (k-way merge)', 'M', 'find-k-pairs-with-smallest-sums'],
       ['Design Twitter', 'M', 'design-twitter'],
-      ['Find Median from Data Stream (two heaps)', 'H', 'find-median-from-data-stream'],
+      ['Find Median from Data Stream (two heaps)', 'H', 'find-median-from-data-stream', '*'],
     ] },
     { title: '6.2 Intervals & line sweep (sort by start / end)', problems: [
       ['Merge Intervals', 'M', 'merge-intervals', '*'],
@@ -255,7 +263,7 @@ const RAW = [
       ['Path Sum II', 'M', 'path-sum-ii'],
       ['Path Sum III (prefix sum on a tree)', 'M', 'path-sum-iii'],
       ['Count Good Nodes in Binary Tree', 'M', 'count-good-nodes-in-binary-tree'],
-      ['Lowest Common Ancestor of a Binary Tree', 'M', 'lowest-common-ancestor-of-a-binary-tree'],
+      ['Lowest Common Ancestor of a Binary Tree', 'M', 'lowest-common-ancestor-of-a-binary-tree', '*'],
       ['House Robber III (tree DP)', 'M', 'house-robber-iii'],
       ['Binary Tree Maximum Path Sum', 'H', 'binary-tree-maximum-path-sum'],
       ['Construct Binary Tree from Preorder and Inorder', 'M', 'construct-binary-tree-from-preorder-and-inorder-traversal'],
@@ -274,9 +282,9 @@ const RAW = [
     ] },
     { title: '7.3 Binary search tree', problems: [
       ['Convert Sorted Array to Binary Search Tree', 'E', 'convert-sorted-array-to-binary-search-tree'],
-      ['Insert into a Binary Search Tree', 'M', 'insert-into-a-binary-search-tree', '*'],
+      ['Insert into a Binary Search Tree', 'M', 'insert-into-a-binary-search-tree'],
       ['Delete Node in a BST', 'M', 'delete-node-in-a-bst'],
-      ['Validate Binary Search Tree', 'M', 'validate-binary-search-tree'],
+      ['Validate Binary Search Tree', 'M', 'validate-binary-search-tree', '*'],
       ['Kth Smallest Element in a BST', 'M', 'kth-smallest-element-in-a-bst'],
       ['Lowest Common Ancestor of a BST', 'M', 'lowest-common-ancestor-of-a-binary-search-tree'],
       ['Construct BST from Preorder Traversal', 'M', 'construct-binary-search-tree-from-preorder-traversal'],
@@ -301,7 +309,7 @@ const RAW = [
       ['Walls and Gates', 'M', 'walls-and-gates'],
       ['Surrounded Regions', 'M', 'surrounded-regions'],
       ['Pacific Atlantic Water Flow', 'M', 'pacific-atlantic-water-flow'],
-      ['Is Graph Bipartite?', 'M', 'is-graph-bipartite'],
+      ['Is Graph Bipartite?', 'M', 'is-graph-bipartite', '*'],
       ['Evaluate Division (weighted graph)', 'M', 'evaluate-division'],
       ['Snakes and Ladders', 'M', 'snakes-and-ladders'],
       ['Open the Lock (BFS on states)', 'M', 'open-the-lock'],
@@ -314,9 +322,9 @@ const RAW = [
       ['Alien Dictionary', 'H', 'alien-dictionary'],
     ] },
     { title: '8.3 Union-Find (DSU: rank / size + path compression)', problems: [
-      ['Number of Connected Components in an Undirected Graph', 'M', 'number-of-connected-components-in-an-undirected-graph', '*'],
+      ['Number of Connected Components in an Undirected Graph', 'M', 'number-of-connected-components-in-an-undirected-graph'],
       ['Graph Valid Tree', 'M', 'graph-valid-tree'],
-      ['Redundant Connection', 'M', 'redundant-connection'],
+      ['Redundant Connection', 'M', 'redundant-connection', '*'],
       ['Number of Operations to Make Network Connected', 'M', 'number-of-operations-to-make-network-connected'],
       ['Accounts Merge', 'M', 'accounts-merge'],
       ['Making A Large Island', 'H', 'making-a-large-island'],
@@ -358,11 +366,11 @@ const RAW = [
       ['Longest Increasing Path in a Matrix', 'H', 'longest-increasing-path-in-a-matrix'],
     ] },
     { title: '9.3 Knapsack / subset DP', problems: [
-      ['Ones and Zeroes (0/1 knapsack)', 'M', 'ones-and-zeroes', '*'],
-      ['Partition Equal Subset Sum', 'M', 'partition-equal-subset-sum'],
+      ['Ones and Zeroes (0/1 knapsack)', 'M', 'ones-and-zeroes'],
+      ['Partition Equal Subset Sum', 'M', 'partition-equal-subset-sum', '*'],
       ['Last Stone Weight II (min subset-sum difference)', 'M', 'last-stone-weight-ii'],
       ['Target Sum', 'M', 'target-sum'],
-      ['Coin Change', 'M', 'coin-change'],
+      ['Coin Change', 'M', 'coin-change', '*'],
       ['Coin Change II (unbounded knapsack)', 'M', 'coin-change-ii'],
       ['Perfect Squares', 'M', 'perfect-squares'],
       ['Combination Sum IV (ordered counting)', 'M', 'combination-sum-iv'],
@@ -379,10 +387,10 @@ const RAW = [
       ['Regular Expression Matching', 'H', 'regular-expression-matching'],
     ] },
     { title: '9.5 DP on stocks (buy/sell state machine)', problems: [
-      ['Best Time to Buy and Sell Stock II', 'M', 'best-time-to-buy-and-sell-stock-ii', '*'],
+      ['Best Time to Buy and Sell Stock II', 'M', 'best-time-to-buy-and-sell-stock-ii'],
       ['Best Time to Buy and Sell Stock IV', 'H', 'best-time-to-buy-and-sell-stock-iv'],
       ['Best Time to Buy and Sell Stock with Cooldown', 'M', 'best-time-to-buy-and-sell-stock-with-cooldown'],
-      ['Best Time to Buy and Sell Stock with Transaction Fee', 'M', 'best-time-to-buy-and-sell-stock-with-transaction-fee'],
+      ['Best Time to Buy and Sell Stock with Transaction Fee', 'M', 'best-time-to-buy-and-sell-stock-with-transaction-fee', '*'],
     ] },
     { title: '9.6 LIS (DP + binary search)', problems: [
       ['Longest Increasing Subsequence', 'M', 'longest-increasing-subsequence', '*'],
@@ -402,7 +410,7 @@ const RAW = [
       ['Happy Number', 'E', 'happy-number'],
       ['Palindrome Number', 'E', 'palindrome-number'],
       ['Plus One', 'E', 'plus-one'],
-      ['Reverse Integer (overflow)', 'M', 'reverse-integer'],
+      ['Reverse Integer (overflow)', 'M', 'reverse-integer', '*'],
       ['Multiply Strings', 'M', 'multiply-strings'],
       ['Detect Squares', 'M', 'detect-squares'],
       ['Count Primes (Sieve of Eratosthenes)', 'M', 'count-primes'],

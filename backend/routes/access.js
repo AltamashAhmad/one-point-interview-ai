@@ -4,6 +4,7 @@ const { verifyToken }              = require('../middleware/auth');
 const { enforceGlobalStatus }      = require('../middleware/checkUserAccess');
 const { sendAccessRequestEmail }   = require('../services/emailService');
 const admin = require('../config/firebase');
+const logger = require('../utils/logger');
 
 const db = admin.firestore();
 
@@ -59,14 +60,17 @@ router.post('/request', async (req, res, next) => {
     }
 
     // ── Validate input ─────────────────────────────────────────────────────
-    const { purpose, reason = '' } = req.body;
+    const { purpose, reason = '' } = req.body || {};
 
     if (!purpose || !VALID_PURPOSES.includes(purpose)) {
       return res.status(400).json({
         error: `purpose must be one of: ${VALID_PURPOSES.join(', ')}`,
       });
     }
-    if (reason && reason.length > 500) {
+    if (typeof reason !== 'string') {
+      return res.status(400).json({ error: 'reason must be text.' });
+    }
+    if (reason.length > 500) {
       return res.status(400).json({ error: 'reason must be 500 characters or less.' });
     }
 
@@ -101,7 +105,7 @@ router.post('/request', async (req, res, next) => {
       reason:      requestData.reason,
       requestId:   docRef.id,
     }).catch((err) => {
-      console.error('[Access] Failed to send admin email:', err.message);
+      logger.error('Access request email failed', { requestId: req.id, err: err.message });
     });
 
     return res.status(201).json({

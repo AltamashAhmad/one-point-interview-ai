@@ -171,12 +171,13 @@ async function auditCode({ code, language, problemTitle, promptContext }) {
 
   const outputText = response.output_text;
   if (!outputText) {
-    const err = new Error('OpenAI returned an empty code audit response.');
+    const err = new Error('The code review came back empty. Please try again.');
     err.status = 502;
+    err.expose = true;
     throw err;
   }
 
   return normalizeAudit(JSON.parse(outputText));
 }
 
-module.exports = { auditCode, codeAuditSchema };
+module.exports = { auditCode };

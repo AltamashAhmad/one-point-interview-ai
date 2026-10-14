@@ -2,7 +2,7 @@ import axios from 'axios';
 import { auth, appCheck } from './firebase';
 import { getToken } from 'firebase/app-check';
 
-const API_BASE = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
+const API_BASE = import.meta.env.REACT_APP_BACKEND_URL || 'http://localhost:8080';
 
 // Use a dedicated axios instance with no timeout so massive LLM generations
 // never abort prematurely.
@@ -48,46 +48,78 @@ async function getHeaders() {
   return { ...authHeader, ...appCheckHeader };
 }
 
-/**
- * Send a message to the AI interviewer and get a response.
- *
- * @param {Array<{role: string, content: string}>} messages
- * @param {string} interviewType - 'dsa' | 'systemDesign' | 'lld'
- * @param {string} userName - Candidate's first name
- * @param {string} model - OPI model ID to use
- * @param {Object} config - { company, difficulty, language }
- */
-export async function sendMessage(messages, interviewType, userName = 'there', model, config = {}, signal) {
-  const headers = await getHeaders();
-  const { data } = await apiClient.post(
-    '/api/chat',
-    {
-      messages,
-      interviewType,
-      userName,
-      model,
-      company:    config.company    || '',
-      difficulty: config.difficulty || 'ANY',
-      language:   config.language   || 'any language',
-      questionSeed: config.questionSeed || null,
-    },
-    { headers, ...(signal && { signal }) }
-  );
-  return data;
+/** Error shaped like an axios error so callers can keep reading err.response.data. */
+function responseError(status, data) {
+  const err = new Error(data?.error || `Request failed with status ${status}`);
+  err.response = { status, data: data || {} };
+  return err;
 }
 
 /**
- * Submit raw candidate code to the OpenAI-powered code auditor.
- *
- * @param {Object} payload
- * @param {string} payload.code
- * @param {string} payload.language
- * @param {string} payload.problemTitle
- * @param {string} payload.promptContext
+ * Parses a text/event-stream body and calls onEvent(event, data) for each message.
+ * Exported for tests.
  */
-export async function auditCode(payload, signal) {
+export async function readEventStream(body, onEvent) {
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let boundary;
+    while ((boundary = buffer.indexOf('\n\n')) !== -1) {
+      const block = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      let event = 'message';
+      let data = '';
+      for (const line of block.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim();
+        else if (line.startsWith('data:')) data += line.slice(5).trim();
+      }
+      if (data) onEvent(event, JSON.parse(data));
+    }
+  }
+}
+
+/** POSTs JSON to an SSE endpoint; streams `token` events to onToken and resolves with the `done` payload. */
+async function postEventStream(path, body, { onToken, signal } = {}) {
   const headers = await getHeaders();
-  const { data } = await apiClient.post('/api/code-audit', payload, { headers, ...(signal && { signal }) });
+  const response = await fetch(`${API_BASE}${path}`, {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok || !response.body) {
+    const data = await response.json().catch(() => ({}));
+    throw responseError(response.status, data);
+  }
+
+  let result = null;
+  let streamError = null;
+  await readEventStream(response.body, (event, data) => {
+    if (event === 'token') {
+      onToken?.(data.text);
+    } else if (event === 'done') {
+      result = data;
+    } else if (event === 'error') {
+      streamError = responseError(data?.code === 'SESSION_CONFLICT' || data?.code === 'SESSION_ENDED' ? 409 : 502, data);
+    }
+  });
+
+  if (streamError) throw streamError;
+  if (!result) throw responseError(502, { error: 'The connection closed before the AI finished. Please try again.' });
+  return result;
+}
+
+/**
+ * Platform catalogue: enabled AI models with availability, defaults and interview types.
+ */
+export async function getMeta() {
+  const headers = await getHeaders();
+  const { data } = await apiClient.get('/api/meta', { headers });
   return data;
 }
 
@@ -105,141 +137,76 @@ export async function getCompanyList() {
   }
 }
 
-/**
- * Fetch available interview types from the backend.
- */
-export async function getInterviewTypes() {
-  const { data } = await apiClient.get('/api/chat/types');
-  return data;
-}
-
-const buildHistoryQuery = (options = {}) => {
-  const params = new URLSearchParams();
-  if (options.isLoop) params.append('isLoop', 'true');
-  if (options.isRoadmap) params.append('isRoadmap', 'true');
-  if (options.isTutor) params.append('isTutor', 'true');
-  const str = params.toString();
-  return str ? `?${str}` : '';
-};
+// ── Sessions (interviews, tutor lessons, sheet practice, loop rounds) ──────
 
 /**
- * Fetch all past interview sessions for the current user.
+ * List the user's sessions, newest first (no transcripts).
+ * @param {{ status?, interviewType?, mode?, question?, loopId? }} filters
  */
-export async function getHistory(options = {}) {
+export async function listSessions(filters = {}) {
   const headers = await getHeaders();
-  const { data } = await apiClient.get(`/api/history${buildHistoryQuery(options)}`, { headers });
-  return data.interviews;
+  const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== undefined && v !== null && v !== ''));
+  const { data } = await apiClient.get('/api/sessions', { headers, params });
+  return data.sessions;
 }
 
 /**
- * Archive active sessions for a specific interview type.
- * @param {string} interviewType
- * @param {Object} options - { isLoop, isRoadmap, isTutor }
+ * Start a session. Counts against the daily quota.
+ * @param {{ interviewType, config?: { company, difficulty, language, model, scorecardModel }, questionTitle?, source? }} payload
  */
-export async function archiveSession(interviewType, options = {}) {
+export async function createSession(payload) {
   const headers = await getHeaders();
-  const payload = { interviewType };
-  if (options.questionTitle) {
-    payload.questionTitle = options.questionTitle;
-  }
-  const { data } = await apiClient.post(`/api/history/archive${buildHistoryQuery(options)}`, payload, { headers });
-  return data;
+  const { data } = await apiClient.post('/api/sessions', payload, { headers });
+  return data.session;
 }
 
-/**
- * Fetch a specific interview session by ID.
- * @param {string} id
- */
-export async function getHistoryById(id, options = {}) {
+/** Full session including transcript. */
+export async function getSession(id) {
   const headers = await getHeaders();
-  const { data } = await apiClient.get(`/api/history/${id}${buildHistoryQuery(options)}`, { headers });
-  return data.interview;
+  const { data } = await apiClient.get(`/api/sessions/${id}`, { headers });
+  return data.session;
 }
 
 /**
- * Create or update an interview session.
- * @param {string} sessionId
- * @param {string} interviewType
- * @param {string} modelUsed
- * @param {Array}  messages
- * @param {Object} [meta] - { company, difficulty, language, questionTitle, questionLink }
+ * Send a message (or, with no content on a new session, request the opening message).
+ * Reuse the same `turnId` when retrying so a reply that was saved before the connection dropped isn't duplicated.
+ * The reply streams through onToken; resolves with { message, model, fellBack, messageCount, timerEndsAt }.
  */
-export async function saveSession(sessionId, interviewType, modelUsed, messages, meta = {}, options = {}) {
+export async function sendSessionTurn(id, { content, model, turnId } = {}, handlers = {}) {
+  return postEventStream(`/api/sessions/${id}/turns`, { content, model, turnId }, handlers);
+}
+
+/** Submit code for review; resolves with the two messages appended to the transcript. */
+export async function reviewSessionCode(id, code, language) {
   const headers = await getHeaders();
-  const { data } = await apiClient.post(
-    `/api/history${buildHistoryQuery(options)}`,
-    { sessionId, interviewType, modelUsed, messages, ...meta },
-    { headers }
-  );
-  return data;
+  const { data } = await apiClient.post(`/api/sessions/${id}/code-review`, { code, language }, { headers });
+  return data.messages;
 }
 
-/**
- * Archive old active sessions of a given type.
- * @param {string} interviewType 
- * @param {Object} options 
- */
-export async function archiveOldSessions(interviewType, options = {}) {
+/** End the session. Interviews come back with a scorecard. */
+export async function endSession(id, scorecardModel) {
   const headers = await getHeaders();
-  const { data } = await apiClient.post(
-    `/api/history/archive${buildHistoryQuery(options)}`,
-    { interviewType },
-    { headers }
-  );
-  return data;
+  const { data } = await apiClient.post(`/api/sessions/${id}/end`, { scorecardModel }, { headers });
+  return data.session;
 }
 
-/**
- * Delete a specific interview session by ID.
- * @param {string} id
- */
-export async function deleteSession(id, options = {}) {
+/** Generate (once) and return AI revision notes for a session. */
+export async function generateSessionNotes(id) {
   const headers = await getHeaders();
-  const { data } = await apiClient.delete(`/api/history/${id}${buildHistoryQuery(options)}`, { headers });
-  return data;
-}
-
-/**
- * Toggle pin status for an interview session (max 3 pins).
- */
-export async function pinSession(id, options = {}) {
-  const headers = await getHeaders();
-  const { data } = await apiClient.put(`/api/history/${id}/pin${buildHistoryQuery(options)}`, {}, { headers });
-  return data; // { success: true, isPinned: boolean }
-}
-
-/**
- * Generate and fetch the scorecard for an interview session.
- */
-export async function generateScorecard(sessionId, model, options = {}) {
-  const headers = await getHeaders();
-  const { data } = await apiClient.post(`/api/history/${sessionId}/scorecard${buildHistoryQuery(options)}`, { model }, { headers });
-  return data.scorecard;
-}
-
-/**
- * Generate AI revision notes for an interview session.
- */
-export async function generateNotes(sessionId, model, options = {}) {
-  const headers = await getAuthHeader();
-  const { data } = await axios.post(`${API_BASE}/api/history/${sessionId}/notes${buildHistoryQuery(options)}`, { model }, { headers });
+  const { data } = await apiClient.post(`/api/sessions/${id}/notes`, {}, { headers });
   return data.notes;
 }
 
-/**
- * Update user-edited revision notes.
- */
-export async function updateNotes(sessionId, notes, options = {}) {
-  const headers = await getAuthHeader();
-  const { data } = await axios.put(`${API_BASE}/api/history/${sessionId}/notes${buildHistoryQuery(options)}`, { notes }, { headers });
-  return data.notes;
+/** Update { isPinned?, notes?, code?, status?: 'archived' }. `code` is the editor content of an active session. */
+export async function updateSession(id, patch) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.patch(`/api/sessions/${id}`, patch, { headers });
+  return data.session;
 }
 
-/**
- * Check if the backend is reachable.
- */
-export async function healthCheck() {
-  const { data } = await apiClient.get('/api/health');
+export async function deleteSession(id) {
+  const headers = await getHeaders();
+  const { data } = await apiClient.delete(`/api/sessions/${id}`, { headers });
   return data;
 }
 
@@ -275,17 +242,6 @@ export async function createLoop(payload) {
 }
 
 /**
- * Update a single round of a loop and apply progression on the server.
- * @param {string} loopId
- * @param {Object} payload - { roundIndex, status?, score?, sessionId? }
- */
-export async function updateLoopRound(loopId, payload) {
-  const headers = await getHeaders();
-  const { data } = await apiClient.put(`/api/loops/${loopId}/round`, payload, { headers });
-  return data.loop;
-}
-
-/**
  * Delete a loop by ID.
  * @param {string} id
  */
@@ -307,16 +263,14 @@ export async function getMyProfile() {
   return data.profile;
 }
 
-/**
- * Toggle the unchecked status of a question.
- */
-export async function toggleUncheckQuestion(questionTitle, unchecked) {
+/** Saves the signed-in user's theme ('dark' | 'light') on their profile. */
+export async function updateMyPreferences(preferences) {
   const headers = await getHeaders();
-  const { data } = await apiClient.put('/api/users/me/uncheck', { questionTitle, unchecked }, { headers });
+  const { data } = await apiClient.patch('/api/users/me/preferences', preferences, { headers });
   return data;
 }
 
-// ── Study Tracker (Striver A2Z sheet, prep plan) ─────────────────
+// ── Study Tracker (DSA sheet, prep plan) ──────────────────────────────────
 
 /**
  * Fetch all tracked items for a sheet.
@@ -352,12 +306,20 @@ export async function deleteTrackerItem(sheetId, itemKey) {
 }
 
 /**
- * Toggle the manually completed status of a question.
+ * Generate pseudocode-only study notes for one tracker item. Does not save anything.
+ * @param {'dsa-master'|'prep-plan'} sheetId
+ * @param {string} itemKey
+ * @param {{itemType: 'question'|'section', title: string, difficulty?: string, sectionTitle?: string, language?: string}} context
+ * @returns {Promise<string>} the generated notes (Markdown)
  */
-export async function toggleManualComplete(questionTitle, isCompleted) {
+export async function generateTrackerNote(sheetId, itemKey, context) {
   const headers = await getHeaders();
-  const { data } = await apiClient.put('/api/users/me/manual-complete', { questionTitle, isCompleted }, { headers });
-  return data;
+  const { data } = await apiClient.post(
+    `/api/tracker/${sheetId}/items/${encodeURIComponent(itemKey)}/notes/generate`,
+    context,
+    { headers }
+  );
+  return data.notes;
 }
 
 /**
@@ -397,15 +359,6 @@ export async function getAdminStats() {
 export async function getAdminUsers(params = {}) {
   const headers = await getHeaders();
   const { data } = await apiClient.get('/api/admin/users', { headers, params });
-  return data;
-}
-
-/**
- * Fetch a single user's full profile.
- */
-export async function getAdminUser(uid) {
-  const headers = await getHeaders();
-  const { data } = await apiClient.get(`/api/admin/users/${uid}`, { headers });
   return data;
 }
 
@@ -484,15 +437,6 @@ export async function approveAccessRequest(requestId) {
 export async function denyAccessRequest(requestId, payload = {}) {
   const headers = await getHeaders();
   const { data } = await apiClient.put(`/api/admin/requests/${requestId}/deny`, payload, { headers });
-  return data;
-}
-
-/**
- * Fetch usage analytics. params: { days: 7|14|30 }
- */
-export async function getAdminUsage(params = { days: 30 }) {
-  const headers = await getHeaders();
-  const { data } = await apiClient.get('/api/admin/usage', { headers, params });
   return data;
 }
 
