@@ -1,12 +1,8 @@
 name: Deploy Backend to EC2 (Dev)
 
+# Manual only: pushes to GitHub never deploy. Run it from the Actions tab.
 on:
-  push:
-    branches:
-      - dev
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-deploy-dev.yml'
+  workflow_dispatch:
 
 jobs:
   test:
