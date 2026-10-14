@@ -11,6 +11,11 @@ jest.mock('../middleware/auth', () => ({
   }
 }));
 
+jest.mock('../middleware/checkUserAccess', () => ({
+  checkUserAccess: (req, res, next) => next(),
+  enforceGlobalStatus: (req, res, next) => next()
+}));
+
 const mockAdd = jest.fn();
 const mockDocGet = jest.fn();
 const mockDocUpdate = jest.fn();
@@ -36,10 +41,12 @@ jest.mock('../config/firebase', () => {
 });
 
 const loopsRouter = require('../routes/loops');
+const { errorHandler } = require('../utils/httpError');
 
 const app = express();
 app.use(express.json());
 app.use('/api/loops', loopsRouter);
+app.use(errorHandler);
 
 const sampleRounds = [
   { type: 'dsa', name: 'Coding 1' },
@@ -129,59 +136,33 @@ describe('Loops API', () => {
     });
   });
 
-  describe('PUT /api/loops/:id/round', () => {
-    it('advances to the next round when a round is passed', async () => {
-      mockDocGet.mockResolvedValueOnce({
-        exists: true,
-        id: 'loop1',
-        data: () => ({
-          userId: 'user123',
-          status: 'in-progress',
-          currentRoundIndex: 0,
-          rounds: [
-            { type: 'dsa', name: 'R1', status: 'pending', score: null, sessionId: null },
-            { type: 'systemDesign', name: 'R2', status: 'locked', score: null, sessionId: null }
-          ]
-        })
-      });
-      mockDocUpdate.mockResolvedValueOnce();
+  describe('round progression (server-side only)', () => {
+    const { applyRoundUpdate } = require('../services/loops');
+    const loopWith = (rounds) => ({ status: 'in-progress', currentRoundIndex: 0, rounds });
 
-      const res = await request(app)
-        .put('/api/loops/loop1/round')
-        .send({ roundIndex: 0, status: 'passed', score: 80, sessionId: 'sess1' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.loop.currentRoundIndex).toBe(1);
-      expect(res.body.loop.rounds[0].status).toBe('passed');
-      expect(res.body.loop.rounds[1].status).toBe('pending');
+    it('advances to the next round when a round is passed', () => {
+      const loop = applyRoundUpdate(loopWith([
+        { type: 'dsa', status: 'in-progress' },
+        { type: 'systemDesign', status: 'locked' },
+      ]), 0, { status: 'passed', score: 80, sessionId: 'sess1' });
+      expect(loop.currentRoundIndex).toBe(1);
+      expect(loop.rounds[0]).toMatchObject({ status: 'passed', score: 80, sessionId: 'sess1' });
+      expect(loop.rounds[1].status).toBe('pending');
     });
 
-    it('marks the loop failed when a round fails', async () => {
-      mockDocGet.mockResolvedValueOnce({
-        exists: true,
-        id: 'loop1',
-        data: () => ({
-          userId: 'user123',
-          status: 'in-progress',
-          currentRoundIndex: 0,
-          rounds: [{ type: 'dsa', name: 'R1', status: 'pending', score: null, sessionId: null }]
-        })
-      });
-      mockDocUpdate.mockResolvedValueOnce();
-
-      const res = await request(app)
-        .put('/api/loops/loop1/round')
-        .send({ roundIndex: 0, status: 'failed', score: 30, sessionId: 'sess1' });
-
-      expect(res.status).toBe(200);
-      expect(res.body.loop.status).toBe('failed');
+    it('marks the loop failed when a round fails, and passed after the last round', () => {
+      expect(applyRoundUpdate(loopWith([{ status: 'in-progress' }]), 0, { status: 'failed' }).status).toBe('failed');
+      expect(applyRoundUpdate(loopWith([{ status: 'in-progress' }]), 0, { status: 'passed' }).status).toBe('passed');
     });
 
-    it('rejects an invalid roundIndex', async () => {
-      const res = await request(app)
-        .put('/api/loops/loop1/round')
-        .send({ roundIndex: -1 });
-      expect(res.status).toBe(400);
+    it('rejects unknown rounds and statuses', () => {
+      expect(() => applyRoundUpdate(loopWith([]), 3, { status: 'passed' })).toThrow(/Round does not exist/);
+      expect(() => applyRoundUpdate(loopWith([{}]), 0, { status: 'won' })).toThrow(/status must be one of/);
+    });
+
+    it('no longer lets clients set round results directly', async () => {
+      const res = await request(app).put('/api/loops/loop1/round').send({ roundIndex: 0, status: 'passed' });
+      expect(res.status).toBe(404);
     });
   });
 

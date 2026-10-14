@@ -1,4 +1,4 @@
-const { verifyToken } = require('../middleware/auth');
+const { verifyToken, forgetVerifiedUser } = require('../middleware/auth');
 const admin = require('../config/firebase');
 
 const mockVerifyIdToken = jest.fn();
@@ -37,12 +37,14 @@ describe('Auth Middleware', () => {
 
   it('should return 401 if token is revoked (auth/id-token-revoked)', async () => {
     req.headers.authorization = 'Bearer valid.but.revoked';
-    
-    mockVerifyIdToken.mockRejectedValueOnce({ code: 'auth/id-token-revoked' });
+
+    mockVerifyIdToken
+      .mockResolvedValueOnce({ uid: 'revoked-user' })
+      .mockRejectedValueOnce({ code: 'auth/id-token-revoked' });
 
     await verifyToken(req, res, next);
 
-    expect(mockVerifyIdToken).toHaveBeenCalledWith('valid.but.revoked', true);
+    expect(mockVerifyIdToken).toHaveBeenLastCalledWith('valid.but.revoked', true);
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ error: 'Session revoked. Please sign in again.' });
     expect(next).not.toHaveBeenCalled();
@@ -63,7 +65,7 @@ describe('Auth Middleware', () => {
     req.headers.authorization = 'Bearer valid.token';
     const mockUser = { uid: 'user123', email: 'test@example.com' };
     
-    mockVerifyIdToken.mockResolvedValueOnce(mockUser);
+    mockVerifyIdToken.mockResolvedValue(mockUser);
 
     await verifyToken(req, res, next);
 
@@ -71,5 +73,22 @@ describe('Auth Middleware', () => {
     expect(req.user).toEqual(mockUser);
     expect(next).toHaveBeenCalledTimes(1);
     expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('only re-checks revocation over the network every few minutes per user', async () => {
+    req.headers.authorization = 'Bearer cached.token';
+    mockVerifyIdToken.mockResolvedValue({ uid: 'fast-user' });
+
+    await verifyToken(req, res, next);
+    await verifyToken(req, res, next);
+    await verifyToken(req, res, next);
+
+    const revocationChecks = mockVerifyIdToken.mock.calls.filter(([, checkRevoked]) => checkRevoked === true);
+    expect(revocationChecks).toHaveLength(1);
+    expect(next).toHaveBeenCalledTimes(3);
+
+    forgetVerifiedUser('fast-user');
+    await verifyToken(req, res, next);
+    expect(mockVerifyIdToken.mock.calls.filter(([, checkRevoked]) => checkRevoked === true)).toHaveLength(2);
   });
 });

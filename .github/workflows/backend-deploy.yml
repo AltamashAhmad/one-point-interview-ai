@@ -9,8 +9,25 @@ on:
       - '.github/workflows/backend-deploy.yml'
 
 jobs:
+  test:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx jest --ci
+
   deploy-main:
     name: Deploy to Production (main)
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Execute SSH commands on EC2
@@ -23,13 +40,26 @@ jobs:
             # Navigate to the backend directory
             cd ~/one-point-interview-ai/backend
             
+            # Fix the remote URL just in case it's pointing to the old repo
+            git remote set-url origin https://github.com/AltamashAhmad/one-point-interview-ai.git
+            
             # Discard any local changes just in case, then pull the latest code
             git reset --hard
             git pull origin main
             
-            # Install dependencies (only updates if package.json changed)
-            npm install
+            # Install exactly what the lockfile pins, without dev dependencies
+            npm ci --omit=dev
             
-            # Restart the PM2 process for the backend
-            # Make sure your PM2 process was originally started with: pm2 start index.js --name "backend-main" --port 8080
-            pm2 restart backend-main || pm2 start index.js --name "backend-main"
+            # Reload only the production process; fall back for servers where it has another name
+            if pm2 describe backend-main > /dev/null 2>&1; then
+              pm2 reload backend-main --update-env
+            else
+              pm2 restart all || pm2 start index.js --name "backend-main"
+            fi
+
+            # Fail the deploy if the API does not come back healthy
+            for i in 1 2 3 4 5 6; do
+              sleep 5
+              curl -fsS http://localhost:8080/api/health && exit 0
+            done
+            echo "Backend failed health check after deploy" && exit 1

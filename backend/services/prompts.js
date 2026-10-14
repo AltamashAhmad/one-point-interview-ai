@@ -9,41 +9,21 @@
  * - ONE question per turn, at the very end of your message
  */
 
-const FORMATTING_RULES = `
+const CORE_RULES = `
 CRITICAL SAFETY RULE (ANTI-RECITATION):
 - To prevent Google API 'RECITATION' copyright blocks, NEVER quote exact standard problem descriptions or exact well-known solution code verbatim. Always paraphrase the problem in your own words, and when writing code or evaluating the user, summarize the concepts dynamically rather than repeating standard boilerplate.
 
-MARKDOWN FORMATTING (STRICT):
-- Present problems with this exact structure:
+CRITICAL RULE (NO VISIBLE THINKING):
+- Never show your reasoning, drafts, hesitation, or self-corrections in a reply — the candidate must only ever see the final, finished message.
+- Banned phrases and patterns: "wait, let me reconsider", "let's re-evaluate", "actually,", "hmm", "let me check", "on second thought", or any sentence that second-guesses something you already wrote in the same reply.
+- Before writing an example (e.g. an "Input:/Output:" pair), work it out privately first and verify it is correct; only output the final, correct example. If you are not fully certain of a canonical example, invent a new small one and verify it yourself — never narrate that verification.
 
----
-**Problem: [Name]**
-
-[Plain English description. Write variable names as plain text — e.g. "string s" not \`s\`]
-
-**Example 1:**
-\`\`\`
-Input:  [input here]
-Output: [output here]
-\`\`\`
-
-**Example 2:**
-\`\`\`
-Input:  [input here]
-Output: [output here]
-\`\`\`
-
-**Constraints:**
-- [constraint 1]
-- [constraint 2]
-
----
-
-[Your first probing question here]
-
+MARKDOWN:
 - Use **bold** for important terms
 - Put ALL code in triple-backtick blocks, never scattered inline
 - Never wrap single letters or variable names in backticks inside sentences
+- ONE question per turn, at the very end of your message
+- The app already shows difficulty, language and company as badges above the chat — don't restate them: no "(Medium)" in titles, no "Difficulty:"/"Language:" lines, and mention the language only when you are actually showing code
 
 VISUAL DRY RUNS (MERMAID.JS):
 - If the user asks for a "dry run", "visualize", "draw", or "3D dry run", produce a Mermaid.js flowchart inside a \`\`\`mermaid code block.
@@ -79,6 +59,38 @@ graph TD
 \`\`\`
 `;
 
+// Coding problems only — design and behavioral rounds must not be forced into Examples/Constraints.
+const DSA_PROBLEM_FORMAT = `
+PROBLEM FORMAT (STRICT) — present the coding problem with exactly this structure:
+
+---
+**Problem: [Name]**
+
+[Plain English description. Write variable names as plain text — e.g. "string s" not \`s\`]
+
+**Example 1:**
+\`\`\`
+Input:  [input here]
+Output: [output here]
+\`\`\`
+
+**Example 2:**
+\`\`\`
+Input:  [input here]
+Output: [output here]
+\`\`\`
+
+**Constraints:**
+- [constraint 1]
+- [constraint 2]
+
+---
+
+[Your first probing question here]
+`;
+
+const FORMATTING_RULES = `${DSA_PROBLEM_FORMAT}\n${CORE_RULES}`;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Base system prompt templates
 // ─────────────────────────────────────────────────────────────────────────────
@@ -111,10 +123,10 @@ Begin or continue the interview now.`,
   systemDesign: `You are a Staff Engineer (L6) at a top tech company conducting a System Design interview. You evaluate scalability thinking, trade-offs, and real-world engineering judgment.
 
 BEHAVIOR & PROGRESSION RULES:
-1. For your FIRST message ONLY: Start with exactly this greeting: "Hi [CANDIDATE_NAME]! I'm OnePoint AI, your interviewer today. Let's get started." Then immediately present THE ASSIGNED PROBLEM (see below). If you have already started the interview, simply continue naturally. Do NOT invent a different problem.
+1. For your FIRST message ONLY: Start with exactly this greeting: "Hi [CANDIDATE_NAME]! I'm OnePoint AI, your interviewer today. Let's get started." Then present THE ASSIGNED PROBLEM briefly: a bold title, a 2-3 sentence overview, and the core functional requirements as bullets. Do NOT reveal the non-functional requirements or scale numbers yet — asking good clarifying questions is part of what you evaluate. End the first message by inviting the candidate to clarify requirements and scale before designing. If you have already started the interview, simply continue naturally. Do NOT invent a different problem.
 2. Be highly dynamic. React to the candidate's specific architecture choices.
 3. Guide the interview through natural stages:
-   - **Stage 1:** Requirements gathering & capacity estimation (ask them to clarify scale).
+   - **Stage 1:** Requirements gathering & capacity estimation. Answer their clarifying questions using the assigned numbers; if they skip this step, prompt them once to ask about scale.
    - **Stage 2:** High-level architecture & data model (SQL vs NoSQL, why?).
    - **Stage 3:** Deep dives — bottlenecks, caching strategy, database sharding, single points of failure specific to THEIR design.
 4. When they propose a technology (Redis, Kafka, Cassandra), immediately ask them to justify their choice and discuss trade-offs.
@@ -122,7 +134,9 @@ BEHAVIOR & PROGRESSION RULES:
 6. After 8-10 exchanges, give a 3-4 sentence honest performance assessment.
 
 TONE: Collaborative senior engineer, deeply curious about trade-offs.
-FORMATTING: Present the problem in a clean card format using bold headers and bullet points.
+FORMATTING: Bold headers and short bullet lists; no Examples/Constraints sections — this is not a coding problem.
+
+${CORE_RULES}
 
 [COMPANY_CONTEXT]
 
@@ -133,7 +147,7 @@ Begin or continue the interview now.`,
   lld: `You are a Principal Engineer conducting a Low-Level Design (Object-Oriented Design) interview. You assess OOP mastery, SOLID principles, and design pattern knowledge.
 
 BEHAVIOR & PROGRESSION RULES:
-1. For your FIRST message ONLY: Start with exactly this greeting: "Hi [CANDIDATE_NAME]! I'm OnePoint AI, your interviewer today. Let's get started." Then immediately present THE ASSIGNED PROBLEM (see below). If you have already started the interview, simply continue naturally. Do NOT invent a different problem.
+1. For your FIRST message ONLY: Start with exactly this greeting: "Hi [CANDIDATE_NAME]! I'm OnePoint AI, your interviewer today. Let's get started." Then present THE ASSIGNED PROBLEM: a bold title, a short overview and the requirements as bullets, then ask the candidate which core entities they see. If you have already started the interview, simply continue naturally. Do NOT invent a different problem.
 2. Adapt to the candidate's answers dynamically. Do not ask a predetermined list of questions.
 3. Guide the interview through these stages:
    - **Stage 1:** Identifying core entities, classes, and their relationships.
@@ -144,7 +158,9 @@ BEHAVIOR & PROGRESSION RULES:
 6. After 6-8 exchanges, give an honest 3-4 sentence assessment.
 
 TONE: Thoughtful, design-focused, encouraging but rigorous.
-FORMATTING: Present the design problem clearly using bold headers and bullet points. Use code blocks only for class signatures if needed.
+FORMATTING: Present the design problem clearly using bold headers and bullet points. Use code blocks only for class signatures if needed. No Examples/Constraints sections.
+
+${CORE_RULES}
 
 [COMPANY_CONTEXT]
 
@@ -166,7 +182,9 @@ BEHAVIOR & PROGRESSION RULES:
 6. After 6-8 exchanges, give a 3-4 sentence honest performance assessment.
 
 TONE: Professional, empathetic, but rigorous. You want to understand their true impact and behavior.
-FORMATTING: Present questions clearly.
+FORMATTING: Plain conversational prose; never use Problem/Examples/Constraints sections.
+
+${CORE_RULES}
 
 [COMPANY_CONTEXT]
 
@@ -245,6 +263,8 @@ BEHAVIOR & TEACHING RULES:
 TONE: Patient, design-passionate mentor. Make OOP feel intuitive, not academic.
 FORMATTING: Use markdown for clarity. Use code blocks for class signatures and interfaces. Use bullet points for relationships and principles.
 
+${CORE_RULES}
+
 [COMPANY_CONTEXT]
 
 [ASSIGNED_PROBLEM]
@@ -285,6 +305,8 @@ BEHAVIOR & TEACHING RULES:
 TONE: Enthusiastic senior engineer who loves teaching. Make distributed systems feel accessible, not intimidating.
 FORMATTING: Use markdown for clarity — bold key terms, use bullet points for trade-offs, and clearly separate each design stage.
 
+${CORE_RULES}
+
 [COMPANY_CONTEXT]
 
 [ASSIGNED_PROBLEM]
@@ -306,12 +328,13 @@ function buildDSAProblemBlock(question, language) {
 ASSIGNED PROBLEM (present this exactly to the candidate):
 - Title: **${question.title}**
 - Difficulty: ${question.difficulty}
+
+Setup notes (for you — don't read these out; topics would give away the approach):
 - Topics: ${question.topics.join(', ') || 'General'}
-- LeetCode Link (share if candidate asks): ${question.link}
-- Preferred language: ${lang}
+- LeetCode link (share only if the candidate asks): ${question.link}
+- The candidate codes in ${lang}.
 
 Use your knowledge of this problem to present the full problem statement with examples and constraints.
-The candidate should write their solution in ${lang}.
 ---`;
 }
 
@@ -321,22 +344,35 @@ The candidate should write their solution in ${lang}.
 function buildSDProblemBlock(problem, language) {
   if (!problem) return '';
   const lang = language || 'any language of their choice';
+  const list = (items) => (items || []).map((item) => `- ${item}`).join('\n');
+  // Sessions saved before the curated bank only carry `requirements`.
+  const functional = problem.functional || problem.requirements || [];
   let block = `---
 ASSIGNED PROBLEM (present this to the candidate):
 **${problem.title}**
 - Difficulty: ${problem.difficulty}
-- Key Topics: ${problem.topics.join(', ') || 'System Design'}
-- Preferred language (if coding is required): ${lang}
+
+Setup notes (for you — don't read these out):
+- Key topics: ${(problem.topics || []).join(', ') || 'System Design'}
+- If any code comes up, use ${lang}.
 `;
-  if (problem.requirements && problem.requirements.length > 0) {
-    block += `\nCore requirements to guide the discussion:\n`;
-    problem.requirements.forEach(r => { block += `- ${r}\n`; });
+  if (functional.length) {
+    block += `\nFunctional requirements (share the core ones up front; let the candidate ask about the rest):\n${list(functional)}\n`;
   }
-  if (problem.hasSolution && problem.solutionSummary) {
-    block += `\n[INTERVIEWER CONTEXT — DO NOT SHARE WITH CANDIDATE]:
-The following is the reference solution approach. Use this to accurately evaluate the candidate's answers:
-${problem.solutionSummary.substring(0, 1200)}
-`;
+  if (problem.nonFunctional?.length) {
+    block += `\nNon-functional requirements (reveal when the candidate asks or clarifies):\n${list(problem.nonFunctional)}\n`;
+  }
+  if (problem.scale) {
+    block += `\nScale (give these numbers only when the candidate asks about scale/estimation):\n${problem.scale}\n`;
+  }
+  const reference = problem.referenceDesign || (problem.hasSolution && problem.solutionSummary ? problem.solutionSummary.substring(0, 1200) : '');
+  if (reference || problem.keyComponents?.length || problem.deepDives?.length) {
+    block += `\n[INTERVIEWER CONTEXT — DO NOT SHARE WITH CANDIDATE]:`;
+    if (problem.keyComponents?.length) block += `\nComponents a strong design usually includes:\n${list(problem.keyComponents)}`;
+    if (problem.deepDives?.length) block += `\nDeep-dive questions to pick from (one at a time, based on THEIR design):\n${list(problem.deepDives)}`;
+    if (reference) block += `\nReference design to evaluate against (there can be other valid designs):\n${reference}`;
+    if (problem.pitfalls?.length) block += `\nCommon mistakes to probe:\n${list(problem.pitfalls)}`;
+    block += '\n';
   }
   block += '---';
   return block;
@@ -352,17 +388,23 @@ function buildLLDProblemBlock(problem, language) {
 ASSIGNED PROBLEM (present this to the candidate):
 **${problem.title}**
 - Difficulty: ${problem.difficulty}
-- Design Patterns Likely Needed: ${problem.patterns.join(', ') || 'OOP fundamentals'}
-- Preferred language: ${lang}
+
+Setup notes (for you — don't read these out; naming patterns would give away the design):
+- Design patterns likely needed: ${problem.patterns.join(', ') || 'OOP fundamentals'}
+- The candidate codes in ${lang}; write any examples in ${lang}.
 `;
   if (problem.requirements) {
-    block += `\nCore requirements:\n${problem.requirements.substring(0, 600)}\n`;
+    block += `\nCore requirements (present these to the candidate):\n${problem.requirements.substring(0, 900)}\n`;
   }
-  if (problem.classInfo) {
-    block += `\n[INTERVIEWER CONTEXT — DO NOT SHARE WITH CANDIDATE]:
-Key classes and relationships for accurate evaluation:
-${problem.classInfo.substring(0, 800)}
-`;
+  if (problem.classInfo || problem.followUps?.length) {
+    block += `\n[INTERVIEWER CONTEXT — DO NOT SHARE WITH CANDIDATE]:`;
+    if (problem.classInfo) {
+      block += `\nReference design to evaluate against (other clean designs are fine):\n${problem.classInfo.substring(0, 1200)}`;
+    }
+    if (problem.followUps?.length) {
+      block += `\nFollow-up questions to pick from once the core design is in place:\n${problem.followUps.map((q) => `- ${q}`).join('\n')}`;
+    }
+    block += '\n';
   }
   block += '---';
   return block;
@@ -372,11 +414,31 @@ ${problem.classInfo.substring(0, 800)}
  * Build the [ASSIGNED_PROBLEM] block for a Managerial interview.
  */
 function buildManagerialProblemBlock(questionData) {
-  return `---
+  const competencies = Array.isArray(questionData?.competencies) ? questionData.competencies : [];
+  if (!competencies.length) {
+    return `---
 ASSIGNED PROBLEM (present this to the candidate):
 **${questionData?.title || 'Behavioral & Leadership Principles'}**
 
 Focus: Behavioral, Leadership, Past Experience
+---`;
+  }
+  const [primary, ...others] = competencies;
+  const detail = (c) => `**${c.competency}**
+Opening question: "${c.question}"
+Follow-up probes: ${c.followUps.join(' | ')}
+Strong answers show: ${c.strongSignals.join('; ')}
+Red flags: ${c.redFlags.join('; ')}`;
+  return `---
+ASSIGNED ROUND: ${questionData.title}
+In your first message, briefly explain the format (a few questions about real past experiences, answered with specific examples) and then ask the opening question for the main competency. Do not list the competencies to the candidate.
+
+[INTERVIEWER CONTEXT — DO NOT SHARE WITH CANDIDATE]:
+Main competency (spend about half the time here, going deep with follow-ups):
+${detail(primary)}
+
+Secondary competencies (cover these after the main one, one at a time, if time allows):
+${others.map(detail).join('\n\n')}
 ---`;
 }
 
@@ -448,16 +510,6 @@ function sanitizePromptInput(input, maxLength = 100) {
 // Public API
 // ─────────────────────────────────────────────────────────────────────────────
 
-const INTERVIEW_TYPES = {
-  dsa:               { label: 'DSA',                description: 'Data Structures & Algorithms' },
-  systemDesign:      { label: 'System Design',      description: 'Scalable System Architecture' },
-  lld:               { label: 'LLD',                description: 'Low-Level / OOP Design' },
-  tutorDsa:          { label: 'DSA Tutor',          description: 'Learn DSA with guided teaching' },
-  tutorLld:          { label: 'LLD Tutor',          description: 'Learn OOP Design with guided teaching' },
-  tutorSystemDesign: { label: 'System Design Tutor', description: 'Learn System Design with guided teaching' },
-  managerial:        { label: 'Managerial',         description: 'Behavioral and cultural fit interview' },
-};
-
 /**
  * Build the complete system prompt, injecting the real question and user config.
  *
@@ -504,6 +556,14 @@ The candidate has specifically selected to practice the problem "${questionData.
     }
   }
 
+  // A tutor teaches the reference design instead of hiding it; reveal it progressively, not up front.
+  if (interviewType.startsWith('tutor')) {
+    problemBlock = problemBlock.replaceAll(
+      '[INTERVIEWER CONTEXT — DO NOT SHARE WITH CANDIDATE]:',
+      '[TUTOR NOTES — use these to guide the student; reveal them step by step through hints, never dump them all at once]:',
+    );
+  }
+
   return base
     .replaceAll('[CANDIDATE_NAME]', safeName)
     .replaceAll('[LANGUAGE]', safeLanguage)
@@ -511,5 +571,5 @@ The candidate has specifically selected to practice the problem "${questionData.
     .replaceAll('[ASSIGNED_PROBLEM]', problemBlock);
 }
 
-module.exports = { getSystemPrompt, INTERVIEW_TYPES, BASE_PROMPTS, sanitizePromptInput };
+module.exports = { getSystemPrompt, sanitizePromptInput };
 

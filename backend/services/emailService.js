@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const logger = require('../utils/logger');
+const { escapeHtml } = require('../utils/escapeHtml');
 
 // ── Gmail transporter (reused across all sends) ───────────────────────────────
 let transporter = null;
@@ -74,7 +76,7 @@ function htmlWrapper(content) {
 // ── 1. Admin: new access request notification ─────────────────────────────────
 async function sendAccessRequestEmail({ uid, email, displayName, purpose, reason, requestId }) {
   if (!ADMIN_EMAIL) {
-    console.warn('[Email] ADMIN_EMAIL not set — skipping access request notification');
+    logger.warn('ADMIN_EMAIL not set — skipping access request notification');
     return;
   }
 
@@ -85,8 +87,8 @@ async function sendAccessRequestEmail({ uid, email, displayName, purpose, reason
     other:        '💡 Other',
   };
 
-  const purposeLabel = purposeLabels[purpose] || purpose;
-  const adminLink    = `${FRONTEND_URL}/admin?tab=requests&id=${requestId}`;
+  const purposeLabel = escapeHtml(purposeLabels[purpose] || purpose);
+  const adminLink    = `${FRONTEND_URL}/admin?tab=requests&id=${encodeURIComponent(requestId || '')}`;
 
   const content = `
     <h2 style="color:#ffffff;font-size:20px;font-weight:700;margin:0 0 8px;">🔔 New Access Request</h2>
@@ -98,13 +100,13 @@ async function sendAccessRequestEmail({ uid, email, displayName, purpose, reason
         <tr>
           <td style="padding-bottom:14px;border-bottom:1px solid rgba(255,255,255,0.06);">
             <span style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">User</span><br/>
-            <span style="color:#ffffff;font-size:16px;font-weight:600;">${displayName || 'Unknown'}</span>
+            <span style="color:#ffffff;font-size:16px;font-weight:600;">${escapeHtml(displayName) || 'Unknown'}</span>
           </td>
         </tr>
         <tr>
           <td style="padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
             <span style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Email</span><br/>
-            <span style="color:#6366f1;font-size:14px;">${email || 'N/A'}</span>
+            <span style="color:#6366f1;font-size:14px;">${escapeHtml(email) || 'N/A'}</span>
           </td>
         </tr>
         <tr>
@@ -117,7 +119,7 @@ async function sendAccessRequestEmail({ uid, email, displayName, purpose, reason
           <td style="padding:14px 0 0;">
             <span style="color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Message</span><br/>
             <span style="color:#d1d5db;font-size:14px;font-style:${reason ? 'normal' : 'italic'};">
-              ${reason || 'No message provided'}
+              ${escapeHtml(reason) || 'No message provided'}
             </span>
           </td>
         </tr>
@@ -145,12 +147,15 @@ async function sendAccessRequestEmail({ uid, email, displayName, purpose, reason
     html:    htmlWrapper(content),
   });
 
-  console.log(`[Email] Access request notification sent for ${email}`);
+  logger.info('Email sent', { template: 'access-request' });
 }
 
 // ── 2. User: request approved ─────────────────────────────────────────────────
 async function sendApprovalEmail({ email, displayName, dailyLimit }) {
   if (!email) return;
+
+  displayName = escapeHtml(displayName);
+  dailyLimit = escapeHtml(dailyLimit);
 
   const loginLink = `${FRONTEND_URL}/login`;
 
@@ -193,12 +198,15 @@ async function sendApprovalEmail({ email, displayName, dailyLimit }) {
     html:    htmlWrapper(content),
   });
 
-  console.log(`[Email] Approval email sent to ${email}`);
+  logger.info('Email sent', { template: 'approval' });
 }
 
 // ── 3. User: request denied ───────────────────────────────────────────────────
 async function sendDenialEmail({ email, displayName, reason }) {
   if (!email) return;
+
+  displayName = escapeHtml(displayName);
+  reason = escapeHtml(reason);
 
   const content = `
     <div style="text-align:center;margin-bottom:28px;">
@@ -232,12 +240,15 @@ async function sendDenialEmail({ email, displayName, reason }) {
     html:    htmlWrapper(content),
   });
 
-  console.log(`[Email] Denial email sent to ${email}`);
+  logger.info('Email sent', { template: 'denial' });
 }
 
 // ── 4. User: account suspended ────────────────────────────────────────────────
 async function sendSuspensionEmail({ email, displayName, suspendedUntil, reason }) {
   if (!email) return;
+
+  displayName = escapeHtml(displayName);
+  reason = escapeHtml(reason);
 
   const until = suspendedUntil
     ? new Date(suspendedUntil).toLocaleDateString('en-US', { dateStyle: 'long' })

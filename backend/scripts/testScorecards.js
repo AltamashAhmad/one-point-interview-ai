@@ -1,7 +1,7 @@
 require('dotenv').config();
-const { generateGroqResponse } = require('../services/groq');
+const { generateText } = require('../services/ai/gateway');
 
-const MODEL = 'llama-3.1-8b-instant';
+const MODEL = 'qwen/qwen3.8-27b';
 
 // The AI's initial question to the candidate
 const INITIAL_SYSTEM_MESSAGES = [
@@ -156,7 +156,7 @@ ${transcript}`;
   ];
 
   try {
-    const responseText = await generateGroqResponse(aiMessages, systemPrompt, MODEL);
+    const { text: responseText } = await generateText({ messages: aiMessages, systemPrompt, model: MODEL, purpose: 'scorecard' });
     
     // Parse
     let cleanedText = responseText;

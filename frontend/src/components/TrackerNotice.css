@@ -1,0 +1,9 @@
+.tracker-notice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  font-size: var(--fs-sm);
+  color: var(--danger-text);
+}

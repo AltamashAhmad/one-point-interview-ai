@@ -1,129 +1,4 @@
-/* ── Global Design System ─────────────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
-
-/* ── Theme-independent tokens ─────────────────────────────────────────────── */
-:root {
-  /* Accent palette (shared across themes) */
-  --purple: #8b5cf6;
-  --purple-light: #a78bfa;
-  --purple-dark: #7c3aed;
-  --purple-glow: rgba(139, 92, 246, 0.18);
-
-  --blue: #3b82f6;
-  --blue-glow: rgba(59, 130, 246, 0.16);
-
-  --green: #10b981;
-  --green-glow: rgba(16, 185, 129, 0.16);
-
-  --red: #ef4444;
-  --yellow: #f59e0b;
-
-  /* Brand gradient */
-  --gradient-brand: linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%);
-  --gradient-brand-soft: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(59,130,246,0.18));
-
-  /* Radius scale */
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 26px;
-  --radius-pill: 999px;
-
-  /* Spacing scale */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-8: 48px;
-
-  /* Motion */
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --t-fast: 0.15s var(--ease);
-  --t-med: 0.25s var(--ease);
-
-  /* Compatibility aliases */
-  --primary-color: var(--purple);
-  --focus-color: var(--purple-light);
-  --border-color: var(--border);
-  --card-bg: var(--bg-card);
-  --bg-main: var(--bg-secondary);
-  --bg-deep: var(--bg-primary);
-}
-
-/* ── Dark theme (default) ─────────────────────────────────────────────────── */
-:root,
-:root[data-theme="dark"] {
-  color-scheme: dark;
-
-  --bg-primary: #070b13;
-  --bg-secondary: #0b1120;
-  --bg-card: #111827;
-  --bg-card-hover: #18202f;
-  --bg-input: #1a2334;
-
-  --border: #1e2d45;
-  --border-light: #2a3f5f;
-
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-
-  /* Glass surfaces */
-  --glass-bg: rgba(17, 24, 39, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --glass-blur: 16px;
-
-  /* Navbar */
-  --nav-bg: rgba(7, 11, 19, 0.72);
-
-  /* Elevation shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.55);
-  --shadow-glow-purple: 0 0 50px rgba(139, 92, 246, 0.28);
-
-  /* Hero background accents */
-  --hero-glow-1: rgba(139, 92, 246, 0.18);
-  --hero-glow-2: rgba(59, 130, 246, 0.14);
-}
-
-/* ── Light theme ──────────────────────────────────────────────────────────── */
-:root[data-theme="light"] {
-  color-scheme: light;
-
-  --bg-primary: #f6f8fc;
-  --bg-secondary: #eef2f9;
-  --bg-card: #ffffff;
-  --bg-card-hover: #f8fafc;
-  --bg-input: #f1f5f9;
-
-  --border: #e2e8f0;
-  --border-light: #cbd5e1;
-
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(15, 23, 42, 0.08);
-  --glass-blur: 16px;
-
-  --nav-bg: rgba(246, 248, 252, 0.8);
-
-  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 20px 50px rgba(15, 23, 42, 0.12);
-  --shadow-glow-purple: 0 0 50px rgba(139, 92, 246, 0.18);
-
-  --hero-glow-1: rgba(139, 92, 246, 0.14);
-  --hero-glow-2: rgba(59, 130, 246, 0.12);
-
-  --purple-glow: rgba(139, 92, 246, 0.12);
-  --blue-glow: rgba(59, 130, 246, 0.1);
-  --green-glow: rgba(16, 185, 129, 0.1);
-}
+@import './styles/tokens.css';
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -137,13 +12,19 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: var(--font-sans);
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   transition: background-color var(--t-med), color var(--t-med);
+}
+
+/* Inner pages: shared sticky PageHeader on top, page content below. */
+.page-shell {
+  min-height: 100dvh;
+  background-color: var(--bg-primary);
 }
 
 /* ── Loading Screen ────────────────────────────────────────────────────────── */
@@ -169,6 +50,27 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* Shared animations — components and pages reuse these names, so they must live here, not in page CSS. */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
@@ -203,17 +105,18 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 11px 22px;
+  min-height: 40px;
+  padding: 9px 18px;
   border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
-  border: none;
-  transition: transform var(--t-fast), box-shadow var(--t-fast), background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  border: 1px solid transparent;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast), box-shadow var(--t-fast);
   text-decoration: none;
   white-space: nowrap;
-  letter-spacing: 0.01em;
 }
 
 .btn:focus-visible {
@@ -221,32 +124,43 @@ body {
   outline-offset: 2px;
 }
 
-.btn:disabled {
+.btn:disabled,
+.btn[aria-busy='true'] {
   opacity: 0.55;
   cursor: not-allowed;
 }
 
 .btn-primary {
-  background: var(--gradient-brand);
-  color: #fff;
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.45);
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--border-light);
 }
 
 .btn-outline {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border);
+  border-color: var(--border-light);
 }
 
 .btn-outline:hover:not(:disabled) {
-  border-color: var(--purple);
-  color: var(--purple-light);
-  background: var(--purple-glow);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  background: var(--accent-soft);
 }
 
 .btn-ghost {
@@ -256,7 +170,151 @@ body {
 
 .btn-ghost:hover:not(:disabled) {
   color: var(--text-primary);
+  background: var(--surface-2);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--danger-strong);
+}
+
+.btn-danger-outline {
+  background: transparent;
+  color: var(--danger-text);
+  border-color: var(--border-light);
+}
+
+.btn-danger-outline:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.btn-xs {
+  min-height: 28px;
+  padding: 3px 10px;
+  font-size: var(--fs-xs);
+}
+
+.btn-sm {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: var(--fs-sm);
+}
+
+.btn-lg {
+  min-height: 46px;
+  padding: 12px 24px;
+  font-size: var(--fs-base);
+}
+
+.btn-block { width: 100%; }
+
+.btn-icon {
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+}
+
+.btn-icon.btn-sm { width: 34px; }
+
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* One back button for every page header (pages must not redefine it). */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: var(--space-2) var(--space-4);
+  background: var(--glass-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+
+.back-btn:hover {
   background: var(--bg-card-hover);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.back-btn:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* ── Modals (shared by every page; page CSS only adds page-specific classes) ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: modalFade var(--t-fast);
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 440px;
+  max-height: calc(100dvh - 2 * var(--space-4));
+  overflow-y: auto;
+  padding: var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: modalIn var(--t-med);
+}
+
+.modal-title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--fs-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.modal-body {
+  margin: 0 0 var(--space-5);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+@keyframes modalFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* ── Reduced motion ────────────────────────────────────────────────────────── */

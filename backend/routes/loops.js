@@ -3,17 +3,9 @@ const router = express.Router();
 const { verifyToken } = require('../middleware/auth');
 const { enforceGlobalStatus } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
+const { getOwnedLoop, ROUND_STATUSES } = require('../services/loops');
 
 const db = admin.firestore();
-
-// Validates Firestore document IDs to prevent path traversal / malformed IDs
-function isValidDocId(id) {
-  if (!id || typeof id !== 'string') return false;
-  if (id.length > 128) return false;
-  if (id.includes('/') || id === '.' || id === '..') return false;
-  if (/^__.*__$/.test(id)) return false;
-  return true;
-}
 
 // Builds a clean, validated rounds array from arbitrary client input.
 function sanitizeRounds(rounds) {
@@ -22,9 +14,7 @@ function sanitizeRounds(rounds) {
   return rounds.map((r) => ({
     type: typeof r.type === 'string' ? r.type.slice(0, 50) : 'unknown',
     name: typeof r.name === 'string' ? r.name.slice(0, 200) : 'Round',
-    status: ['pending', 'passed', 'failed', 'locked', 'in-progress'].includes(r.status)
-      ? r.status
-      : 'pending',
+    status: ROUND_STATUSES.includes(r.status) ? r.status : 'pending',
     score: typeof r.score === 'number' ? r.score : null,
     sessionId: typeof r.sessionId === 'string' ? r.sessionId : null,
   }));
@@ -32,13 +22,9 @@ function sanitizeRounds(rounds) {
 
 const VALID_LOOP_STATUS = ['in-progress', 'passed', 'failed'];
 
-/**
- * GET /api/loops
- * List all loops for the authenticated user (newest first).
- */
-// Apply global status check to all loops endpoints
 router.use(verifyToken, enforceGlobalStatus);
 
+/** GET /api/loops — the user's loops, newest first. */
 router.get('/', async (req, res, next) => {
   try {
     const userId = req.user.uid;
@@ -64,27 +50,11 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-/**
- * GET /api/loops/:id
- * Fetch a specific loop by ID.
- */
+/** GET /api/loops/:id */
 router.get('/:id', async (req, res, next) => {
   try {
-    const userId = req.user.uid;
-    if (!isValidDocId(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid loop ID.' });
-    }
-    const doc = await db.collection('loops').doc(req.params.id).get();
-
-    if (!doc.exists) {
-      return res.status(404).json({ error: 'Loop not found' });
-    }
-    const data = doc.data();
-    if (data.userId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized access to this loop' });
-    }
-
-    res.json({ loop: { id: doc.id, ...data } });
+    const { id, loop } = await getOwnedLoop(req.user.uid, req.params.id);
+    res.json({ loop: { id, ...loop } });
   } catch (error) {
     next(error);
   }
@@ -135,91 +105,11 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-/**
- * PUT /api/loops/:id/round
- * Update a single round's status/score/sessionId and apply progression logic.
- * Body: { roundIndex, status?, score?, sessionId? }
- */
-router.put('/:id/round', async (req, res, next) => {
-  try {
-    const userId = req.user.uid;
-    if (!isValidDocId(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid loop ID.' });
-    }
-
-    const { roundIndex, status, score, sessionId } = req.body;
-    if (!Number.isInteger(roundIndex) || roundIndex < 0) {
-      return res.status(400).json({ error: 'A valid roundIndex is required.' });
-    }
-
-    const docRef = db.collection('loops').doc(req.params.id);
-    const doc = await docRef.get();
-
-    if (!doc.exists) {
-      return res.status(404).json({ error: 'Loop not found' });
-    }
-    const loop = doc.data();
-    if (loop.userId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized access to this loop' });
-    }
-    if (!loop.rounds || !loop.rounds[roundIndex]) {
-      return res.status(400).json({ error: 'Round does not exist on this loop.' });
-    }
-
-    const round = loop.rounds[roundIndex];
-    if (status !== undefined) round.status = status;
-    if (score !== undefined) round.score = score;
-    if (sessionId !== undefined) round.sessionId = sessionId;
-
-    // Progression logic (server is the source of truth)
-    if (status === 'failed') {
-      loop.status = 'failed';
-    } else if (status === 'passed') {
-      if (roundIndex === loop.rounds.length - 1) {
-        loop.status = 'passed';
-      } else if (loop.currentRoundIndex === roundIndex) {
-        loop.currentRoundIndex = roundIndex + 1;
-        const next = loop.rounds[roundIndex + 1];
-        if (next.status === 'locked' || next.status === 'pending') {
-          next.status = 'pending';
-        }
-      }
-    }
-
-    await docRef.update({
-      rounds: loop.rounds,
-      status: loop.status,
-      currentRoundIndex: loop.currentRoundIndex,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    res.json({ loop: { id: doc.id, ...loop } });
-  } catch (error) {
-    next(error);
-  }
-});
-
-/**
- * DELETE /api/loops/:id
- * Delete a specific loop.
- */
+/** DELETE /api/loops/:id — round progress itself is only changed by the sessions API. */
 router.delete('/:id', async (req, res, next) => {
   try {
-    const userId = req.user.uid;
-    if (!isValidDocId(req.params.id)) {
-      return res.status(400).json({ error: 'Invalid loop ID.' });
-    }
-    const docRef = db.collection('loops').doc(req.params.id);
-    const doc = await docRef.get();
-
-    if (!doc.exists) {
-      return res.status(404).json({ error: 'Loop not found' });
-    }
-    if (doc.data().userId !== userId) {
-      return res.status(403).json({ error: 'Unauthorized access' });
-    }
-
-    await docRef.delete();
+    const { ref } = await getOwnedLoop(req.user.uid, req.params.id);
+    await ref.delete();
     res.json({ success: true });
   } catch (error) {
     next(error);

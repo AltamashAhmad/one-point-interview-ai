@@ -6,7 +6,7 @@ const { getSystemPrompt }           = require('../services/prompts');
 const { getQuestion }               = require('../services/questionBank');
 
 // POST /api/prompts/generate
-router.post('/generate', verifyToken, checkUserAccess, async (req, res) => {
+router.post('/generate', verifyToken, checkUserAccess, async (req, res, next) => {
   try {
     const {
       interviewType,
@@ -14,12 +14,11 @@ router.post('/generate', verifyToken, checkUserAccess, async (req, res) => {
       config = {},
     } = req.body;
 
-    const isSuperAdmin = (req.user?.email || '').trim().toLowerCase() === (process.env.ADMIN_EMAIL || 'altamashahmadajaz2@gmail.com').toLowerCase();
-    
+    const superAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const isSuperAdmin = Boolean(superAdminEmail) && (req.user?.email || '').trim().toLowerCase() === superAdminEmail;
+
     if (req.userProfile?.role !== 'admin' && !isSuperAdmin) {
-      return res.status(403).json({ 
-        error: `Forbidden: Admin access required. (Role: ${req.userProfile?.role || 'none'}, Email: ${req.user?.email || 'none'})` 
-      });
+      return res.status(403).json({ error: 'Forbidden', code: 'FORBIDDEN' });
     }
 
     if (!interviewType) {
@@ -59,8 +58,7 @@ router.post('/generate', verifyToken, checkUserAccess, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Prompt generation error:', error);
-    res.status(500).json({ error: error.message || 'Internal server error during prompt generation' });
+    next(error);
   }
 });
 

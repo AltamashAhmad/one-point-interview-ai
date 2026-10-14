@@ -304,7 +304,9 @@ const additionalSD = [
 
 sdBank.push(...additionalSD);
 
-const sdOutputPath = path.join(OUT_DIR, 'system-design.json');
+// data/system-design.json is hand-curated (requirements, scale, reference design); this primer
+// extract is only a reference and must not overwrite it.
+const sdOutputPath = path.join(OUT_DIR, 'system-design.primer.json');
 fs.writeFileSync(sdOutputPath, JSON.stringify(sdBank, null, 2));
 console.log(`✅ System Design: ${sdBank.length} problems → ${sdOutputPath}`);
 

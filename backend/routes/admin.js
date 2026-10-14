@@ -1,16 +1,40 @@
 const express = require('express');
 const router  = express.Router();
-const { verifyToken }   = require('../middleware/auth');
+const { verifyToken, forgetVerifiedUser } = require('../middleware/auth');
 const { requireAdmin }  = require('../middleware/requireAdmin');
-const { evictCache }    = require('../middleware/checkUserAccess');
+const { evictCache, invalidatePlatformSettings } = require('../middleware/checkUserAccess');
 const {
   sendApprovalEmail,
   sendDenialEmail,
   sendSuspensionEmail,
 } = require('../services/emailService');
 const admin = require('../config/firebase');
+const logger = require('../utils/logger');
+const { searchWords } = require('../services/userSearch');
 
 const db  = admin.firestore();
+const { AggregateField } = admin.firestore;
+
+const PAGE_SIZE = 20;
+const REQUEST_PAGE_SIZE = 20;
+const MAX_REASON_CHARS = 500; // matches the limit on a user's own access-request message
+const SEARCH_LIMIT = 200; // per search query; larger result sets are flagged as truncated
+const USER_STATUSES = ['ALL', 'PENDING', 'APPROVED', 'BANNED', 'SUSPENDED'];
+const REQUEST_STATUSES = ['pending', 'approved', 'denied', 'all'];
+
+// Firestore reports a query whose composite index is missing or still building as FAILED_PRECONDITION (code 9).
+function listError(err, req, res, next) {
+  if (err.code !== 9) return next(err);
+  logger.error('Admin list needs a Firestore index', { requestId: req.id, err: err.message });
+  const building = /currently building/i.test(err.message);
+  return res.status(503).json({
+    error: building
+      ? 'This list is still being prepared. Try again in a few minutes.'
+      : 'This list needs a Firestore index that is not deployed yet.',
+    code: 'INDEX_REQUIRED',
+    requestId: req.id,
+  });
+}
 
 // All admin routes require a valid Firebase token + admin role
 router.use(verifyToken, requireAdmin);
@@ -21,31 +45,25 @@ router.use(verifyToken, requireAdmin);
 // ─────────────────────────────────────────────────────────────────────────────
 router.get('/stats', async (req, res, next) => {
   try {
-    const [usersSnap, requestsSnap] = await Promise.all([
-      db.collection('users').get(),
-      db.collection('accessRequests').where('status', '==', 'pending').get(),
+    const users = db.collection('users');
+    const count = (query) => query.count().get().then((snap) => snap.data().count);
+    const [total, pending, approved, banned, suspended, unlimited, pendingRequests, totalAiCalls] = await Promise.all([
+      count(users),
+      count(users.where('status', '==', 'PENDING')),
+      count(users.where('status', '==', 'APPROVED')),
+      count(users.where('status', '==', 'BANNED')),
+      count(users.where('status', '==', 'SUSPENDED')),
+      count(users.where('isUnlimited', '==', true)),
+      count(db.collection('accessRequests').where('status', '==', 'pending')),
+      users.aggregate({ calls: AggregateField.sum('totalAiCalls') }).get().then((snap) => snap.data().calls || 0),
     ]);
 
-    const counts = { total: 0, pending: 0, approved: 0, banned: 0, suspended: 0, unlimited: 0 };
-    let totalAiCalls = 0;
-
-    usersSnap.forEach(doc => {
-      const d = doc.data();
-      counts.total++;
-      if (d.status === 'PENDING')   counts.pending++;
-      if (d.status === 'APPROVED')  counts.approved++;
-      if (d.status === 'BANNED')    counts.banned++;
-      if (d.status === 'SUSPENDED') counts.suspended++;
-      if (d.isUnlimited)            counts.unlimited++;
-      totalAiCalls += d.totalAiCalls || 0;
-    });
-
     res.json({
-      users: counts,
-      pendingRequests: requestsSnap.size,
+      users: { total, pending, approved, banned, suspended, unlimited },
+      pendingRequests,
       totalAiCalls,
     });
-  } catch (err) { next(err); }
+  } catch (err) { listError(err, req, res, next); }
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -59,45 +77,56 @@ router.get('/stats', async (req, res, next) => {
 
 router.get('/users', async (req, res, next) => {
   try {
-    const { status, search, page = 1 } = req.query;
-    const PAGE_SIZE = 20;
+    const status = String(req.query.status || 'ALL').toUpperCase();
+    const search = String(req.query.search || '').trim().toLowerCase();
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    if (!USER_STATUSES.includes(status)) return res.status(400).json({ error: 'Unknown status filter.', code: 'INVALID_REQUEST' });
 
-    let query = db.collection('users');
-
-    if (status && status !== 'ALL') {
-      query = query.where('status', '==', status.toUpperCase());
-    }
-
-    const snap = await query.limit(200).get(); // cap at 200 for now
-    let users = [];
-    snap.forEach(doc => users.push({ uid: doc.id, ...doc.data() }));
-
-    // Sort in-memory to avoid requiring a Firestore composite index (status + createdAt)
-    users.sort((a, b) => {
-      const tA = a.createdAt?.toMillis?.() || 0;
-      const tB = b.createdAt?.toMillis?.() || 0;
-      return tB - tA; // desc
+    const users = db.collection('users');
+    const byStatus = status === 'ALL' ? users : users.where('status', '==', status);
+    const withSuperAdmin = (u) => ({
+      ...u,
+      isSuperAdmin: (u.email || '').trim().toLowerCase() === (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
     });
 
-    // Client-side search (works across email + displayName)
-    if (search && search.trim()) {
-      const q = search.trim().toLowerCase();
-      users = users.filter(u =>
-        (u.email       || '').toLowerCase().includes(q) ||
-        (u.displayName || '').toLowerCase().includes(q) ||
-        (u.uid         || '').toLowerCase().includes(q)
-      );
+    if (!search) {
+      const [countSnap, pageSnap] = await Promise.all([
+        byStatus.count().get(),
+        byStatus.orderBy('createdAt', 'desc').offset((page - 1) * PAGE_SIZE).limit(PAGE_SIZE).get(),
+      ]);
+      const list = pageSnap.docs.map((doc) => withSuperAdmin({ uid: doc.id, ...doc.data() }));
+      return res.json({ users: list, total: countSnap.data().count, page, pageSize: PAGE_SIZE, truncated: false });
     }
 
-    const total = users.length;
-    const start = (Number(page) - 1) * PAGE_SIZE;
-    const paged = users.slice(start, start + PAGE_SIZE).map(u => ({
-      ...u,
-      isSuperAdmin: (u.email || '').trim().toLowerCase() === (process.env.ADMIN_EMAIL || '').trim().toLowerCase()
-    }));
+    // Word-start match on the searchTokens array (email and name), plus an exact uid.
+    // The last typed word drives the indexed query; every typed word must match in memory.
+    const words = searchWords(search);
+    const rawId = String(req.query.search || '').trim();
+    const idMatch = /^[A-Za-z0-9_-]{1,128}$/.test(rawId) ? users.doc(rawId).get() : null;
+    const wordMatch = words.length
+      ? users.where('searchTokens', 'array-contains', words[words.length - 1]).limit(SEARCH_LIMIT).get()
+      : null;
+    const [byWord, byId] = await Promise.all([wordMatch, idMatch]);
 
-    res.json({ users: paged, total, page: Number(page), pageSize: PAGE_SIZE });
-  } catch (err) { next(err); }
+    const matches = new Map();
+    byWord?.forEach((doc) => {
+      const tokens = doc.data().searchTokens || [];
+      if (words.every((word) => tokens.includes(word))) matches.set(doc.id, { uid: doc.id, ...doc.data() });
+    });
+    if (byId?.exists) matches.set(byId.id, { uid: byId.id, ...byId.data() });
+
+    const sorted = [...matches.values()]
+      .filter((u) => status === 'ALL' || u.status === status)
+      .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+    const start = (page - 1) * PAGE_SIZE;
+    res.json({
+      users: sorted.slice(start, start + PAGE_SIZE).map(withSuperAdmin),
+      total: sorted.length,
+      page,
+      pageSize: PAGE_SIZE,
+      truncated: Boolean(byWord && byWord.size >= SEARCH_LIMIT),
+    });
+  } catch (err) { listError(err, req, res, next); }
 });
 
 router.get('/users/:uid', async (req, res, next) => {
@@ -131,36 +160,31 @@ router.delete('/users/:uid', async (req, res, next) => {
         throw authErr;
       }
     }
+    forgetVerifiedUser(uid);
+    evictCache(uid);
 
-    // 2. Delete the user profile from Firestore
-    await db.collection('users').doc(uid).delete();
+    // 2. Delete the profile together with its subcollections (study tracker items).
+    await db.recursiveDelete(db.collection('users').doc(uid));
 
-    // 3. Clean up other records asynchronously to not block the response
+    // 3. Clean up the user's other records in the background so the response isn't blocked.
     const cleanup = async () => {
-      try {
-        const batch = db.batch();
-        let ops = 0;
-
-        const cleanupQuery = async (query) => {
-          const snapshot = await query.get();
-          for (const doc of snapshot.docs) {
-            batch.delete(doc.ref);
-            ops++;
-            if (ops >= 400) {
-              await batch.commit();
-              ops = 0;
-            }
-          }
-        };
-
-        await cleanupQuery(db.collection('interviews').where('userId', '==', uid));
-        await cleanupQuery(db.collection('loops').where('userId', '==', uid));
-        await cleanupQuery(db.collection('accessRequests').where('uid', '==', uid));
-
-        if (ops > 0) await batch.commit();
-      } catch (err) {
-        console.error('[Admin] Cleanup failed for user', uid, err.message);
-      }
+      const deleteAll = async (query) => {
+        const snapshot = await query.get();
+        // A committed batch can't be reused, and Firestore caps a batch at 500 writes.
+        for (let i = 0; i < snapshot.docs.length; i += 400) {
+          const batch = db.batch();
+          snapshot.docs.slice(i, i + 400).forEach((doc) => batch.delete(doc.ref));
+          await batch.commit();
+        }
+      };
+      const byUser = ['sessions', 'interviews', 'tutor_interviews', 'roadmap_interviews', 'loop_interviews', 'loops'];
+      const results = await Promise.allSettled([
+        ...byUser.map((name) => deleteAll(db.collection(name).where('userId', '==', uid))),
+        deleteAll(db.collection('accessRequests').where('uid', '==', uid)),
+      ]);
+      results
+        .filter((r) => r.status === 'rejected')
+        .forEach((r) => logger.error('User data cleanup failed', { uid, err: r.reason?.message }));
     };
     cleanup();
 
@@ -171,10 +195,13 @@ router.delete('/users/:uid', async (req, res, next) => {
 router.put('/users/:uid/status', async (req, res, next) => {
   try {
     const { uid }    = req.params;
-    const { action, suspendDays, reason } = req.body;
+    const { action, suspendDays, reason } = req.body || {};
 
     if (!['approve', 'suspend', 'ban', 'unban', 'unsuspend', 'promote', 'demote'].includes(action)) {
       return res.status(400).json({ error: 'Invalid action' });
+    }
+    if (reason !== undefined && reason !== null && (typeof reason !== 'string' || reason.length > MAX_REASON_CHARS)) {
+      return res.status(400).json({ error: `reason must be text of at most ${MAX_REASON_CHARS} characters.`, code: 'INVALID_REQUEST' });
     }
 
     const userDoc = await db.collection('users').doc(uid).get();
@@ -213,7 +240,7 @@ router.put('/users/:uid/status', async (req, res, next) => {
       // Send approval email (fire-and-forget)
       sendApprovalEmail({
         email: profile.email, displayName: profile.displayName, dailyLimit: profile.dailyLimit,
-      }).catch(e => console.error('[Email] approval:', e.message));
+      }).catch(e => logger.error('Email send failed', { template: 'approval', err: e.message }));
     }
 
     if (action === 'ban') {
@@ -243,7 +270,7 @@ router.put('/users/:uid/status', async (req, res, next) => {
       sendSuspensionEmail({
         email: profile.email, displayName: profile.displayName,
         suspendedUntil: until.toISOString(), reason,
-      }).catch(e => console.error('[Email] suspension:', e.message));
+      }).catch(e => logger.error('Email send failed', { template: 'suspension', err: e.message }));
     }
 
     if (action === 'unsuspend') {
@@ -312,31 +339,23 @@ router.post('/users/:uid/reset-quota', async (req, res, next) => {
 
 router.get('/requests', async (req, res, next) => {
   try {
-    const { status = 'pending' } = req.query;
+    const status = String(req.query.status || 'pending');
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    if (!REQUEST_STATUSES.includes(status)) return res.status(400).json({ error: 'Unknown status filter.', code: 'INVALID_REQUEST' });
 
-    let query = db.collection('accessRequests');
-    if (status !== 'all') {
-      query = query.where('status', '==', status);
-    }
-
-    const snap = await query.limit(100).get();
-    const requests = [];
-    snap.forEach(doc => requests.push({ id: doc.id, ...doc.data() }));
-
-    // Sort in-memory to avoid requiring a Firestore composite index (status + createdAt)
-    requests.sort((a, b) => {
-      const getMs = (t) => {
-        if (!t) return 0;
-        if (typeof t.toMillis === 'function') return t.toMillis();
-        if (t._seconds) return t._seconds * 1000;
-        if (typeof t === 'string' || typeof t === 'number') return new Date(t).getTime();
-        return 0;
-      };
-      return getMs(b.createdAt) - getMs(a.createdAt);
+    const base = db.collection('accessRequests');
+    const filtered = status === 'all' ? base : base.where('status', '==', status);
+    const [countSnap, pageSnap] = await Promise.all([
+      filtered.count().get(),
+      filtered.orderBy('createdAt', 'desc').offset((page - 1) * REQUEST_PAGE_SIZE).limit(REQUEST_PAGE_SIZE).get(),
+    ]);
+    res.json({
+      requests: pageSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+      total: countSnap.data().count,
+      page,
+      pageSize: REQUEST_PAGE_SIZE,
     });
-
-    res.json({ requests });
-  } catch (err) { next(err); }
+  } catch (err) { listError(err, req, res, next); }
 });
 
 router.put('/requests/:id/approve', async (req, res, next) => {
@@ -365,7 +384,7 @@ router.put('/requests/:id/approve', async (req, res, next) => {
 
       sendApprovalEmail({
         email: profile.email, displayName: profile.displayName, dailyLimit: profile.dailyLimit,
-      }).catch(e => console.error('[Email] approval:', e.message));
+      }).catch(e => logger.error('Email send failed', { template: 'approval', err: e.message }));
     }
 
     res.json({ success: true, requestId: req.params.id });
@@ -374,7 +393,10 @@ router.put('/requests/:id/approve', async (req, res, next) => {
 
 router.put('/requests/:id/deny', async (req, res, next) => {
   try {
-    const { reason } = req.body;
+    const { reason } = req.body || {};
+    if (reason !== undefined && reason !== null && (typeof reason !== 'string' || reason.length > MAX_REASON_CHARS)) {
+      return res.status(400).json({ error: `reason must be text of at most ${MAX_REASON_CHARS} characters.`, code: 'INVALID_REQUEST' });
+    }
     const requestDoc = await db.collection('accessRequests').doc(req.params.id).get();
     if (!requestDoc.exists) return res.status(404).json({ error: 'Request not found' });
 
@@ -391,7 +413,7 @@ router.put('/requests/:id/deny', async (req, res, next) => {
       const profile = userDoc.data();
       sendDenialEmail({
         email: profile.email, displayName: profile.displayName, reason,
-      }).catch(e => console.error('[Email] denial:', e.message));
+      }).catch(e => logger.error('Email send failed', { template: 'denial', err: e.message }));
     }
 
     res.json({ success: true, requestId: req.params.id });
@@ -431,6 +453,7 @@ router.put('/settings', async (req, res, next) => {
     update.updatedBy = req.user.uid;
 
     await db.collection('platformSettings').doc('main').set(update, { merge: true });
+    invalidatePlatformSettings();
     res.json({ success: true, settings: update });
   } catch (err) { next(err); }
 });

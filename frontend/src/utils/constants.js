@@ -3,7 +3,7 @@
  * Extracted to avoid duplication between Interview.js, Landing.js, History.js, HistoryDetail.js.
  */
 
-import { AVAILABLE_MODELS } from '../components/ModelSelector';
+import { findModel } from '../services/modelCatalog';
 // ── Interview Type Configuration ──────────────────────────────────────────────
 export const TYPE_CONFIG = {
   dsa: {
@@ -12,7 +12,7 @@ export const TYPE_CONFIG = {
     fullName: 'Data Structures & Algorithms',
     color: '#3b82f6',
     glow: 'rgba(59, 130, 246, 0.15)',
-    emoji: '🧩',
+    icon: 'code',
   },
   systemDesign: {
     id: 'systemDesign',
@@ -20,7 +20,7 @@ export const TYPE_CONFIG = {
     fullName: 'Scalable System Architecture',
     color: '#8b5cf6',
     glow: 'rgba(139, 92, 246, 0.15)',
-    emoji: '🏗️',
+    icon: 'building',
     featured: true,
   },
   lld: {
@@ -29,15 +29,15 @@ export const TYPE_CONFIG = {
     fullName: 'Low-Level / OOP Design',
     color: '#10b981',
     glow: 'rgba(16, 185, 129, 0.15)',
-    emoji: '🔧',
+    icon: 'layers',
   },
   managerial: {
     id: 'managerial',
-    label: 'Managerial',
+    label: 'Behavioral',
     fullName: 'Behavioral & Leadership',
     color: '#f43f5e',
     glow: 'rgba(244, 63, 94, 0.15)',
-    emoji: '👔',
+    icon: 'message',
   },
   tutorDsa: {
     id: 'tutorDsa',
@@ -45,7 +45,7 @@ export const TYPE_CONFIG = {
     fullName: 'Learn Algorithms & Data Structures',
     color: '#f59e0b',
     glow: 'rgba(245, 158, 11, 0.15)',
-    emoji: '🎓',
+    icon: 'graduation',
     isTutor: true,
     baseType: 'dsa',
   },
@@ -55,7 +55,7 @@ export const TYPE_CONFIG = {
     fullName: 'Learn Object-Oriented Design',
     color: '#f59e0b',
     glow: 'rgba(245, 158, 11, 0.15)',
-    emoji: '🎓',
+    icon: 'graduation',
     isTutor: true,
     baseType: 'lld',
   },
@@ -65,7 +65,7 @@ export const TYPE_CONFIG = {
     fullName: 'Learn Scalable Architecture',
     color: '#f59e0b',
     glow: 'rgba(245, 158, 11, 0.15)',
-    emoji: '🎓',
+    icon: 'graduation',
     isTutor: true,
     baseType: 'systemDesign',
   },
@@ -105,17 +105,17 @@ export function formatDate(timestamp, options = {}) {
  */
 export function friendlyModelName(modelId) {
   if (!modelId) return 'Unknown model';
-  const found = AVAILABLE_MODELS.find(m => m.id === modelId);
+  const found = findModel(modelId);
   return found ? found.name : modelId;
 }
 
 /**
- * Get the accent color for a model's provider (Gemini = purple, Groq = orange).
+ * Get the accent color for a model's provider.
  * @param {string} modelId
  * @returns {string} CSS color
  */
 export function modelProviderColor(modelId) {
-  const found = AVAILABLE_MODELS.find(m => m.id === modelId);
+  const found = findModel(modelId);
   if (!found) return '#64748b';
-  return found.provider === 'groq' ? '#f97316' : '#8b5cf6';
+  return found.badgeColor || '#10b981';
 }

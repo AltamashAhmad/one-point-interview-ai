@@ -1,0 +1,617 @@
+/* DSA sheet and prep plan: summary, sticky toolbar, step and pattern lists, problem rows. */
+.roadmap-page {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--space-5);
+}
+
+.striver-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.striver-progress-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+}
+
+.striver-progress-label {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.striver-progress-meta {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+}
+
+.striver-bar {
+  height: 6px;
+  overflow: hidden;
+  background: var(--surface-3);
+  border-radius: var(--radius-pill);
+}
+
+.striver-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width var(--t-med);
+}
+
+.striver-desc {
+  margin: 0;
+  font-size: var(--fs-md);
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.striver-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.striver-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.striver-step-num {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border-radius: 50%;
+}
+
+.striver-pill,
+.striver-anchor-badge,
+.striver-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: var(--radius-pill);
+}
+
+.striver-pill {
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.striver-anchor-badge {
+  color: var(--warning-text);
+  background: var(--warning-soft);
+  border: 1px solid color-mix(in srgb, var(--warning) 35%, transparent);
+}
+
+.striver-ai-badge {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.striver-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.striver-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Toolbar that stays under the page header while the list is scrolled. */
+.striver-toolbar {
+  position: sticky;
+  top: 70px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border);
+}
+
+.striver-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.striver-search,
+.striver-select {
+  height: 36px;
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: var(--fs-md);
+  color: var(--text-primary);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.striver-search {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.striver-search:focus,
+.striver-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.striver-select.full { width: 100%; }
+
+.striver-expand-btns {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.striver-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.striver-chip {
+  min-height: 30px;
+  padding: 0 var(--space-3);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: color var(--t-fast), background var(--t-fast), border-color var(--t-fast);
+}
+
+.striver-chip:hover {
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.striver-chip.active {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.striver-chip:focus-visible,
+.striver-search:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.striver-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.striver-toggle:focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
+.sheet-practice-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  text-align: left;
+}
+
+.striver-error {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-sm);
+  color: var(--danger);
+  background: var(--danger-soft);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  width: 100%;
+}
+
+.striver-loading {
+  padding: var(--space-6);
+  font-size: var(--fs-sm);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* Steps and patterns */
+.roadmap-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.topic-section {
+  overflow: hidden;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.topic-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-md);
+  font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.topic-header:hover { background: var(--surface-2); }
+
+.topic-progress {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.striver-caret {
+  display: inline-block;
+  width: 16px;
+  margin-right: var(--space-2);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  transition: transform var(--t-fast);
+}
+
+.striver-caret.small { font-size: var(--fs-xs); }
+.striver-caret.open { transform: rotate(90deg); }
+
+.striver-section {
+  border-top: 1px solid var(--border);
+}
+
+.striver-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-5);
+  cursor: pointer;
+  user-select: none;
+}
+
+.striver-section-header:hover { background: var(--surface-2); }
+
+.striver-section-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.striver-section-right {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.striver-mini-bar {
+  position: relative;
+  width: 72px;
+  height: 4px;
+  overflow: hidden;
+  background: var(--surface-3);
+  border-radius: var(--radius-pill);
+}
+
+.striver-mini-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--pct, 0%);
+  background: var(--accent);
+  border-radius: inherit;
+}
+
+/* Problem rows */
+.question-list,
+.striver-question-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.striver-question-list {
+  padding: 0 var(--space-3) var(--space-2) var(--space-5);
+}
+
+.question-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 48px;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.question-list > .question-item:first-child { border-top: none; }
+.question-item:hover { background: var(--surface-2); }
+.question-item.important { box-shadow: inset 3px 0 0 var(--warning); }
+
+.question-left {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.question-right {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.striver-check {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  background: none;
+  border: none;
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.striver-check:hover { background: var(--surface-3); }
+
+.question-title {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--fs-md);
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.question-title:hover {
+  color: var(--accent-text);
+  text-decoration: underline;
+}
+
+.question-item.completed .question-title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+
+.striver-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.roadmap-action-btn,
+.striver-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.roadmap-action-btn:hover,
+.striver-icon-btn:hover {
+  color: var(--text-primary);
+  background: var(--surface-3);
+}
+
+.striver-icon-btn.active,
+.striver-icon-btn.has-note { color: var(--accent-text); }
+
+.striver-icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.difficulty-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.diff-Easy {
+  color: var(--success-text);
+  background: var(--success-soft);
+  border-color: transparent;
+}
+
+.diff-Medium {
+  color: var(--warning-text);
+  background: var(--warning-soft);
+  border-color: transparent;
+}
+
+.diff-Hard {
+  color: var(--danger-text);
+  background: var(--danger-soft);
+  border-color: transparent;
+}
+
+.diff-Theory {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+/* Practice dialog */
+.modal-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+
+.modal-option-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 600;
+  text-align: left;
+  color: var(--text-primary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast);
+}
+
+.modal-option-btn span {
+  font-size: var(--fs-sm);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.modal-option-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.sheet-modal-cancel { width: 100%; }
+
+.striver-modal-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.striver-link-btn {
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--accent-text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.striver-hint {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.striver-note-preview {
+  margin: 0;
+  font-size: var(--fs-sm);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+
+@media (max-width: 640px) {
+  .roadmap-page { padding: var(--space-4) var(--space-3); }
+  .striver-summary { padding: var(--space-4); }
+  .striver-progress-label { font-size: var(--fs-lg); }
+  .striver-toolbar { position: static; }
+  .striver-mini-bar { width: 48px; }
+  .question-item { flex-wrap: wrap; }
+  .question-right { width: 100%; justify-content: space-between; }
+}

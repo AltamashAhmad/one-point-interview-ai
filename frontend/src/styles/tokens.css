@@ -1,0 +1,192 @@
+/* ── Design tokens ────────────────────────────────────────────────────────────
+   One accent (indigo), neutral surfaces, semantic status colours, flat elevation.
+   Legacy names (--purple, --bg-card, ...) stay as the stable public API so pages
+   migrate gradually; new code should prefer the semantic names (--accent, --surface-*, --success, ...). */
+
+/* Fonts are bundled (see index.jsx), so there is no render-blocking request. */
+:root {
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Type scale */
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-base: 16px;
+  --fs-lg: 18px;
+  --fs-xl: 22px;
+  --fs-2xl: 28px;
+  --fs-3xl: 36px;
+
+  /* Accent (shared by both themes) */
+  --accent: #5b5fe9;
+  --accent-hover: #4f46e5;
+  --on-accent: #ffffff;
+
+  /* Legacy accent names, now pointing at the single accent */
+  --purple: var(--accent);
+  --purple-dark: var(--accent-hover);
+  --blue: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+
+  /* Semantic status colours */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --danger-strong: #dc2626;
+  --info: #3b82f6;
+
+  /* Flat brand fill: the old purple-to-blue gradient is intentionally gone */
+  --gradient-brand: linear-gradient(135deg, #5b5fe9 0%, #4f46e5 100%);
+
+  /* Radius scale */
+  --radius-xs: 6px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+  --space-12: 64px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 0.15s var(--ease);
+  --t-med: 0.25s var(--ease);
+
+  /* Layout */
+  --sidebar-w: 248px;
+  --tabbar-h: 60px;
+
+  /* Compatibility aliases */
+  --primary-color: var(--accent);
+  --focus-color: var(--accent-text);
+  --border-color: var(--border);
+  --card-bg: var(--bg-card);
+  --bg-main: var(--bg-secondary);
+  --bg-deep: var(--bg-primary);
+  --text-color: var(--text-primary);
+  --hover-bg: var(--bg-card-hover);
+  --shadow-xl: var(--shadow-lg);
+  --text-error: var(--danger);
+  --bg-error: var(--danger-soft);
+  --gradient-brand-soft: linear-gradient(135deg, var(--accent-soft), var(--accent-soft));
+}
+
+/* ── Dark theme (default) ─────────────────────────────────────────────────── */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surfaces: page < card < raised < input */
+  --surface-0: #0a0c10;
+  --surface-1: #12151b;
+  --surface-2: #181c24;
+  --surface-3: #1e232d;
+
+  --bg-primary: var(--surface-0);
+  --bg-secondary: #0e1116;
+  --bg-card: var(--surface-1);
+  --bg-card-hover: var(--surface-2);
+  --bg-input: var(--surface-3);
+  --bg-reading: #151923;
+
+  --border: #232834;
+  --border-light: #323948;
+
+  --text-primary: #eceef2;
+  --text-secondary: #a3abb9;
+  --text-muted: #8b94a4;
+
+  --accent-text: #a5b4fc;
+  --accent-soft: rgba(99, 102, 241, 0.16);
+  --purple-light: #a5b4fc;
+  --purple-glow: rgba(99, 102, 241, 0.16);
+  --blue-glow: rgba(59, 130, 246, 0.16);
+  --green-glow: rgba(16, 185, 129, 0.16);
+
+  --success-soft: rgba(16, 185, 129, 0.14);
+  --warning-soft: rgba(245, 158, 11, 0.14);
+  --danger-soft: rgba(239, 68, 68, 0.14);
+  --success-text: #34d399;
+  --warning-text: #fbbf24;
+  --danger-text: #f87171;
+  --info-text: #60a5fa;
+
+  --glass-bg: rgba(18, 21, 27, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-blur: 14px;
+
+  --nav-bg: rgba(10, 12, 16, 0.8);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-glow-purple: 0 0 40px rgba(99, 102, 241, 0.14);
+
+  --hero-glow-1: rgba(99, 102, 241, 0.1);
+  --hero-glow-2: rgba(59, 130, 246, 0.06);
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────────── */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-0: #f7f8fa;
+  --surface-1: #ffffff;
+  --surface-2: #f1f3f6;
+  --surface-3: #eceff3;
+
+  --bg-primary: var(--surface-0);
+  --bg-secondary: #f1f3f6;
+  --bg-card: var(--surface-1);
+  --bg-card-hover: var(--surface-2);
+  --bg-input: var(--surface-3);
+  --bg-reading: #ffffff;
+
+  --border: #e3e6eb;
+  --border-light: #cfd4dc;
+
+  --text-primary: #11151c;
+  --text-secondary: #4b5563;
+  --text-muted: #5f6672;
+
+  --accent-text: #4338ca;
+  --accent-soft: rgba(99, 102, 241, 0.1);
+  --purple-light: #4338ca;
+  --purple-glow: rgba(99, 102, 241, 0.1);
+  --blue-glow: rgba(59, 130, 246, 0.1);
+  --green-glow: rgba(16, 185, 129, 0.1);
+
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --warning-soft: rgba(245, 158, 11, 0.14);
+  --danger-soft: rgba(239, 68, 68, 0.1);
+  --success-text: #047857;
+  --warning-text: #92400e;
+  --danger-text: #b91c1c;
+  --info-text: #1d4ed8;
+
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-blur: 14px;
+
+  --nav-bg: rgba(247, 248, 250, 0.85);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.12);
+  --shadow-glow-purple: 0 0 40px rgba(99, 102, 241, 0.1);
+
+  --hero-glow-1: rgba(99, 102, 241, 0.08);
+  --hero-glow-2: rgba(59, 130, 246, 0.05);
+}

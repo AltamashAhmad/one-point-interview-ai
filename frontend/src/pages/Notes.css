@@ -1,0 +1,251 @@
+/* ── Notes: home, topic list and article ─────────────────────────────────── */
+.notes-page {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5) var(--space-12);
+  --track-accent: var(--purple);
+  --track-text: color-mix(in srgb, var(--track-accent) 65%, var(--text-primary));
+}
+
+.notes-page--article { max-width: 780px; }
+
+.notes-intro {
+  margin: 0 0 var(--space-5);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+/* Two big cards on the Notes home */
+.notes-track-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+.notes-track-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--track-accent) 12%, var(--bg-card)) 0%, var(--bg-card) 65%);
+  border: 1px solid color-mix(in srgb, var(--track-accent) 30%, var(--border));
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: transform var(--t-fast), box-shadow var(--t-fast), border-color var(--t-fast);
+}
+
+.notes-track-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--track-accent);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--track-accent) 22%, transparent);
+}
+
+.notes-track-card:focus-visible { outline: 2px solid var(--track-accent); outline-offset: 3px; }
+
+.notes-track-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--track-accent) 16%, transparent);
+}
+
+.notes-track-title { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+.notes-track-desc { font-size: 14px; line-height: 1.55; color: var(--text-secondary); }
+
+.notes-track-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-2);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.notes-track-cta { margin-top: var(--space-2); font-size: 14px; font-weight: 700; color: var(--track-text); }
+
+/* Topic list */
+.notes-group { margin-top: var(--space-6); }
+
+.notes-group-title {
+  margin: 0 0 var(--space-3);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Article */
+.notes-toc {
+  margin-bottom: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.notes-toc-title { display: block; margin-bottom: var(--space-2); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+.notes-toc ol { margin: 0; padding: 0; list-style: none; columns: 2; column-gap: var(--space-5); }
+.notes-toc li { break-inside: avoid; margin: 2px 0; font-size: 13.5px; color: var(--text-muted); }
+
+.notes-toc button {
+  padding: 2px 0;
+  font: inherit;
+  text-align: left;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.notes-toc button:hover { color: var(--track-text); text-decoration: underline; }
+
+.notes-article { font-size: 16px; line-height: 1.75; overflow-wrap: break-word; }
+.notes-article .inline-code { white-space: normal; overflow-wrap: anywhere; }
+.notes-article .md-p { margin: 0 0 var(--space-4); }
+.notes-article .md-h1 { font-size: 28px; margin: 0 0 var(--space-4); }
+.notes-lead { margin-bottom: var(--space-5); }
+
+/* Collapsible sections, same interaction as the DSA sheet's pattern headers */
+.notes-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.notes-toolbar-count { font-size: 13px; font-weight: 600; color: var(--text-muted); }
+.notes-toolbar-actions { display: flex; gap: var(--space-2); }
+
+.notes-section { border-top: 1px solid var(--border); scroll-margin-top: 90px; }
+.notes-section:last-child { border-bottom: 1px solid var(--border); }
+.notes-section-title { margin: 0; }
+
+.notes-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) 0;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-align: left;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.notes-section-toggle:hover { color: var(--track-text); }
+.notes-section-toggle:focus-visible { outline: 2px solid var(--track-accent); outline-offset: 2px; border-radius: 6px; }
+
+.notes-section-caret {
+  flex-shrink: 0;
+  width: 14px;
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  transition: transform var(--t-fast);
+}
+
+.notes-section.is-open .notes-section-caret { transform: rotate(90deg); }
+.notes-section-body { padding-bottom: var(--space-5); }
+.notes-section-body[hidden] { display: none; }
+.notes-section-body > :first-child { margin-top: 0; }
+
+/* Reading progress: a bar fixed above the sticky header, plus a % pill in it */
+.notes-progress {
+  position: fixed;
+  top: 0;
+  left: var(--shell-sidebar-w, 0px);
+  right: 0;
+  height: 3px;
+  z-index: 60;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--track-accent) 14%, transparent);
+}
+
+.notes-progress-fill {
+  height: 100%;
+  background: var(--track-accent);
+  border-radius: 0 3px 3px 0;
+  transition: width 0.12s linear;
+}
+
+.notes-progress-pill {
+  min-width: 46px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--track-text);
+  background: color-mix(in srgb, var(--track-accent) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--track-accent) 30%, var(--border));
+  border-radius: var(--radius-pill);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notes-progress-fill, .notes-section-caret { transition: none; }
+}
+.notes-article .md-h3 { font-size: 15px; margin: var(--space-5) 0 var(--space-2); color: var(--track-text); }
+.notes-article .md-li { margin-bottom: 6px; }
+.notes-article .md-ul, .notes-article .md-ol { margin-bottom: var(--space-4); }
+.notes-article .md-blockquote { margin: var(--space-4) 0; padding: var(--space-3) var(--space-4); border-left-color: var(--track-accent); }
+.notes-article .md-blockquote .md-p { color: var(--text-primary); font-style: normal; font-size: 15px; line-height: 1.65; }
+.notes-article .md-table-wrapper { margin: var(--space-4) 0; }
+.notes-article .code-block-wrapper { margin: var(--space-4) 0; }
+
+.notes-loading, .notes-soon { text-align: center; color: var(--text-secondary); }
+.notes-loading { padding: var(--space-8) 0; }
+.notes-soon { padding: var(--space-8) var(--space-5); background: var(--bg-card); border: 1px dashed var(--border-light); border-radius: var(--radius-lg); }
+.notes-soon-icon { font-size: 36px; }
+.notes-soon h2 { margin: var(--space-3) 0 var(--space-2); font-size: 20px; color: var(--text-primary); }
+.notes-soon p { margin: 0; font-size: 14px; }
+
+/* Previous / next */
+.notes-pager { display: flex; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-8); }
+
+.notes-pager-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 48%;
+  padding: var(--space-3) var(--space-4);
+  font-family: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--t-fast);
+}
+
+.notes-pager-btn.is-next { margin-left: auto; text-align: right; }
+.notes-pager-btn:hover { border-color: var(--track-accent); }
+.notes-pager-btn span { font-size: 12px; color: var(--text-muted); }
+.notes-pager-btn strong { font-size: 14px; }
+
+@media (max-width: 640px) {
+  .notes-page { padding: var(--space-5) var(--space-4) var(--space-8); }
+  .notes-toc ol { columns: 1; }
+  .notes-article { font-size: 15.5px; }
+  .notes-article .md-h1 { font-size: 24px; }
+  .notes-section-toggle { font-size: 18px; }
+  .notes-toolbar-count { display: none; }
+}

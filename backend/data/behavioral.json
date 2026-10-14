@@ -1,0 +1,98 @@
+[
+  {
+    "slug": "conflict",
+    "competency": "Conflict & Disagreement",
+    "question": "Tell me about a time you strongly disagreed with a teammate or your manager on a technical decision.",
+    "followUps": ["What exactly was each side's position and why?", "How did you communicate your view — what did you actually say or write?", "How was it resolved, and would you handle it the same way again?", "How is your relationship with that person now?"],
+    "strongSignals": ["Disagrees with data, not ego; seeks to understand the other view", "Escalates only after trying to resolve directly", "Commits fully once a decision is made (disagree and commit)"],
+    "redFlags": ["Blames or belittles the other person", "'We' everywhere with no personal actions", "Story where they were simply right and nothing was learned"]
+  },
+  {
+    "slug": "failure",
+    "competency": "Failure & Learning",
+    "question": "Tell me about a project or decision that failed or went badly. What was your role in it?",
+    "followUps": ["What specifically did you do that contributed to the failure?", "When did you realise it was going wrong, and what did you do then?", "What did you change in how you work afterwards?", "Has that lesson helped you since? Give an example."],
+    "strongSignals": ["Owns their part clearly without deflecting", "Concrete, lasting change in behaviour", "Proportionate — neither trivial nor catastrophising"],
+    "redFlags": ["A 'failure' that is really a disguised strength", "Blames others or circumstances only", "No concrete lesson or change"]
+  },
+  {
+    "slug": "ownership",
+    "competency": "Ownership & Going Beyond Scope",
+    "question": "Tell me about a time you took ownership of a problem that wasn't strictly your responsibility.",
+    "followUps": ["Why did you decide to take it on?", "What did you have to deprioritise to do it?", "What obstacles did you hit and how did you get past them?", "What was the measurable result?"],
+    "strongSignals": ["Acts without being asked when it matters to the customer/team", "Follows through to completion, not just raising the issue", "Balances it against their own commitments"],
+    "redFlags": ["Complains about others not doing their job", "Starts but hands off halfway", "No clear outcome"]
+  },
+  {
+    "slug": "ambiguity",
+    "competency": "Dealing with Ambiguity",
+    "question": "Describe a situation where you had to make progress on a project with unclear requirements or goals.",
+    "followUps": ["What did you do first to reduce the ambiguity?", "Who did you talk to, and what did you learn?", "What assumptions did you make and how did you validate them?", "How did the result compare with what was eventually needed?"],
+    "strongSignals": ["Breaks the problem down and gets early feedback", "States assumptions explicitly and revisits them", "Makes reversible decisions quickly"],
+    "redFlags": ["Waits for someone to hand over perfect requirements", "Builds a lot before checking direction"]
+  },
+  {
+    "slug": "tight-deadline",
+    "competency": "Delivering Under Pressure",
+    "question": "Tell me about a time you had to deliver something important under a very tight deadline.",
+    "followUps": ["What did you cut or simplify, and how did you decide?", "How did you communicate risk to stakeholders?", "What trade-offs did you make on quality, and how did you handle them later?", "What would you do differently?"],
+    "strongSignals": ["Prioritises ruthlessly and explains trade-offs", "Communicates early about risk", "Pays down shortcuts afterwards"],
+    "redFlags": ["Heroics with no planning (worked 20 hours a day as the only answer)", "Hid problems until the deadline"]
+  },
+  {
+    "slug": "influence",
+    "competency": "Influence Without Authority",
+    "question": "Tell me about a time you convinced people who didn't report to you to adopt your idea or change direction.",
+    "followUps": ["Who were the stakeholders and what did each care about?", "What evidence or prototype did you use?", "What pushback did you get and how did you address it?", "What was the outcome?"],
+    "strongSignals": ["Tailors the argument to each audience's goals", "Uses data, prototypes or small experiments", "Builds allies rather than forcing a decision"],
+    "redFlags": ["Escalated to a manager as the first move", "Idea adopted with no understanding of why"]
+  },
+  {
+    "slug": "mentoring",
+    "competency": "Mentoring & Growing Others",
+    "question": "Tell me about a time you helped a teammate grow or become more effective.",
+    "followUps": ["What did you notice they needed?", "What specifically did you do, week to week?", "How did you know it was working?", "What did you learn about mentoring from it?"],
+    "strongSignals": ["Specific, sustained actions (pairing, reviews, stretch tasks)", "Lets the person own the work", "Observable improvement"],
+    "redFlags": ["Just 'answered their questions'", "Took over the work instead of teaching"]
+  },
+  {
+    "slug": "customer-obsession",
+    "competency": "Customer Focus",
+    "question": "Tell me about a time you went out of your way to solve a problem for a customer or user.",
+    "followUps": ["How did you find out about the problem?", "How did you verify what the customer actually needed?", "What trade-offs did you make for them?", "How did you measure the impact?"],
+    "strongSignals": ["Starts from the customer and works backwards", "Distinguishes what they asked for from what they need", "Uses metrics or feedback to confirm impact"],
+    "redFlags": ["Customer only mentioned in passing", "Built what was asked without questioning it"]
+  },
+  {
+    "slug": "technical-decision",
+    "competency": "Technical Judgment & Trade-offs",
+    "question": "Walk me through the most significant technical decision you made in the last year.",
+    "followUps": ["What options did you consider and why did you reject them?", "How did you evaluate risk and cost?", "Who did you involve in the decision?", "Looking back, was it the right call?"],
+    "strongSignals": ["Clear options with explicit trade-offs", "Considers long-term maintenance, not just speed", "Honest retrospective"],
+    "redFlags": ["Picked a technology because it was new/cool", "No alternatives considered"]
+  },
+  {
+    "slug": "prioritization",
+    "competency": "Prioritisation",
+    "question": "Tell me about a time you had more work than you could possibly do. How did you decide what to do and what to drop?",
+    "followUps": ["What framework or criteria did you use?", "How did you communicate what would not get done?", "Did anyone disagree with your priorities? What happened?", "What was the impact of the things you dropped?"],
+    "strongSignals": ["Prioritises by impact and urgency with stakeholder input", "Says no explicitly and transparently", "Revisits priorities as things change"],
+    "redFlags": ["Tried to do everything and burned out", "Dropped things silently"]
+  },
+  {
+    "slug": "feedback",
+    "competency": "Receiving Difficult Feedback",
+    "question": "Tell me about the toughest piece of feedback you've received. How did you respond?",
+    "followUps": ["How did you feel when you first heard it?", "What did you do in the following weeks?", "How did you check whether you had improved?", "Have you given similar feedback to someone else?"],
+    "strongSignals": ["Listens without defensiveness", "Concrete action plan and follow-up", "Seeks feedback proactively afterwards"],
+    "redFlags": ["Dismisses the feedback as unfair", "Trivial feedback chosen to look good"]
+  },
+  {
+    "slug": "raising-the-bar",
+    "competency": "Raising the Quality Bar",
+    "question": "Tell me about a time you improved the quality, reliability or performance of a system or process your team owned.",
+    "followUps": ["How did you identify the problem — what signals or metrics?", "What did you change and why that approach?", "How did you get the team to adopt it?", "What were the before and after numbers?"],
+    "strongSignals": ["Uses metrics to find and prove the improvement", "Fixes root causes, not symptoms", "Makes the improvement stick (automation, standards)"],
+    "redFlags": ["Vague 'made it better' with no data", "One-off fix with no lasting change"]
+  }
+]
