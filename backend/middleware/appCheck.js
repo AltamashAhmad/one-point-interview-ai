@@ -1,4 +1,5 @@
 const admin = require('../config/firebase');
+const logger = require('../utils/logger');
 
 /**
  * Firebase App Check verification middleware.
@@ -37,7 +38,7 @@ async function verifyAppCheck(req, res, next) {
     req.appCheckAppId = appCheckClaims.appId;
     next();
   } catch (err) {
-    console.warn(`[AppCheck] Rejected invalid token — ${err.message}`);
+    logger.warn('App Check token rejected', { requestId: req.id, err: err.message });
     return res.status(401).json({
       error: 'App Check verification failed. Access denied.',
     });

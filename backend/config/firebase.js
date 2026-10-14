@@ -1,4 +1,5 @@
 const admin = require('firebase-admin');
+const logger = require('../utils/logger');
 
 // Lazy-init Firebase Admin — only runs once
 if (!admin.apps.length) {
@@ -18,7 +19,7 @@ if (!admin.apps.length) {
     }),
   });
 
-  console.log('✅ Firebase Admin initialized');
+  logger.info('Firebase Admin initialized');
 }
 
 module.exports = admin;

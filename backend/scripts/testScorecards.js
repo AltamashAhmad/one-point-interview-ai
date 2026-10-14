@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { generatePrimaryResponse } = require('../services/primaryAi');
+const { generateText } = require('../services/ai/gateway');
 
 const MODEL = 'qwen/qwen3.8-27b';
 
@@ -156,7 +156,7 @@ ${transcript}`;
   ];
 
   try {
-    const responseText = await generatePrimaryResponse(aiMessages, systemPrompt, MODEL);
+    const { text: responseText } = await generateText({ messages: aiMessages, systemPrompt, model: MODEL, purpose: 'scorecard' });
     
     // Parse
     let cleanedText = responseText;

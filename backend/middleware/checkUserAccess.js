@@ -1,4 +1,6 @@
 const admin = require('../config/firebase');
+const logger = require('../utils/logger');
+const { searchTokens } = require('../services/userSearch');
 const db    = admin.firestore();
 
 // ── In-memory cache so we don't hit Firestore on every single message ────────
@@ -27,6 +29,10 @@ function evictCache(uid) {
 // ── Platform settings cache (refreshed every 5 min) ──────────────────────────
 let platformSettings = null;
 let settingsExpiry = 0;
+
+function invalidatePlatformSettings() {
+  settingsExpiry = 0;
+}
 
 async function getPlatformSettings() {
   if (Date.now() < settingsExpiry && platformSettings) return platformSettings;
@@ -62,6 +68,7 @@ async function createUserProfile(uid, firebaseUser) {
     uid,
     email:               firebaseUser.email       || null,
     displayName:         firebaseUser.name        || firebaseUser.displayName || null,
+    searchTokens:        searchTokens(firebaseUser.email, firebaseUser.name || firebaseUser.displayName),
     photoURL:            firebaseUser.picture     || firebaseUser.photoURL    || null,
     role:                'user',
     status:              'PENDING',
@@ -87,11 +94,12 @@ async function createUserProfile(uid, firebaseUser) {
       await admin.auth().deleteUser(uid);
     } catch (e) {
       if (e.code !== 'auth/user-not-found') {
-        console.error('[Auth] Failed to delete blocked signup user in middleware:', e.message);
+        logger.error('Failed to delete blocked signup user', { uid, err: e.message });
       }
     }
     const err = new Error('New account registrations are currently disabled.');
     err.status = 403;
+    err.expose = true;
     err.code = 'SIGNUPS_DISABLED';
     throw err;
   }
@@ -266,7 +274,7 @@ async function checkUserAccess(req, res, next) {
     });
 
   } catch (err) {
-    console.error('[checkUserAccess] Error:', err.message);
+    logger.error('Access check failed; failing open', { requestId: req.id, err: err.message });
     // Fail open (allow the request) so a Firestore outage doesn't break the app for everyone
     // This is a design decision — change to next(err) if you prefer fail-closed
     next();
@@ -321,4 +329,4 @@ async function enforceGlobalStatus(req, res, next) {
   }
 }
 
-module.exports = { checkUserAccess, enforceGlobalStatus, evictCache, getPlatformSettings };
+module.exports = { checkUserAccess, enforceGlobalStatus, evictCache, getPlatformSettings, invalidatePlatformSettings };

@@ -1,0 +1,217 @@
+{
+  "overrides": {
+    "car-rental-system": {
+      "classInfo": "Entities: Customer, Car (id, make, model, type, pricePerDay, status), Reservation (id, customer, car, startDate, endDate, status, totalPrice), Payment, RentalSystem (facade/Singleton). A PaymentProcessor interface (CreditCardPayment, PayPalPayment) = Strategy. PricingStrategy can vary by car type/season. Search filters by type, price range and availability over dates. Availability check + reservation must be atomic per car (synchronized / lock per car) to avoid double booking.",
+      "followUps": ["How would you add late-return fees or damage charges without changing Reservation?", "How do you prevent two customers reserving the same car for overlapping dates concurrently?", "How would you support multiple branches with car transfers?"]
+    },
+    "chess-game": {
+      "classInfo": "Entities: Game (board, players, currentTurn, status, moveHistory), Board (8x8 Cell grid), Cell, abstract Piece (color, canMove(board, from, to)) with King, Queen, Rook, Bishop, Knight, Pawn subclasses (polymorphism instead of type switches), Player, Move (from, to, piece, captured). Game validates turn, asks piece for legality, checks the move does not leave own king in check, applies it, then evaluates check/checkmate/stalemate. Move history enables undo (Command pattern) and special rules (castling, en passant).",
+      "followUps": ["How do you detect checkmate efficiently?", "How would you implement undo/redo?", "Where does the rule for castling live so Piece classes stay clean?"]
+    },
+    "coffee-vending-machine": {
+      "classInfo": "Entities: CoffeeMachine (Singleton), Coffee/Recipe (name, price, ingredient quantities), Ingredient (name, quantity), Payment. Menu is data-driven (map of recipes). Flow: select coffee → take payment → check ingredients → dispense → update inventory → return change. Inventory updates synchronized for concurrent orders. Low-ingredient alerts via Observer. Optional State pattern (Idle, PaymentPending, Dispensing).",
+      "followUps": ["How would you add a new drink without code changes?", "What happens if ingredients run out after payment is accepted?", "How do you notify a technician when stock is low?"]
+    },
+    "concert-ticket-booking-system": {
+      "classInfo": "Entities: Concert (id, artist, venue, dateTime, seats), Seat (id, number, type/tier, price, status AVAILABLE/RESERVED/BOOKED), User, Booking (id, user, concert, seats, totalPrice, status), Payment, ConcertTicketBookingSystem (Singleton facade). Booking reserves seats atomically (lock per seat or per concert) and releases them if payment fails or a hold expires. Search by artist/venue/date. Notifications on booking confirmation (Observer).",
+      "followUps": ["How do you hold seats for 10 minutes during checkout and release them automatically?", "How do you prevent double booking under high concurrency?", "How would you add dynamic pricing by demand?"]
+    },
+    "cricinfo": {
+      "classInfo": "Entities: Match (teams, venue, format, status, innings list), Team (players), Player (role, stats), Innings (battingTeam, bowlingTeam, overs), Over (balls), Ball (bowler, batsman, runs, extras, wicket), Scorecard (derived), Commentary. Services: MatchService (create/update matches), ScorecardService (update on each ball), SearchService. Live updates pushed to subscribers via Observer. Match formats (T20, ODI, Test) via Strategy for rules like overs limit.",
+      "followUps": ["How is a live score update propagated to millions of viewers?", "How would you model rain-shortened matches (DLS)?", "How do you compute player career statistics efficiently?"]
+    },
+    "digital-wallet-service": {
+      "classInfo": "Entities: User, Wallet/Account (id, user, balance, currency), Transaction (id, fromAccount, toAccount, amount, currency, status, timestamp), PaymentMethod (abstract: CreditCard, BankAccount), CurrencyConverter, DigitalWallet (Singleton facade). Transfers must be atomic: lock both accounts in a consistent order (by id) to avoid deadlock, validate balance, debit and credit, record the transaction. Use BigDecimal for money. Idempotency key prevents duplicate transfers.",
+      "followUps": ["How do you avoid deadlocks when two users transfer to each other simultaneously?", "Why not use double for money?", "How would you support refunds and transaction reversal?"]
+    },
+    "hotel-management-system": {
+      "classInfo": "Entities: Hotel, Room (number, type, price, status), Guest, Reservation (guest, room, checkIn, checkOut, status), Payment (interface with Cash/Card implementations = Strategy), HotelManagementSystem (Singleton). Operations: search available rooms by date/type, reserve, check in, check out, cancel. Room availability per date range checked and reserved atomically (synchronized). Room state transitions (AVAILABLE → BOOKED → OCCUPIED → AVAILABLE) could use State pattern.",
+      "followUps": ["How do you check availability across a date range efficiently?", "How would you add housekeeping status to rooms?", "How do you handle overbooking policies?"]
+    },
+    "library-management-system": {
+      "classInfo": "Entities: Book (ISBN, title, author, year) vs BookCopy/BookItem (barcode, status) — separating catalog info from physical copies is key. Member (id, name, borrowedItems, limit), Loan (copy, member, dueDate, returnDate), Fine, Librarian, LibraryManager (Singleton). Operations: add/remove books, search by title/author/ISBN, borrow (check limit & availability), return (compute fine), reserve a book when none are available (queue per book, notify via Observer). Concurrency on borrowing the last copy.",
+      "followUps": ["Why separate Book from BookItem?", "How do reservations work when all copies are out?", "How would you add different fine rules for member types?"]
+    },
+    "logging-framework": {
+      "classInfo": "Entities: Logger (Singleton or per-class via LoggerFactory), LogLevel enum (DEBUG < INFO < WARN < ERROR < FATAL), LogMessage (level, message, timestamp, thread), LogConfig (min level, appenders), LogAppender interface (ConsoleAppender, FileAppender, DatabaseAppender) = Strategy, Formatter interface. Logger filters by level and forwards to all appenders. Thread-safety for concurrent writes; optional async appender with a queue and background thread. Chain of Responsibility can model level handling.",
+      "followUps": ["How do you make logging non-blocking for the application?", "How would you add log rotation to FileAppender?", "How can different packages have different log levels?"]
+    },
+    "lru-cache": {
+      "classInfo": "Core: HashMap<K, Node> + doubly linked list (head = most recent, tail = least recent) giving O(1) get and put. Node(key, value, prev, next). get: look up node, move to head. put: update+move if exists; else insert at head and if size > capacity remove tail and delete its key from the map. Sentinel head/tail nodes simplify edge cases. Thread-safety via synchronized methods or ReentrantLock; generic LRUCache<K,V> with an EvictionPolicy interface allows LFU later.",
+      "followUps": ["Why do you need the key stored inside the node?", "How would you make it thread-safe with good concurrency?", "How would you switch to LFU without rewriting the cache?"]
+    },
+    "movie-ticket-booking-system": {
+      "classInfo": "Entities: Movie, Cinema/Theater (screens), Screen (seats), Show (movie, screen, startTime, seat availability), Seat (row, number, type, price), Booking (user, show, seats, status, payment), User, Payment. Booking flow: select show → view seats → temporarily lock chosen seats (with timeout) → pay → confirm or release. Seat locking must be atomic per show (ConcurrentHashMap/locks). Search movies by city, title, date.",
+      "followUps": ["How is seat locking with a timeout implemented?", "What happens if payment succeeds but confirmation fails?", "How would you model different seat types and pricing?"]
+    },
+    "linkedin": {
+      "classInfo": "Entities: User/Profile (experience, education, skills), Connection/ConnectionRequest (status PENDING/ACCEPTED), Post, Comment, Like, Job (company, description), JobApplication, Message, Notification. Services: UserService, ConnectionService, FeedService, JobService, MessagingService, NotificationService (Observer for events like new connection or message). Search across users/jobs by keyword. Privacy settings control profile visibility.",
+      "followUps": ["How do you model connection requests and their states?", "How would you suggest 'people you may know'?", "How do you keep the notification system decoupled from every service?"]
+    },
+    "pub-sub-system": {
+      "classInfo": "Entities: Message (payload, timestamp), Topic (name, subscribers), Subscriber interface (onMessage), Publisher, Broker/PubSubService (Singleton) mapping topic name → Topic. Publish delivers the message to all subscribers of the topic, ideally asynchronously via an ExecutorService so slow subscribers don't block publishers. Thread-safe collections (ConcurrentHashMap, CopyOnWriteArrayList) for subscribe/unsubscribe during delivery. Observer pattern at its core.",
+      "followUps": ["How do you stop one slow subscriber from delaying others?", "How would you add message persistence and replay?", "How do you guarantee ordering per topic?"]
+    },
+    "ride-sharing-service": {
+      "classInfo": "Entities: Rider, Driver (location, status AVAILABLE/BUSY/OFFLINE, vehicle), Location, Ride (rider, driver, pickup, drop, status, fare), RideService (Singleton) coordinating requests. Matching finds nearest available driver (DriverMatchingStrategy interface: nearest, highest-rated). Fare via PricingStrategy (base + distance + time, surge). Ride state machine REQUESTED → ACCEPTED → IN_PROGRESS → COMPLETED/CANCELLED. Driver assignment must be atomic so one driver isn't given two rides. Notifications via Observer.",
+      "followUps": ["How do you make the matching algorithm pluggable?", "How do you prevent assigning a driver twice?", "Where does surge pricing logic belong?"]
+    },
+    "social-networking-service": {
+      "classInfo": "Entities: User (profile, friends), FriendRequest, Post (author, content, media, likes, comments), Comment, Like, Notification, NewsFeed. Services: UserService (register/login/profile), FriendService, PostService, FeedService (collect friends' posts sorted by time), NotificationService (Observer on likes/comments/friend requests). Privacy per post (public/friends/private) checked when building feeds. Thread-safe collections for concurrent actions.",
+      "followUps": ["How do you generate a user's news feed?", "How do you enforce privacy settings in the feed?", "How would you add groups or pages?"]
+    },
+    "task-management-system": {
+      "classInfo": "Entities: User, Task (id, title, description, dueDate, priority, status, assignee, reminders), TaskStatus enum (TODO/IN_PROGRESS/DONE), Priority enum, TaskManager (Singleton) with create/update/delete/assign, search and filter by priority, due date, assignee. Reminders via a scheduler; changes notify assignees (Observer). Task history for auditing. Concurrent edits handled with synchronized methods or optimistic versioning.",
+      "followUps": ["How would you support sub-tasks and dependencies?", "How are reminders scheduled and delivered?", "How do you handle two users editing the same task?"]
+    },
+    "tic-tac-toe": {
+      "classInfo": "Entities: Game (board, players, currentPlayer, status), Board (NxN grid of Cells, makeMove, isFull), Player (name, symbol), Symbol enum (X, O). Win check after each move only needs the move's row, column and diagonals — O(N) — or O(1) with per-row/column/diagonal counters. Game loop alternates players, validates moves, detects win/draw. Board size N configurable.",
+      "followUps": ["How do you check for a winner in O(1) per move?", "How would you add an AI opponent (Strategy)?", "How would you support an N×N board with K-in-a-row?"]
+    },
+    "traffic-signal": {
+      "classInfo": "Entities: TrafficController (Singleton), Intersection, Road, TrafficLight (id, currentSignal, durations), Signal enum (RED, YELLOW, GREEN). State pattern for light transitions with configurable durations; a scheduler cycles signals per intersection ensuring conflicting directions are never green at the same time. Emergency vehicles trigger an override. Sensors can adjust timing (Observer).",
+      "followUps": ["How do you guarantee two conflicting roads are never green together?", "How would you handle emergency vehicle priority?", "How can timing adapt to traffic density?"]
+    },
+    "course-registration-system": {
+      "classInfo": "Entities: Student, Course (code, name, instructor, maxCapacity, enrolledCount, schedule), Registration (student, course, timestamp), CourseRegistrationSystem (Singleton). Operations: search courses, register (check capacity, prerequisites, schedule conflicts), drop. Registration for the last seat must be atomic (synchronized on course). Waitlist queue per course with auto-enrollment when a seat frees up.",
+      "followUps": ["How do you handle 1,000 students registering for the last seat at once?", "How would you add prerequisites and time-conflict checks?", "How does a waitlist work?"]
+    },
+    "vending-machine": {
+      "classInfo": "Entities: VendingMachine (Singleton), Product (name, price), Inventory (product → quantity), Coin and Note enums, State interface with IdleState, ReadyState (money inserted), DispenseState, ReturnChangeState — the State pattern is the core of this problem. Operations: select product, insert money, dispense, return change (greedy over denominations), refill. Invalid actions in a state give clear errors.",
+      "followUps": ["Why is the State pattern a good fit here?", "How do you compute change and handle insufficient change?", "What happens if the user cancels mid-transaction?"]
+    },
+    "airline-management-system": {
+      "classInfo": "Entities: Flight (number, source, destination, departure, arrival, aircraft, seats), Aircraft, Seat (number, class, status), Passenger, Booking (flight, passenger, seat, status), Payment, Crew, AirlineManagementSystem (facade). Search flights by route/date, book (atomic seat reservation), cancel, manage crew and aircraft assignments. Seat reservation concurrency; notifications on schedule changes (Observer).",
+      "followUps": ["How would you model multi-leg itineraries?", "How do you handle overbooking and flight cancellations?", "How is seat selection kept consistent under concurrency?"]
+    },
+    "atm": {
+      "classInfo": "Entities: ATM (id, location, cashDispenser, state), Card, Account (balance), Transaction (abstract: Withdrawal, Deposit, BalanceInquiry) = polymorphism, BankingService (validates PIN, updates balances), CashDispenser (denominations; Chain of Responsibility for splitting into notes). ATM State pattern: Idle → CardInserted → Authenticated → TransactionSelected. Balance updates must be atomic; network failures during withdrawal need compensation.",
+      "followUps": ["How does Chain of Responsibility help dispense notes?", "What if cash is dispensed but the account update fails?", "How do you lock the card after 3 wrong PINs?"]
+    },
+    "elevator-system": {
+      "classInfo": "Entities: ElevatorController/Dispatcher, Elevator (id, currentFloor, direction, state, request queue), Request (floor, direction), Direction enum, Button (internal/external). Scheduling strategy interface (FCFS, SCAN/LOOK, nearest car) chooses which elevator serves a hall call. Each elevator processes requests in its direction (SCAN) using two priority queues (up/down). Elevators run on their own threads; controller thread-safe.",
+      "followUps": ["Compare FCFS vs SCAN/LOOK for elevator scheduling.", "How do you choose which elevator answers a hall call?", "How would you add maintenance mode or VIP floors?"]
+    },
+    "online-auction-system": {
+      "classInfo": "Entities: User, AuctionListing (item, seller, startingPrice, currentHighestBid, endTime, status), Bid (bidder, amount, timestamp), AuctionService (Singleton). placeBid must be atomic per listing: validate amount > current highest and auction still open, then update (synchronized or lock per listing). Auction closing handled by a scheduler that marks winners and notifies participants (Observer). Search listings by keyword/category.",
+      "followUps": ["How do you handle two bids arriving at the same millisecond?", "How is the auction closed exactly at end time?", "How would you add auto-bidding up to a max amount?"]
+    },
+    "food-delivery-service": {
+      "classInfo": "Entities: Customer, Restaurant (menu), MenuItem, Order (customer, restaurant, items, status, deliveryAgent, payment), OrderStatus enum (PLACED → CONFIRMED → PREPARING → OUT_FOR_DELIVERY → DELIVERED / CANCELLED), DeliveryAgent (location, available), FoodDeliveryService (Singleton). Agent assignment via strategy (nearest available). Status changes notify customer/restaurant/agent (Observer). Order state transitions validated centrally.",
+      "followUps": ["How do you validate that order status transitions are legal?", "How do you choose a delivery agent?", "How would you add order cancellation with refunds?"]
+    },
+    "music-streaming-service": {
+      "classInfo": "Entities: User (subscription), Song (title, artist, album, duration, url), Album, Artist, Playlist (owner, songs, public/private), MusicPlayer (current song, queue, play/pause/next — State pattern), RecommendationEngine (strategy), SearchService, MusicStreamingService (facade). Playlists shareable; followers get new releases (Observer). Free vs premium features via strategy or decorator.",
+      "followUps": ["How would you model the player controls with the State pattern?", "How does shuffle/repeat fit in the queue design?", "How would you add offline downloads for premium users?"]
+    },
+    "online-shopping-service": {
+      "classInfo": "Entities: User, Product (id, name, price, category, stock), ShoppingCart (items: product + quantity), Order (items, total, status, payment, shippingAddress), OrderStatus enum, Payment interface (card, UPI...) = Strategy, OnlineShoppingService (Singleton). Place order: validate stock and decrement atomically, create order, process payment, roll back stock on failure. Search/filter products. Discounts via a pricing rule chain.",
+      "followUps": ["How do you avoid overselling the last unit?", "How would you add coupons and discounts cleanly?", "What happens if payment fails after stock is reserved?"]
+    },
+    "online-stock-brokerage-system": {
+      "classInfo": "Entities: User, Account (balance, portfolio), Stock (symbol, price), Order (abstract: BuyOrder, SellOrder; type MARKET/LIMIT; status), Portfolio (holdings), StockBroker (Singleton) that places and executes orders. Order matching/execution updates balance and holdings atomically; insufficient funds or shares rejected. Price updates notify watchers (Observer). Order types via Strategy or polymorphism.",
+      "followUps": ["How do limit orders differ from market orders in your design?", "How do you keep balance and holdings consistent on execution?", "How would you add stop-loss orders?"]
+    },
+    "restaurant-management-system": {
+      "classInfo": "Entities: MenuItem, Order (table, items, status), OrderItem, Table (capacity, status), Reservation, Staff (Waiter, Chef, Manager), Payment, RestaurantManager (Singleton). Flows: reserve/assign table, place order → kitchen queue → prepare → serve → bill and pay. Order status changes notify waiters (Observer). Inventory of ingredients updated as items are prepared.",
+      "followUps": ["How does the kitchen get and prioritize orders?", "How would you split a bill between guests?", "How do you prevent double-booking a table?"]
+    },
+    "snake-and-ladder": {
+      "classInfo": "Entities: Board (size, map of snakes: head→tail, ladders: bottom→top), Snake, Ladder, Player (name, position), Dice (roll; number of dice configurable), Game (players queue, board, dice, winner). Turn: roll, move, apply snake/ladder jump, check win (exact landing optional). Board generated from config; multiple concurrent games via a GameManager.",
+      "followUps": ["How do you make board configuration data-driven?", "How would you support multiple dice or special rules?", "How do you run many games concurrently?"]
+    },
+    "splitwise": {
+      "classInfo": "Entities: User, Group (members, expenses), Expense (paidBy, amount, splits, description), abstract Split (user, amount) with EqualSplit, ExactSplit, PercentSplit — each validated by its type (Strategy/polymorphism). BalanceSheet: map user → (map otherUser → amount) updated per expense. SplitwiseService (Singleton) adds expenses, shows balances, settles up. Simplify debts using a min-cash-flow greedy with heaps.",
+      "followUps": ["How do you validate that percent splits add up to 100?", "How would you minimize the number of settlement transactions?", "How do you keep balances consistent under concurrent expense additions?"]
+    },
+    "stack-overflow": {
+      "classInfo": "Entities: User (reputation), Question (title, body, tags, author, answers, comments, votes), Answer (accepted flag), Comment, Vote (voter, value ±1), Tag, abstract Post or Votable/Commentable interfaces shared by Question and Answer. StackOverflow facade handles post/answer/comment/vote/search. Reputation updated on votes and accepted answers (Observer or event). One vote per user per post enforced; concurrent votes handled atomically.",
+      "followUps": ["How do you share voting/commenting logic between questions and answers?", "How is reputation calculated and kept consistent?", "How would you implement search by tags and keywords?"]
+    },
+    "parking-lot": {
+      "followUps": ["How do you assign the nearest free spot efficiently?", "How would you add pricing per hour by vehicle type?", "What happens when two cars arrive at two gates for the last spot?"]
+    }
+  },
+  "problems": [
+    {
+      "slug": "rate-limiter-lld",
+      "title": "Designing a Rate Limiter (Low-Level)",
+      "difficulty": "MEDIUM",
+      "patterns": ["Strategy Pattern", "Factory Pattern", "Concurrency"],
+      "requirements": "1. Limit the number of requests a client can make in a time window.\n2. Support multiple algorithms: fixed window, sliding window log, token bucket.\n3. Different limits per client tier or API.\n4. allowRequest(clientId) must be thread-safe and fast.\n5. Limits can be configured without code changes.",
+      "classInfo": "RateLimiter interface (boolean allowRequest(String clientId)) with TokenBucketRateLimiter, SlidingWindowLogRateLimiter, FixedWindowRateLimiter implementations (Strategy). RateLimiterFactory creates the right one from RateLimitConfig (capacity, refillRate, windowSize). Per-client state in ConcurrentHashMap<String, Bucket>; Bucket updates are synchronized or use atomics. Token bucket refills lazily based on elapsed time on each call. RateLimiterService maps API/tier → limiter.",
+      "followUps": ["How do you refill tokens without a background thread?", "How would you make this distributed across servers?", "How do you add a new algorithm without touching existing code?"],
+      "hasSolution": true
+    },
+    {
+      "slug": "key-value-store-ttl",
+      "title": "Designing an In-Memory Key-Value Store with TTL",
+      "difficulty": "MEDIUM",
+      "patterns": ["Singleton Pattern", "Strategy Pattern", "Concurrency"],
+      "requirements": "1. Support put(key, value, ttl), get(key) and delete(key).\n2. Keys expire automatically after their TTL.\n3. Optional maximum capacity with an eviction policy (LRU).\n4. Support transactions: begin, commit, rollback (nested optional).\n5. Thread-safe for concurrent clients.",
+      "classInfo": "KeyValueStore (Singleton or instance) holding ConcurrentHashMap<String, Entry>; Entry(value, expiresAt). get checks expiry lazily and removes stale entries; a background ScheduledExecutor sweeps expired keys periodically (or a min-heap/DelayQueue ordered by expiry). EvictionPolicy interface (LRUEviction using LinkedHashMap access order). Transactions: stack of change maps — begin pushes a new layer, commit merges down, rollback pops.",
+      "followUps": ["Lazy expiration vs active expiration — trade-offs?", "How do nested transactions work with your stack of layers?", "How do you keep eviction and expiry thread-safe?"],
+      "hasSolution": true
+    },
+    {
+      "slug": "in-memory-file-system",
+      "title": "Designing an In-Memory File System",
+      "difficulty": "MEDIUM",
+      "patterns": ["Composite Pattern", "Interface Design"],
+      "requirements": "1. Create directories and files using absolute paths (mkdir -p behavior).\n2. List contents of a directory (ls), sorted.\n3. Write and append content to files; read file contents.\n4. Delete files and directories.\n5. Get the size of a directory (sum of its files).",
+      "classInfo": "Composite pattern: abstract FileSystemNode (name, parent, createdAt, getSize()) with File (content, getSize = content length) and Directory (Map<String, FileSystemNode> children, getSize = sum of children). FileSystem class resolves paths by splitting on '/' and walking from root, creating directories as needed. ls returns sorted child names (TreeMap). Permissions could be added as a decorator or field.",
+      "followUps": ["Why is the Composite pattern a good fit?", "How would you add file permissions or symbolic links?", "How would you implement search by file name across the tree?"],
+      "hasSolution": true
+    },
+    {
+      "slug": "meeting-room-scheduler",
+      "title": "Designing a Meeting Room Scheduler",
+      "difficulty": "MEDIUM",
+      "patterns": ["Strategy Pattern", "Observer Pattern", "Concurrency"],
+      "requirements": "1. Book a meeting room for a time interval with a list of participants.\n2. Rooms have capacity and equipment; pick a room that fits.\n3. No overlapping bookings in the same room.\n4. Cancel meetings and notify participants.\n5. View a room's or user's calendar for a day.",
+      "classInfo": "Entities: MeetingRoom (id, capacity, equipment, Calendar of bookings), Meeting (id, interval, organizer, participants, room), Interval(start, end, overlaps()), User, Scheduler (book/cancel). Each room keeps bookings in a TreeMap<start, Meeting> so overlap check is O(log n) via floorEntry/ceilingEntry. RoomSelectionStrategy (smallest room that fits, nearest). Booking synchronized per room. NotificationService notifies participants (Observer).",
+      "followUps": ["How do you check for overlaps efficiently?", "How do you avoid two people booking the same room at once?", "How would you add recurring meetings?"],
+      "hasSolution": true
+    },
+    {
+      "slug": "task-scheduler",
+      "title": "Designing a Task/Job Scheduler",
+      "difficulty": "HARD",
+      "patterns": ["Command Pattern", "Strategy Pattern", "Concurrency"],
+      "requirements": "1. Schedule tasks to run once at a given time or repeatedly at a fixed interval.\n2. Execute tasks on a pool of worker threads.\n3. Support task priorities.\n4. Cancel scheduled tasks.\n5. Retry failed tasks a configurable number of times.",
+      "classInfo": "Task interface (Command: execute()); ScheduledTask (task, nextRunTime, interval, priority, retries, status). Scheduler holds a PriorityQueue/DelayQueue ordered by nextRunTime then priority, protected by a lock + condition: the dispatcher thread waits until the head is due (awaitNanos), then hands it to an ExecutorService worker pool. Recurring tasks are re-queued with nextRunTime += interval. RetryPolicy strategy (fixed, exponential backoff). Cancel marks the task CANCELLED so the dispatcher skips it.",
+      "followUps": ["How does the dispatcher wait efficiently for the next due task?", "What happens if a new, earlier task is scheduled while the dispatcher is waiting?", "How do you avoid a slow task delaying others?"],
+      "hasSolution": true
+    },
+    {
+      "slug": "text-editor-undo-redo",
+      "title": "Designing a Text Editor with Undo/Redo",
+      "difficulty": "MEDIUM",
+      "patterns": ["Command Pattern", "Memento Pattern"],
+      "requirements": "1. Insert and delete text at a cursor position.\n2. Move the cursor left and right.\n3. Undo and redo any number of operations.\n4. Copy/cut/paste using a clipboard.\n5. Efficient for large documents.",
+      "classInfo": "Command pattern: Command interface (execute, undo) with InsertCommand, DeleteCommand, PasteCommand storing what they need to reverse themselves. Editor keeps undoStack and redoStack; executing a new command clears redo. Document stores text in a gap buffer, rope or StringBuilder with cursor index. Memento is an alternative (snapshot state) but costs memory; command-based undo is preferred for large docs.",
+      "followUps": ["Command vs Memento for undo — trade-offs?", "Why must redo be cleared after a new edit?", "Which data structure keeps inserts in the middle cheap?"],
+      "hasSolution": true
+    },
+    {
+      "slug": "inventory-management",
+      "title": "Designing an Inventory Management System",
+      "difficulty": "MEDIUM",
+      "patterns": ["Observer Pattern", "Strategy Pattern", "Concurrency"],
+      "requirements": "1. Manage products across multiple warehouses.\n2. Add stock, reserve stock for orders, and release or fulfill reservations.\n3. Alert when stock falls below a reorder threshold.\n4. Choose which warehouse fulfills an order.\n5. Keep an audit trail of stock movements.",
+      "classInfo": "Entities: Product (sku, name), Warehouse (id, location, Map<sku, StockLevel>), StockLevel (available, reserved, reorderThreshold), Reservation (orderId, sku, qty, warehouse, status), StockMovement (audit). InventoryService: reserve() atomically moves available → reserved (lock per sku per warehouse), fulfill() decrements reserved, release() returns stock. WarehouseSelectionStrategy (nearest, most stock). LowStockListener (Observer) triggers reorder notifications.",
+      "followUps": ["How do you prevent overselling when many orders reserve the same SKU?", "How does an order spanning two warehouses work?", "How would reservations expire if payment never completes?"],
+      "hasSolution": true
+    },
+    {
+      "slug": "coupon-discount-engine",
+      "title": "Designing a Coupon and Discount Engine",
+      "difficulty": "MEDIUM",
+      "patterns": ["Strategy Pattern", "Chain of Responsibility", "Decorator Pattern"],
+      "requirements": "1. Support discount types: percentage off, flat amount off, buy-X-get-Y.\n2. Coupons have conditions: minimum cart value, category, user segment, expiry, usage limits.\n3. Multiple discounts may stack in a defined order, or be exclusive.\n4. Compute final cart price with a breakdown of applied discounts.\n5. Easy to add new discount types.",
+      "classInfo": "Discount interface (isApplicable(cart, user), apply(cart) → amount) with PercentageDiscount, FlatDiscount, BuyXGetYDiscount (Strategy). Condition interface (MinCartValue, CategoryCondition, ExpiryCondition, UsageLimitCondition) composed per Coupon (Specification pattern). DiscountEngine runs applicable discounts in priority order as a chain, respecting exclusivity, and returns a PriceBreakdown. Usage counts updated atomically at checkout.",
+      "followUps": ["How do you add a new discount type without changing the engine?", "How do you decide the order in which stacked discounts apply?", "How do you enforce a global usage limit under concurrency?"],
+      "hasSolution": true
+    }
+  ]
+}

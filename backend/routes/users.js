@@ -1,7 +1,10 @@
 const express = require('express');
 const router  = express.Router();
 const { verifyToken } = require('../middleware/auth');
+const { getPlatformSettings } = require('../middleware/checkUserAccess');
 const admin = require('../config/firebase');
+const logger = require('../utils/logger');
+const { searchTokens } = require('../services/userSearch');
 
 const db = admin.firestore();
 
@@ -43,7 +46,7 @@ router.get('/me', verifyToken, async (req, res, next) => {
           await admin.auth().deleteUser(uid);
         } catch (e) {
           if (e.code !== 'auth/user-not-found') {
-            console.error('[Auth] Failed to delete blocked signup user:', e.message);
+            logger.error('Failed to delete blocked signup user', { requestId: req.id, err: e.message });
           }
         }
         return res.status(403).json({
@@ -56,6 +59,7 @@ router.get('/me', verifyToken, async (req, res, next) => {
         uid,
         email:               req.user.email       || null,
         displayName:         req.user.name         || req.user.displayName || null,
+        searchTokens:        searchTokens(req.user.email, req.user.name || req.user.displayName),
         photoURL:            req.user.picture      || req.user.photoURL    || null,
         role:                'user',
         status:              'PENDING',
@@ -89,14 +93,8 @@ router.get('/me', verifyToken, async (req, res, next) => {
     }
 
     const profile = doc.data();
-
-    let maintenanceMode = false;
-    try {
-      const settingsDoc = await db.collection('platformSettings').doc('main').get();
-      if (settingsDoc.exists) {
-        maintenanceMode = settingsDoc.data().maintenanceMode === true;
-      }
-    } catch { /* use defaults */ }
+    const { maintenanceMode: maintenanceFlag } = await getPlatformSettings();
+    const maintenanceMode = maintenanceFlag === true;
 
     // Calculate remaining free trial (for UI display)
     const freeTrialRemaining = Math.max(
@@ -125,64 +123,17 @@ router.get('/me', verifyToken, async (req, res, next) => {
 });
 
 /**
- * PUT /api/users/me/uncheck
- * Toggles the unchecked (manually marked as unsolved) status of a question.
- * Body: { questionTitle: string, unchecked: boolean }
+ * PATCH /api/users/me/preferences
+ * Body: { theme: 'dark' | 'light' }. Stored on the profile so the choice follows the account.
  */
-router.put('/me/uncheck', verifyToken, async (req, res, next) => {
+router.patch('/me/preferences', verifyToken, async (req, res, next) => {
   try {
-    const uid = req.user.uid;
-    const { questionTitle, unchecked } = req.body;
-
-    if (!questionTitle || typeof unchecked !== 'boolean') {
-      return res.status(400).json({ error: 'Missing questionTitle or unchecked status' });
+    const { theme } = req.body || {};
+    if (theme !== 'dark' && theme !== 'light') {
+      return res.status(400).json({ error: 'theme must be "dark" or "light".' });
     }
-
-    const docRef = db.collection('users').doc(uid);
-    
-    if (unchecked) {
-      await docRef.update({
-        uncheckedQuestions: admin.firestore.FieldValue.arrayUnion(questionTitle)
-      });
-    } else {
-      await docRef.update({
-        uncheckedQuestions: admin.firestore.FieldValue.arrayRemove(questionTitle)
-      });
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    next(err);
-  }
-});
-
-/**
- * PUT /api/users/me/manual-complete
- * Toggles the manually completed status of a question (for questions without AI history).
- * Body: { questionTitle: string, isCompleted: boolean }
- */
-router.put('/me/manual-complete', verifyToken, async (req, res, next) => {
-  try {
-    const uid = req.user.uid;
-    const { questionTitle, isCompleted } = req.body;
-
-    if (!questionTitle || typeof isCompleted !== 'boolean') {
-      return res.status(400).json({ error: 'Missing questionTitle or isCompleted status' });
-    }
-
-    const docRef = db.collection('users').doc(uid);
-    
-    if (isCompleted) {
-      await docRef.update({
-        manuallyCompletedQuestions: admin.firestore.FieldValue.arrayUnion(questionTitle)
-      });
-    } else {
-      await docRef.update({
-        manuallyCompletedQuestions: admin.firestore.FieldValue.arrayRemove(questionTitle)
-      });
-    }
-    
-    res.json({ success: true });
+    await db.collection('users').doc(req.user.uid).update({ 'preferences.theme': theme });
+    res.json({ success: true, preferences: { theme } });
   } catch (err) {
     next(err);
   }
