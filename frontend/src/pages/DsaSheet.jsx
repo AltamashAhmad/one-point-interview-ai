@@ -326,7 +326,7 @@ export default function DsaSheet() {
               </div>
               <label className="striver-modal-label">Language</label>
               <select className="striver-select full" aria-label="Language" value={selectedLanguage} onChange={(e) => setSelectedLanguage(e.target.value)}>
-                {['Java', 'Python', 'C++', 'JavaScript', 'TypeScript', 'Go', 'Rust'].map((lang) => (
+                {['Python', 'JavaScript', 'TypeScript', 'Java', 'C++', 'C#', 'Go', 'Rust', 'Kotlin', 'Swift'].map((lang) => (
                   <option key={lang} value={lang}>{lang}</option>
                 ))}
               </select>
