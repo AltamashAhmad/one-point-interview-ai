@@ -52,7 +52,7 @@ async function seedAdmin() {
     approvedBy:           'system',
   }, { merge: true }); // merge: true = safe to re-run
 
-  console.log(`✅ Admin profile seeded for UID: ${ADMIN_UID}`);
+  console.log('✅ Admin profile seeded successfully');
   console.log('   role: admin | status: APPROVED | isUnlimited: true');
   process.exit(0);
 }

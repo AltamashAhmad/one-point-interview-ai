@@ -1,5 +1,4 @@
 const { verifyToken, forgetVerifiedUser } = require('../middleware/auth');
-const admin = require('../config/firebase');
 
 const mockVerifyIdToken = jest.fn();
 jest.mock('../config/firebase', () => ({

@@ -4,12 +4,15 @@ const loaders = import.meta.glob('./topics/*.md', { query: '?raw', import: 'defa
 const keyFor = (topicId) => `./topics/${topicId}.md`;
 
 export function hasTopicContent(topicId) {
-  return keyFor(topicId) in loaders;
+  const key = keyFor(topicId);
+  return Object.prototype.hasOwnProperty.call(loaders, key);
 }
 
 export async function loadTopicContent(topicId) {
-  const load = loaders[keyFor(topicId)];
-  return load ? load() : null;
+  const key = keyFor(topicId);
+  if (!Object.prototype.hasOwnProperty.call(loaders, key)) return null;
+  const load = loaders[key];
+  return typeof load === 'function' ? load() : null;
 }
 
 /** Ids of every topic file on disk (used by tests to catch notes that are not in the study list). */

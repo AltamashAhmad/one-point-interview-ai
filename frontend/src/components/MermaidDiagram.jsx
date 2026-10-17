@@ -15,7 +15,7 @@ mermaid.initialize({
 const VALID_DIRECTIONS = new Set(['TD', 'LR', 'RL', 'BT', 'TB']);
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-const escQ  = s => s.replace(/"/g, '\\"');
+const escQ  = s => s.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 const escBr = s => s.replace(/\[/g, '&#91;').replace(/\]/g, '&#93;');
 
 /**

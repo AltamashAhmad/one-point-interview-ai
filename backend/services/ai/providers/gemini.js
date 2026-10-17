@@ -1,8 +1,9 @@
+const crypto = require('crypto');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 function pickApiKey(isAdmin) {
   const vipKeys = (process.env.VIP_GEMINI_API_KEYS || '').split(',').map((k) => k.trim()).filter(Boolean);
-  if (isAdmin && vipKeys.length > 0) return vipKeys[Math.floor(Math.random() * vipKeys.length)];
+  if (isAdmin && vipKeys.length > 0) return vipKeys[crypto.randomInt(0, vipKeys.length)];
   return process.env.GEMINI_API_KEY;
 }
 

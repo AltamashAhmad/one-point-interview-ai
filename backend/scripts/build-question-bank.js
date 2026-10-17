@@ -100,13 +100,6 @@ for (const companyName of companyDirs) {
   // We merge all, keeping the highest frequency for duplicate titles
   const questionMap = new Map(); // title -> question
 
-  const priorityOrder = [
-    '4. More Than Six Months',
-    '3. Six Months',
-    '2. Three Months',
-    '1. Thirty Days',
-  ];
-
   for (const csvName of csvFiles) {
     if (csvName.includes('All')) continue; // skip the empty "All" file
     const questions = parseCsv(path.join(companyDir, csvName));
