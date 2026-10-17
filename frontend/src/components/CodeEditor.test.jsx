@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import CodeEditor from './CodeEditor';
+import { monacoLanguage } from '../utils/constants';
 
 vi.mock('@monaco-editor/react', () => ({
   default: ({ value, onChange }) => <textarea aria-label="editor" value={value} onChange={(e) => onChange(e.target.value)} />,
@@ -47,4 +48,21 @@ it('flushes a pending save when the editor closes', async () => {
   type('x = 1');
   unmount();
   expect(onSave).toHaveBeenCalledWith('x = 1');
+});
+
+describe('monacoLanguage', () => {
+  it('correctly maps all interview languages to Monaco identifiers', () => {
+    expect(monacoLanguage('C#')).toBe('csharp');
+    expect(monacoLanguage('csharp')).toBe('csharp');
+    expect(monacoLanguage('C++')).toBe('cpp');
+    expect(monacoLanguage('cpp')).toBe('cpp');
+    expect(monacoLanguage('Python')).toBe('python');
+    expect(monacoLanguage('Java')).toBe('java');
+    expect(monacoLanguage('JavaScript')).toBe('javascript');
+    expect(monacoLanguage('TypeScript')).toBe('typescript');
+    expect(monacoLanguage('Go')).toBe('go');
+    expect(monacoLanguage('Rust')).toBe('rust');
+    expect(monacoLanguage('Kotlin')).toBe('kotlin');
+    expect(monacoLanguage('Swift')).toBe('swift');
+  });
 });

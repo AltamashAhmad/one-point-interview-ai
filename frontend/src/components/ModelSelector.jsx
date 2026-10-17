@@ -56,7 +56,7 @@ export default function ModelSelector({ selectedModel, onModelChange, disabled }
 
       {/* Dropdown */}
       {open && (
-        <div className="model-dropdown" role="listbox">
+        <div className="model-dropdown" role="listbox" aria-label="Choose AI Model">
           <div className="model-dropdown-header">Choose AI Model</div>
 
           {PROVIDER_GROUPS.map((group) => {

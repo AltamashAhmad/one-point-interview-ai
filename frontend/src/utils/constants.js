@@ -119,3 +119,19 @@ export function modelProviderColor(modelId) {
   if (!found) return '#64748b';
   return found.badgeColor || '#10b981';
 }
+
+/**
+ * Maps user-selected programming language to Monaco Editor language identifier.
+ * @param {string} language
+ * @returns {string} Monaco language id
+ */
+export function monacoLanguage(language) {
+  const normalized = (language || '').toLowerCase().trim();
+  if (normalized.includes('c++')) return 'cpp';
+  if (normalized === 'c#' || normalized.includes('csharp')) return 'csharp';
+  if (normalized.includes('python')) return 'python';
+  if (normalized.includes('java') && !normalized.includes('javascript')) return 'java';
+  if (normalized.includes('javascript') || normalized === 'js') return 'javascript';
+  if (normalized.includes('typescript') || normalized === 'ts') return 'typescript';
+  return normalized;
+}

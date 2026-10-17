@@ -554,3 +554,40 @@ describe('editor code', () => {
     expect([res.status, res.body.code]).toEqual([409, 'SESSION_ENDED']);
   });
 });
+
+describe('scorecard verdict normalization', () => {
+  const { parseScorecard, PASS_SCORE } = require('../services/evaluation');
+
+  it('normalizes Hire to Lean Hire if score is below PASS_SCORE (70)', () => {
+    const result = parseScorecard(JSON.stringify({
+      score: 68,
+      verdict: 'Hire',
+      strengths: ['Good communication'],
+      weaknesses: ['Minor bug'],
+    }));
+    expect(result.score).toBe(68);
+    expect(result.verdict).toBe('Lean Hire');
+  });
+
+  it('preserves Hire if score is at or above PASS_SCORE', () => {
+    const result = parseScorecard(JSON.stringify({
+      score: PASS_SCORE,
+      verdict: 'Hire',
+      strengths: ['Great code'],
+      weaknesses: [],
+    }));
+    expect(result.score).toBe(70);
+    expect(result.verdict).toBe('Hire');
+  });
+
+  it('normalizes No Hire to Lean Hire if score is below 50', () => {
+    const result = parseScorecard(JSON.stringify({
+      score: 40,
+      verdict: 'Hire',
+      strengths: [],
+      weaknesses: ['Failed implementation'],
+    }));
+    expect(result.score).toBe(40);
+    expect(result.verdict).toBe('No Hire');
+  });
+});

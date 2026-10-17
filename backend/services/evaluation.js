@@ -20,11 +20,13 @@ Your task is to evaluate the following interview transcript and generate a final
 CRITICAL SCORING RULES:
 - The transcript contains ${totalMessages} total messages, of which ${userMessages.length} are from the CANDIDATE.
 - Base your score ONLY on what the candidate actually said and demonstrated. Never infer or hallucinate abilities not shown in the transcript.
+- The passing threshold is ${PASS_SCORE}.
 - NON-NEGOTIABLE RULE 1: If the candidate provided very few responses (1-2 messages) or only trivial/vague answers, the score MUST be between 0-25 and the verdict MUST be "No Hire".
 - NON-NEGOTIABLE RULE 2: If the candidate NEVER wrote any actual code (in any language) for a DSA/LLD problem, the verdict MUST be "No Hire" and the score MUST NOT exceed 30.
-- If the candidate attempted the problem with code but made significant errors or had incomplete solutions, score 25-50 ("No Hire").
-- If the candidate provided a reasonable approach with minor gaps and working code, score 50-75 ("Lean Hire" or "Hire").
-- Only give 75+ ("Strong Hire") if the candidate demonstrated strong problem-solving, clear communication, and optimal, working code.
+- If the candidate attempted the problem with code but made significant errors or had incomplete solutions, score 25-49 ("No Hire").
+- If the candidate provided a reasonable approach with minor gaps or partial solution, score 50-69 ("Lean Hire").
+- If the candidate provided a solid approach with optimal or near-optimal working code, score 70-84 ("Hire").
+- Only give 85+ ("Strong Hire") if the candidate demonstrated strong problem-solving, clear communication, and optimal, working code.
 - Strengths and weaknesses MUST reflect what actually happened in the transcript. Do NOT fabricate accomplishments.
 
 You MUST output ONLY a valid JSON object with the following exact structure, no markdown blocks:
@@ -50,9 +52,17 @@ function parseScorecard(text) {
   try {
     const parsed = JSON.parse(text.slice(first, last + 1));
     if (typeof parsed.score !== 'number') return null;
+    const score = Math.max(0, Math.min(100, Math.round(parsed.score)));
+    let verdict = String(parsed.verdict || 'No Hire');
+    // Ensure verdict is aligned with passing score threshold
+    if (score < PASS_SCORE && (verdict === 'Hire' || verdict === 'Strong Hire')) {
+      verdict = score >= 50 ? 'Lean Hire' : 'No Hire';
+    } else if (score >= PASS_SCORE && verdict === 'No Hire') {
+      verdict = 'Hire';
+    }
     return {
-      score: Math.max(0, Math.min(100, Math.round(parsed.score))),
-      verdict: String(parsed.verdict || 'No Hire'),
+      score,
+      verdict,
       strengths: Array.isArray(parsed.strengths) ? parsed.strengths.map(String) : [],
       weaknesses: Array.isArray(parsed.weaknesses) ? parsed.weaknesses.map(String) : [],
       problemSolving: String(parsed.problemSolving || ''),

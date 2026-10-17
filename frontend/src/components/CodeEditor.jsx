@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button } from './ui';
+import { monacoLanguage } from '../utils/constants';
 import './CodeEditor.css';
 
 const SAVE_DELAY_MS = 1200;
@@ -16,15 +17,6 @@ function writePending(id, code) {
     if (code === null) localStorage.removeItem(pendingKey(id));
     else localStorage.setItem(pendingKey(id), code);
   } catch { /* storage disabled: the server copy is still saved */ }
-}
-
-function monacoLanguage(language) {
-  const normalized = language.toLowerCase();
-  if (normalized.includes('c++')) return 'cpp';
-  if (normalized.includes('python')) return 'python';
-  if (normalized.includes('java') && !normalized.includes('javascript')) return 'java';
-  if (normalized.includes('javascript') || normalized.includes('js')) return 'javascript';
-  return normalized;
 }
 
 const SAVE_LABELS = { saved: 'Saved', saving: 'Saving…', unsaved: 'Not saved yet' };

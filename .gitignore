@@ -1,7 +1,7 @@
 # Environment files — NEVER commit these
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # Dependencies
 node_modules/

@@ -20,7 +20,11 @@ const { requestContext } = require('./middleware/requestContext');
 const { httpError, errorHandler } = require('./utils/httpError');
 const { version: APP_VERSION } = require('./package.json');
 
-const AMPLIFY_ORIGINS = ['https://main.d298ess3vvx0bm.amplifyapp.com', 'https://main.d3qqncmpm1ahwz.amplifyapp.com'];
+const AMPLIFY_ORIGINS = [
+  'https://main.d298ess3vvx0bm.amplifyapp.com',
+  'https://main.d3qqncmpm1ahwz.amplifyapp.com',
+  'https://main.d369q8sr84jlxa.amplifyapp.com',
+];
 const isLoopback = (ip) => ip === '::1' || ip === '127.0.0.1' || ip === '::ffff:127.0.0.1';
 
 /** Builds the Express app (no network listener) so the full middleware stack can be tested. */
