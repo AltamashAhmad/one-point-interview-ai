@@ -19,12 +19,15 @@ function applyRoundUpdate(loop, roundIndex, { status, score, sessionId } = {}) {
     throw httpError(400, `status must be one of: ${ROUND_STATUSES.join(', ')}`, 'INVALID_STATUS');
   }
 
-  loop.rounds[roundIndex] = {
-    ...round,
-    ...(status !== undefined ? { status } : {}),
-    ...(score !== undefined ? { score: typeof score === 'number' ? score : null } : {}),
-    ...(sessionId !== undefined ? { sessionId } : {}),
-  };
+  loop.rounds = loop.rounds.map((r, idx) => {
+    if (idx !== roundIndex) return r;
+    return {
+      ...r,
+      ...(status !== undefined ? { status } : {}),
+      ...(score !== undefined ? { score: typeof score === 'number' ? score : null } : {}),
+      ...(sessionId !== undefined ? { sessionId } : {}),
+    };
+  });
 
   if (status === 'failed') {
     loop.status = 'failed';
@@ -33,10 +36,12 @@ function applyRoundUpdate(loop, roundIndex, { status, score, sessionId } = {}) {
       loop.status = 'passed';
     } else if (loop.currentRoundIndex === roundIndex) {
       loop.currentRoundIndex = roundIndex + 1;
-      const nextRound = loop.rounds[roundIndex + 1];
-      if (nextRound && nextRound.status === 'locked') {
-        loop.rounds[roundIndex + 1] = { ...nextRound, status: 'pending' };
-      }
+      loop.rounds = loop.rounds.map((r, idx) => {
+        if (idx === roundIndex + 1 && r && r.status === 'locked') {
+          return { ...r, status: 'pending' };
+        }
+        return r;
+      });
     }
   }
   return loop;
